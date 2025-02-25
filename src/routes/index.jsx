@@ -1,17 +1,9 @@
 import { createBrowserRouter } from 'react-router-dom';
-import MainLayout from '../layouts/MainLayout';
-import Home from '../pages/Home';
-import About from '../pages/About.jsx';
+import MainRoutes from '@/routes/MainRoutes.jsx';
+import AdminRoutes from '@/routes/AdminRoutes.jsx';
 
 const router = createBrowserRouter([
-  {
-    path: '/',
-    element: <MainLayout />,
-    children: [
-      { path: '', element: <Home /> },
-      { path: 'about', element: <About /> },
-    ],
-  },
+  MainRoutes, // Routes của MainLayout
+  AdminRoutes, // Routes của AdminLayout
 ]);
-
 export default router;

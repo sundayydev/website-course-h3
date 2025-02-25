@@ -1,7 +1,16 @@
+import { SidebarProvider, SidebarTrigger } from '@/components/ui/sidebar';
+import AdminSidebar from '@/components/admin/admin-sidebar.jsx';
 import { Outlet } from 'react-router-dom';
 
 const AdminLayout = () => {
-  return <div className="flex flex-col min-h-screen"></div>;
+  return (
+    <SidebarProvider>
+      <AdminSidebar />
+      <main>
+        <Outlet />
+      </main>
+    </SidebarProvider>
+  );
 };
 
 export default AdminLayout;
