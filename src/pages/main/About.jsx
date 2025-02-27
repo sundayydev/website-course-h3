@@ -19,17 +19,12 @@ const About = () => {
       role: 'Marketing Specialist',
       image: 'https://randomuser.me/api/portraits/women/68.jpg',
     },
-    {
-      name: 'John Doe',
-      role: 'Customer Support',
-      image: 'https://randomuser.me/api/portraits/men/45.jpg',
-    },
   ];
 
   return (
     <div className="w-full lg:h-auto h-full flex flex-col items-center justify-center py-20 bg-gray-50 dark:bg-gray-900">
       <div className="w-full h-full flex flex-col justify-center items-center sm:px-4 px-2">
-        <div className="lg:w-[90%] w-full mx-auto flex flex-col lg:gap-6 lg:flex-row items-center justify-center">
+        <div className="lg:w-[98%] w-full mx-auto flex flex-col lg:gap-6 lg:flex-row items-center justify-center">
           {/* Ảnh chính */}
           <div className="relative">
             <img
@@ -42,25 +37,25 @@ const About = () => {
           {/* Nội dung */}
           <div className="lg:w-[60%] p-4 w-full h-full shadow-xl shadow-pink-300/40 flex flex-col justify-center items-center sm:px-6 px-4 rounded-xl">
             <h2 className="text-4xl text-center text-pink-600 dark:text-pink-400 font-bold px-4 py-1 md:mt-0 mt-10">
-              About Us
+              Về chúng tôi
             </h2>
             <p className="md:text-3xl text-2xl text-center text-gray-800 dark:text-gray-200 font-bold my-5">
-              We are Petal Haven S.C.
+              Chúng tôi là H3
             </p>
             <p className="md:text-xl sm:text-lg text-base mt-2 text-justify sm:px-2 dark:text-gray-300">
-              At Petal Haven, we believe in the transformative power of flowers. Our blooms are not
-              just arrangements; they are expressions of beauty, joy, and emotion. From elegant
-              bouquets to enchanting floral designs, we curate every creation with precision and
-              care. Whether it's a celebration, a gesture of love, or a moment of solace, Petal
-              Haven's exquisite flowers speak a language of their own, bringing nature's beauty to
-              your doorstep.
+              Chào mừng bạn đến với Web học lập trình H3 – nền tảng học lập trình hàng đầu dành cho
+              mọi đối tượng, từ người mới bắt đầu đến lập trình viên chuyên nghiệp. Sứ mệnh của
+              chúng tôi Chúng tôi cam kết cung cấp các khóa học chất lượng cao, dễ hiểu và thực
+              tiễn, giúp người học nhanh chóng nắm vững kiến thức lập trình và áp dụng vào thực tế.
+              Với đội ngũ giảng viên giàu kinh nghiệm, chúng tôi luôn cập nhật những công nghệ mới
+              nhất để mang lại trải nghiệm học tập tốt nhất.
             </p>
 
             <button
               onClick={() => navigate('/contact')}
-              className="lg:mt-10 mt-6 lg:px-6 px-4 lg:py-4 py-2 bg-pink-600 rounded-sm lg:text-xl text-lg text-white font-semibold transition duration-300 hover:bg-pink-700"
+              className="lg:mt-10 mt-6 lg:px-4 px-5 lg:py-4 py-3 bg-pink-600 rounded-xl lg:text-xl text-lg text-white font-semibold transition duration-300 hover:bg-pink-700"
             >
-              Read More
+              Liên hệ
             </button>
           </div>
         </div>
@@ -69,13 +64,13 @@ const About = () => {
       {/* Meet Our Team Section */}
       <div className="w-full mt-20 px-6">
         <h2 className="text-4xl text-center text-pink-600 dark:text-pink-400 font-bold mb-10">
-          Meet Our Team
+          Gặp gỡ đội ngũ của chúng tôi
         </h2>
-        <div className="grid lg:grid-cols-4 sm:grid-cols-2 grid-cols-1 gap-8 justify-center">
+        <div className="grid lg:grid-cols-3 grid-cols-1 gap-8 justify-around">
           {teamMembers.map((member, index) => (
             <div
               key={index}
-              className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg flex flex-col items-center"
+              className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg flex flex-col items-center w-full max-w-xs"
             >
               <img
                 className="w-32 h-32 rounded-full object-cover mb-4"
