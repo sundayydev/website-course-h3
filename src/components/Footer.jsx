@@ -9,9 +9,9 @@ const Footer = () => {
         <div>
           <h1 className="flex items-center space-x-2">
             <a href="/" className="rounded-lg">
-              <img className="rounded-lg" src={LogoH3} alt="Logo H3" width={38} height={38} />
+              <img className="rounded-lg" src={LogoH3} alt="Logo H3" width={40} height={40} />
             </a>
-            <a className="font-semibold text-base text-white hover:text-pink-200" href="/">
+            <a className="font-semibold text-lg text-white hover:text-pink-200" href="/">
               Học Lập Trình Cùng H3
             </a>
           </h1>
@@ -33,7 +33,7 @@ const Footer = () => {
 
         {/* Cột 2: Về F8 */}
         <div>
-          <h3 className="font-semibold text-lg mb-3">VỀ H3</h3>
+          <h3 className="font-semibold text-lg mb-3 text-white">VỀ H3</h3>
           <ul className="space-y-2">
             <li>
               <a href="#" className="hover:text-white">
@@ -60,7 +60,7 @@ const Footer = () => {
 
         {/* Cột 3: Sản phẩm */}
         <div>
-          <h3 className="font-semibold text-lg mb-3">SẢN PHẨM</h3>
+          <h3 className="font-semibold text-lg mb-3 text-white">SẢN PHẨM</h3>
           <ul className="space-y-2">
             <li>
               <a href="#" className="hover:text-white">
@@ -97,7 +97,7 @@ const Footer = () => {
 
         {/* Cột 4: Công cụ */}
         <div>
-          <h3 className="font-semibold text-lg mb-3">CÔNG CỤ</h3>
+          <h3 className="font-semibold text-lg mb-3 text-white">CÔNG CỤ</h3>
           <ul className="space-y-2">
             <li>
               <a href="#" className="hover:text-white">
@@ -134,7 +134,9 @@ const Footer = () => {
 
         {/* Cột 5: Công ty */}
         <div>
-          <h3 className="font-semibold text-lg mb-3">CÔNG TY CỔ PHẦN CÔNG NGHỆ GIÁO DỤC H3</h3>
+          <h3 className="font-semibold text-lg mb-3 text-white">
+            CÔNG TY CỔ PHẦN CÔNG NGHỆ GIÁO DỤC H3
+          </h3>
           <p>
             <strong>Mã số thuế:</strong> 0109922901
           </p>
