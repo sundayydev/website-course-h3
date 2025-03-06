@@ -5,18 +5,18 @@ const About = () => {
   const navigate = useNavigate();
   const teamMembers = [
     {
-      name: 'Alice Johnson',
-      role: 'Founder & CEO',
+      name: 'Ngô Mạnh Hùng',
+      role: 'Developer & CEO',
       image: 'https://randomuser.me/api/portraits/women/44.jpg',
     },
     {
-      name: 'Michael Smith',
+      name: 'Lê Hữu Duy Hoàng',
       role: 'Lead Designer',
       image: 'https://randomuser.me/api/portraits/men/32.jpg',
     },
     {
-      name: 'Emily Davis',
-      role: 'Marketing Specialist',
+      name: 'Lê Hoài Huân',
+      role: 'Developer',
       image: 'https://randomuser.me/api/portraits/women/68.jpg',
     },
   ];
