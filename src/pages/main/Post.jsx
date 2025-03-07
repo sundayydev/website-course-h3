@@ -67,7 +67,7 @@ const topics = ['Front-end / Mobile apps', 'Back-end / Devops', 'UI / UX / Desig
 
 const Post = () => {
   return (
-    <div className="max-w-5xl mx-auto p-2">
+    <div className="max-w-5xl mx-auto p-2 mt-20">
       {/* Sidebar trên Mobile */}
       <div className="md:hidden mb-4">
         <div className="bg-white shadow-md p-4 rounded-lg">
@@ -84,7 +84,7 @@ const Post = () => {
           </div>
         </div>
       </div>
-
+      <p className="font-bold text-3xl text-red-600 mb-10">Bài viết nổi bật</p>
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         {/* Danh sách bài viết */}
         <div className="md:col-span-2 space-y-6">
