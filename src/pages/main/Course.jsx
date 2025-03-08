@@ -1,4 +1,9 @@
 import React from 'react';
+import {Clock1Icon, User2Icon} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import {FaUserFriends} from "react-icons/fa";
+import {MdOutlineAccessTimeFilled, MdOutlinePlayCircleFilled} from "react-icons/md";
+
 
 const PriceInfo = ({ oldPrice, newPrice }) => (
     <div className="mb-2">
@@ -6,28 +11,34 @@ const PriceInfo = ({ oldPrice, newPrice }) => (
         <p className="text-red-500 font-bold text-lg">{newPrice}</p>
     </div>
 );
-
 const TeacherInfo = ({ teacher, students, duration }) => (
-    <div className="flex items-center space-x-4">
+    <div className="flex items-center justify-between">
         <div className="flex items-center">
             <img src={teacher.avatar} alt={teacher.name} className="w-8 h-8 rounded-full" />
             <span className="ml-2 text-sm">{teacher.name}</span>
         </div>
-        <div className="flex space-x-2 text-sm">
-            <span>👥 {students}</span>
-            <span>⏳ {duration}</span>
+        <div className="flex space-x-6 text-sm font-semibold">
+            <p className="grid grid-cols-2 gap-2"><User2Icon /> {students}</p>
+            <p className='grid grid-cols-2 gap-2'><Clock1Icon /> {duration}</p>
         </div>
     </div>
 );
 
 const CourseCard = ({ title, description, oldPrice, newPrice, teacher, students, duration, bgColor }) => {
+    const navigate = useNavigate();
+
+    const handleClick = () => {
+        navigate(`/details?title=${encodeURIComponent(title)}`);
+    };
+
     return (
-        <div className={`rounded-2xl shadow-lg overflow-hidden ${bgColor} text-white w-full md:w-1/3 lg:w-1/4 transform transition-transform duration-300 hover:scale-105 flex flex-col`}>
+        <div
+            className={`rounded-2xl shadow-lg overflow-hidden ${bgColor} text-white w-full md:w-1/3 lg:w-1/4 transform transition-transform duration-300 hover:scale-105 flex flex-col cursor-pointer`}
+            onClick={handleClick}
+        >
             <div className="p-6 flex-grow">
-                <h2 className="text-2xl font-bold mb-2 flex items-center">
-                    {title}
-                </h2>
-                <p className="text-sm mb-4  ">{description}</p>
+                <h2 className="text-2xl font-bold mb-2 flex items-center">{title}</h2>
+                <p className="text-sm mb-4">{description}</p>
             </div>
             <div className="bg-white text-black p-4">
                 <h3 className="text-lg font-semibold mb-2">{title}</h3>
@@ -39,8 +50,15 @@ const CourseCard = ({ title, description, oldPrice, newPrice, teacher, students,
 };
 
 const FreeCourseCard = ({ title, subtitle, description, newPrice, participants, lessons, duration, bgColor }) => {
+    const navigate = useNavigate();
+    const handleClick = () => {
+        navigate(`/details?title=${encodeURIComponent(title)}`);
+    };
     return (
-        <div className={`rounded-2xl shadow-lg overflow-hidden bg-gradient-to-r from-purple-400 to-pink-500 text-white w-full md:w-1/3 lg:w-1/4 transform transition-transform duration-300 hover:scale-105 flex flex-col`}>
+        <div
+            className="rounded-2xl shadow-lg overflow-hidden bg-gradient-to-r from-purple-400 to-pink-500 text-white w-full md:w-1/3 lg:w-1/4 transform transition-transform duration-300 hover:scale-105 flex flex-col cursor-pointer"
+            onClick={handleClick}
+        >
             <div className="p-6 flex-grow">
                 <h2 className="text-2xl font-bold mb-2">{title}</h2>
                 <p className="text-sm mb-4">{subtitle}</p>
@@ -48,10 +66,10 @@ const FreeCourseCard = ({ title, subtitle, description, newPrice, participants, 
             <div className="bg-white text-black p-4">
                 <h3 className="text-lg font-semibold mb-2">{description}</h3>
                 <PriceInfo newPrice={newPrice} />
-                <div className="flex items-center text-sm text-gray-500">
-                    <span className="mr-4">👥 {participants}</span>
-                    <span className="mr-4">📚 {lessons}</span>
-                    <span>⏳ {duration}</span>
+                <div className="flex justify-between font-semibold items-center text-sm text-gray-500">
+                    <span className="flex items-center gap-2"><FaUserFriends /> {participants}</span>
+                    <span className="flex items-center gap-2"><MdOutlinePlayCircleFilled /> {lessons}</span>
+                    <span className="flex items-center gap-2"><MdOutlineAccessTimeFilled /> {duration}</span>
                 </div>
             </div>
         </div>
@@ -59,8 +77,14 @@ const FreeCourseCard = ({ title, subtitle, description, newPrice, participants, 
 };
 
 const PostCard = ({ title, author, readTime, image }) => {
+    const navigate = useNavigate();
+
+    const handleClick = () => {
+        navigate(`/featuredArticle?title=${encodeURIComponent(title)}`);
+    };
+
     return (
-        <div className="rounded-2xl shadow-lg overflow-hidden w-full md:w-1/3 lg:w-1/4 transform transition-transform duration-300 hover:scale-105 flex flex-col">
+        <div className="rounded-2xl shadow-lg overflow-hidden w-full md:w-1/3 lg:w-1/4 transform transition-transform duration-300 hover:scale-105 flex flex-col cursor-pointer" onClick={handleClick}>
             <div className="w-full h-40 flex-shrink-0">
                 <img src={image} alt={title} className="w-full h-full object-cover" />
             </div>
@@ -121,14 +145,14 @@ const CourseList = () => {
 
     const posts = [
         {
-            title: 'Tổng hợp các sản phẩm của học viên tại F8',
-            author: 'Sơn Đặng',
+            title: 'Tổng hợp các sản phẩm tán gái của học viên tại H3',
+            author: 'Duy hoàng',
             readTime: '6 phút',
             image: 'https://sineksekiz.com/wp-content/uploads/2025/02/anh-gai-xinh-0l76Qlt.jpg'
         },
         {
-            title: 'Cách đưa code lên GitHub và tạo GitHub Pages',
-            author: 'Vo Minh Kha',
+            title: 'Làm như thế nào lốp trưởng sẽ không bị buồn',
+            author: 'Mạnh Hùng',
             readTime: '4 phút',
             image: 'https://live.staticflickr.com/65535/51988206348_e72992b30c_k.jpg'
         }
@@ -158,7 +182,7 @@ const CourseList = () => {
                     <FreeCourseCard key={index} {...course} />
                 ))}
             </div>
-            <div className="flex justify-between items-center mb-8 mt-8">
+            <div className="flex justify-between items-center mb-8 mt-8" >
                 <h1 className="text-3xl font-bold">Bài viết nổi bật</h1>
                 <a href="#" className="text-red-500 text-sm cursor-pointer">
                     Xem lộ trình &gt;
