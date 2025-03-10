@@ -159,7 +159,7 @@ const CourseList = () => {
     ];
 
     return (
-        <div className="p-8">
+        <div className="p-8 " >
             <div className="flex justify-between items-center mb-8">
                 <h1 className="text-3xl font-bold text-left">Khóa học Pro</h1>
             </div>
