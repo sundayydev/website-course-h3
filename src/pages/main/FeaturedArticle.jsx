@@ -24,7 +24,7 @@ const article = {
 
 const FeaturedArticle = () => {
     return (
-        <div className="max-w-6xl mx-auto py-8 grid grid-cols-4 gap-8">
+        <div className="max-w-6xl mx-auto py-8 grid grid-cols-4 gap-8 mt-16">
             {/* Left Section */}
             <div className="col-span-1 text-gray-700">
                 <h3 className="font-bold text-lg">{article.author.name}</h3>

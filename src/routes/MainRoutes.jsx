@@ -13,6 +13,7 @@ import PaymentModal from '../pages/main/Payment';
 import PaymentPage from '../pages/main/PaymentDetail';
 import AccountSettings from '../pages/account/SettingAccount';
 import ProfilePage from '../pages/account/ProFile';
+import DetailsPageCourse from "@/pages/main/DetailsPageCourse.jsx";
 
 const MainRoutes = {
   path: '/',
@@ -26,7 +27,7 @@ const MainRoutes = {
     { path: '*', element: <NotFoundPage /> }, // NotFound  404
     { path: 'login', element: <Login /> },
     { path: 'contact', element: <Contact /> },
-    { path: 'home', element: <Home /> },
+    { path: 'DetailsPageCourse', element: <DetailsPageCourse /> },
     { path: 'post', element: <Post /> },
     { path: 'payment', element: <PaymentModal /> },
     { path: 'paymentpage', element: <PaymentPage /> },
@@ -34,5 +35,6 @@ const MainRoutes = {
     { path: 'profile', element: <ProfilePage /> },
   ],
 };
+
 
 export default MainRoutes;

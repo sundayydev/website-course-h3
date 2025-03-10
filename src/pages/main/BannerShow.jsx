@@ -32,7 +32,8 @@ const BannerShow = () => {
     };
 
     return (
-        <div className="relative w-[1359px] h-[270px] overflow-hidden rounded-2xl">
+        <div className="container mx-auto">
+            <div className="relative w-full h-[270px] overflow-hidden rounded-2xl mt-16">
             {images.map((image, index) => (
                 <div
                     key={index}
@@ -78,6 +79,7 @@ const BannerShow = () => {
                     />
                 ))}
             </div>
+        </div>
         </div>
     );
 };
