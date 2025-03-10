@@ -6,7 +6,7 @@ const sidebarItems = [
   {
     section: 'Chung',
     items: [
-      { path: '/home', icon: <FaHome size={16} />, text: 'Trang chủ' },
+      { path: '/', icon: <FaHome size={16} />, text: 'Trang chủ' },
       { path: '/contact', icon: <FaEnvelope size={16} />, text: 'Liên hệ' },
     ],
   },

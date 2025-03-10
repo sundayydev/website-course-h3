@@ -140,9 +140,9 @@ const DetailsPageCourse = () => {
     const nextLesson = hasNext ? allLessons[currentIndex + 1] : null;
 
     return (
-        <div className="flex flex-col h-screen overflow-hidden ">
+        <div className="flex flex-col  h-screen overflow-hidden ">
             {/* Header */}
-            <div className="bg-gray-800 text-white flex items-center justify-between p-4 h-[50px]">
+            <div className="bg-gray-800 text-white flex items-center justify-between p-4 h-[50px] mt-16">
                 <div className="flex items-center">
                     <ArrowLeft  size={24} className="mr-3 cursor-pointer" onClick={() => navigate('/details')} />
                     <div className="bg-pink-500 rounded-full w-8 h-8 flex items-center justify-center font-bold">H3</div>
