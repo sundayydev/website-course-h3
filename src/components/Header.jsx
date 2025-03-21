@@ -5,8 +5,15 @@ import LogoH3 from '../assets/LogoH3.png';
 import { AiFillEye, AiFillEyeInvisible } from 'react-icons/ai';
 import { FaSearch, FaFacebook, FaUser, FaEnvelope, FaLock, FaTimes } from 'react-icons/fa';
 import { FcGoogle } from 'react-icons/fc';
-
+import { login, register } from '../api/api';
 const Header = () => {
+  const [loginData, setLoginData] = useState({ email: '', password: '' });
+  const [registerData, setRegisterData] = useState({
+    name: '',
+    email: '',
+    password: '',
+  });
+
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
@@ -14,6 +21,9 @@ const Header = () => {
   const registerRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
+  const handleChange = (e) => {
+    setRegisterData({ ...registerData, [e.target.name]: e.target.value });
+  };
   // Đóng popup khi click ra ngoài
   useEffect(() => {
     function handleClickOutside(event) {
@@ -27,6 +37,47 @@ const Header = () => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+  // Xử lý đăng nhập
+  const handleLogin = async () => {
+    try {
+      const response = await login(loginData);
+      console.log('Login Success:', response.data);
+      alert('Đăng nhập thành công!');
+    } catch (error) {
+      console.error('Login Error:', error.response?.data);
+      alert('Đăng nhập thất bại!');
+    }
+  };
+
+  // Xử lý đăng ký
+  const handleRegister = async () => {
+    console.log('Dữ liệu gửi lên API:', registerData);
+    try {
+      const response = await register(registerData);
+      console.log('Register Success:', response.data);
+      alert('Đăng ký thành công!');
+    } catch (error) {
+      console.error('Lỗi đăng ký:', error);
+
+      if (error.response) {
+        const { status, data } = error.response;
+        console.log('Chi tiết lỗi:', data.errors);
+
+        if (status === 400 && data.errors) {
+          let errorMessages = Object.values(data.errors).flat().join('\n');
+          alert(`Lỗi đăng ký:\n${errorMessages}`);
+        } else {
+          alert(`Lỗi đăng ký: ${data.message || 'Có lỗi xảy ra, thử lại sau.'}`);
+        }
+      } else if (error.request) {
+        // Trường hợp request được gửi nhưng không có phản hồi từ server
+        alert('Lỗi kết nối! Máy chủ không phản hồi.');
+      } else {
+        // Trường hợp lỗi khác (ví dụ: cấu hình sai request)
+        alert(`Lỗi không xác định: ${error.message}`);
+      }
+    }
+  };
 
   return (
     <header className="flex justify-between items-center px-6 py-3 bg-white shadow-md relative">
@@ -99,6 +150,8 @@ const Header = () => {
                 <input
                   type="email"
                   placeholder="Email"
+                  value={loginData.email}
+                  onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
                   className="w-full px-9 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm md:text-base"
                 />
               </div>
@@ -109,6 +162,8 @@ const Header = () => {
                 <input
                   type={showPassword ? 'text' : 'password'}
                   placeholder="Mật khẩu"
+                  value={loginData.password}
+                  onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
                   className="w-full px-9 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm md:text-base"
                 />
                 <button
@@ -136,11 +191,14 @@ const Header = () => {
               {/* Login Button */}
               <Button
                 className="w-full bg-pink-500 hover:bg-pink-600 text-white py-2 rounded-lg font-semibold"
-                onClick={() => {
-                  if (location.pathname === '/home') {
-                    setIsLoginOpen(false);
-                  } else {
-                    navigate('/home');
+                onClick={async () => {
+                  const success = await handleLogin(); // Gọi hàm đăng nhập
+                  if (success) {
+                    if (location.pathname === '/home') {
+                      setIsLoginOpen(false);
+                    } else {
+                      navigate('/home');
+                    }
                   }
                 }}
               >
@@ -207,7 +265,11 @@ const Header = () => {
                 <FaUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
-                  placeholder="Họ và tên"
+                  name="fullName"
+                  value={registerData.fullName}
+                  required
+                  placeholder="Nhập họ và tên"
+                  onChange={(e) => setRegisterData({ ...registerData, fullName: e.target.value })} // Cập nhật state khi nhập
                   className="w-full px-9 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm md:text-base"
                 />
               </div>
@@ -218,6 +280,8 @@ const Header = () => {
                 <input
                   type="email"
                   placeholder="Email"
+                  value={registerData.email}
+                  onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
                   className="w-full px-9 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm md:text-base"
                 />
               </div>
@@ -228,6 +292,8 @@ const Header = () => {
                 <input
                   type={showPassword ? 'text' : 'password'}
                   placeholder="Mật khẩu"
+                  value={registerData.password}
+                  onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
                   className="w-full px-9 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm md:text-base"
                 />
                 <button
@@ -240,7 +306,10 @@ const Header = () => {
               </div>
 
               {/* Register Button */}
-              <Button className="w-full bg-pink-500 hover:bg-pink-600 text-white py-2 rounded-lg font-semibold">
+              <Button
+                className="w-full bg-pink-500 hover:bg-pink-600 text-white py-2 rounded-lg font-semibold"
+                onClick={handleRegister}
+              >
                 Đăng Ký
               </Button>
 
