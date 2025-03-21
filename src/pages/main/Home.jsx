@@ -1,12 +1,12 @@
 import React from 'react';
-import BannerShow from './BannerShow'
-import Course from "@/pages/main/Course.jsx";
+import BannerShow from './BannerShow';
+import Course from '@/pages/main/Course.jsx';
 const Home = () => {
   return (
-      <div>
-        <BannerShow />
-        <Course />
-      </div>
+    <div className="bg-gray-50 p-4">
+      <BannerShow />
+      <Course />
+    </div>
   );
 };
 
