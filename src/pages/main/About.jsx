@@ -35,7 +35,7 @@ const About = () => {
           </div>
 
           {/* Nội dung */}
-          <div className="lg:w-[60%] p-4 w-full h-full shadow-xl shadow-pink-300/40 flex flex-col justify-center items-center sm:px-6 px-4 rounded-xl">
+          <div className="lg:w-[55%] p-4 w-full h-full shadow-xl shadow-pink-300/40 flex flex-col justify-center items-center sm:px-6 px-4 rounded-xl">
             <h2 className="text-4xl text-center text-pink-600 dark:text-pink-400 font-bold px-4 py-1 md:mt-0 mt-10">
               Về chúng tôi
             </h2>

@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = 'https://localhost:7225/api/auth'; // Đổi port nếu cần
+const API_URL = 'http://localhost:5221/api/auth';
 
 // Đăng ký
 export const register = async (userData) => {

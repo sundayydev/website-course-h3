@@ -3,6 +3,9 @@ import { useState } from 'react';
 
 const ProfilePage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [user, setUser] = useState(null); // Thêm trạng thái để lưu thông tin người dùng
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   return (
     <div className="min-h-screen w-full flex items-center justify-center md:p-4 bg-white mt-20 md:mt-0">
