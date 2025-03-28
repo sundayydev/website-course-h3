@@ -41,8 +41,11 @@ const Header = () => {
   const handleLogin = async () => {
     try {
       const response = await login(loginData);
+      const token = response.data.token;
+      localStorage.setItem('authToken', token);
+
       console.log('Login Success:', response.data);
-      alert('Đăng nhập thành công!');
+      alert('Đăng nhập thành công!@!');
     } catch (error) {
       console.error('Login Error:', error.response?.data);
       alert('Đăng nhập thất bại!');
