@@ -67,7 +67,7 @@ const CourseList = () => {
               <h3 className="text-lg font-semibold mb-2">{course.title}</h3>
               <div className="mb-2">
                 <p className=" text-rose-500 text-lg font-semibold">
-                  {course.price > 0 ? `${course.price}đ` : 'Miễn Phí'}
+                  {course.price > 0 ? `${course.price.toLocaleString()} VND` : 'Miễn Phí'}
                 </p>
               </div>
 

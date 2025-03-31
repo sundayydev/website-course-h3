@@ -10,6 +10,8 @@ import AccountSettings from '../pages/account/SettingAccount';
 import ProfilePage from '../pages/account/ProFile';
 import PostDetails from '../pages/main/PostDetails';
 import Details from '../pages/main/Details';
+import DetailsPageCourse from '../pages/main/DetailsPageCourse';
+import NotFound from '../pages/main/NotFoundPage';
 const MainRoutes = {
   path: '/',
   element: <MainLayout />,
@@ -24,6 +26,8 @@ const MainRoutes = {
     { path: 'profile', element: <ProfilePage /> },
     { path: 'detailspost/:id', element: <PostDetails /> },
     { path: 'details/:courseId', element: <Details /> },
+    { path: 'detailsPageCourse/:lessonId', element: <DetailsPageCourse /> },
+    { path: '*', element: <NotFound /> },
   ],
 };
 
