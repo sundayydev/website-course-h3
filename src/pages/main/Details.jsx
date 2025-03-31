@@ -147,7 +147,7 @@ const Details = () => {
             <div className="relative pb-[56.25%] h-0">
               <iframe
                 src={lessons[0].videoUrl}
-                className="absolute top-0 left-0 w-full h-full rounded-lg shadow-md"
+                className="absolute top-0 left-0 w-full h-full rounded-2xl"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
                 title="Bài học đầu tiên"
@@ -164,7 +164,7 @@ const Details = () => {
         {/* Nút đăng ký học */}
         <Button
           className="w-64 bg-pink-600 text-white rounded-2xl shadow-lg hover:bg-gray-600"
-          onClick={() => navigate('/detailsPageCourse')}
+          onClick={() => lessons.length > 0 && navigate(`/detailsPageCourse/${lessons[0].id}`)}
         >
           Đăng ký học
         </Button>
@@ -198,7 +198,7 @@ const Details = () => {
       {/* Modal hiển thị video bài học */}
       {videoModalOpen && (
         <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
-          <div className="relative bg-white rounded-lg w-full max-w-4xl">
+          <div className="relative bg-white rounded-2xl w-full max-w-4xl">
             <div className="flex justify-between items-center p-4 border-b">
               <h3 className="text-xl font-semibold">Video bài học</h3>
               <button
@@ -212,7 +212,7 @@ const Details = () => {
               <div className="relative pb-[56.25%] h-0">
                 <iframe
                   src={selectedVideo}
-                  className="absolute top-0 left-0 w-full h-full rounded-lg"
+                  className="absolute top-0 left-0 w-full h-full rounded-2xl"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen
                   title="Lesson Video"

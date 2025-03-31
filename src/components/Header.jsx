@@ -5,7 +5,10 @@ import LogoH3 from '../assets/LogoH3.png';
 import { AiFillEye, AiFillEyeInvisible } from 'react-icons/ai';
 import { FaSearch, FaFacebook, FaUser, FaEnvelope, FaLock, FaTimes } from 'react-icons/fa';
 import { FcGoogle } from 'react-icons/fc';
-import { login, register } from '../api/api';
+import { forgotPassword, login, register } from '../api/authApi';
+import axios from 'axios';
+import { toast } from 'react-toastify';
+
 const Header = () => {
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [registerData, setRegisterData] = useState({
@@ -13,17 +16,32 @@ const Header = () => {
     email: '',
     password: '',
   });
+  const [resetPasswordData, setResetPasswordData] = useState({
+    email: '',
+    resetCode: '',
+    newPassword: '',
+  });
+
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [message, setMessage] = useState('');
+  const [loading, setLoading] = useState(false);
+
+  const [showNewPassword, setShowNewPassword] = useState(false);
 
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
+  const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
   const loginRef = useRef(null);
   const registerRef = useRef(null);
+  const forgotPasswordRef = useRef(null);
   const navigate = useNavigate();
   const location = useLocation();
-  const handleChange = (e) => {
-    setRegisterData({ ...registerData, [e.target.name]: e.target.value });
-  };
+  const [user, setUser] = useState(null);
+
   // Đóng popup khi click ra ngoài
   useEffect(() => {
     function handleClickOutside(event) {
@@ -33,53 +51,120 @@ const Header = () => {
       if (registerRef.current && !registerRef.current.contains(event.target)) {
         setIsRegisterOpen(false);
       }
+      if (forgotPasswordRef.current && !forgotPasswordRef.current.contains(event.target)) {
+        setIsForgotPasswordOpen(false);
+      }
     }
+
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
   // Xử lý đăng nhập
   const handleLogin = async () => {
     try {
       const response = await login(loginData);
       const token = response.data.token;
-      localStorage.setItem('authToken', token);
 
-      console.log('Login Success:', response.data);
-      alert('Đăng nhập thành công!@!');
+      localStorage.setItem('authToken', token);
+      setIsLoggedIn(true);
+      setIsLoginOpen(false);
+      toast.success('Đăng nhập thành công!', {
+        position: 'top-right',
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: 'colored',
+      });
+      navigate('/');
     } catch (error) {
       console.error('Login Error:', error.response?.data);
-      alert('Đăng nhập thất bại!');
+      toast.error('Đăng nhập thất bại!', {
+        position: 'top-right',
+        autoClose: 3000,
+        hideProgressBar: false,
+        closeOnClick: true,
+        pauseOnHover: true,
+        draggable: true,
+        theme: 'colored',
+      });
     }
   };
 
+  // Kiểm tra trạng thái đăng nhập khi load trang
+  useEffect(() => {
+    const token = localStorage.getItem('authToken');
+    if (token) {
+      setIsLoggedIn(true);
+    }
+  }, []);
+
+  // Xử lý đăng xuất
+  const handleLogout = () => {
+    localStorage.removeItem('authToken');
+    setIsLoggedIn(false);
+  };
+
+  axios.interceptors.request.use(
+    (config) => {
+      const token = localStorage.getItem('authToken');
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
+      return config;
+    },
+    (error) => Promise.reject(error)
+  );
+
   // Xử lý đăng ký
   const handleRegister = async () => {
-    console.log('Dữ liệu gửi lên API:', registerData);
     try {
       const response = await register(registerData);
-      console.log('Register Success:', response.data);
-      alert('Đăng ký thành công!');
+      alert('Đăng ký thành công, vui lòng đăng nhập!');
+      setIsRegisterOpen(false);
+      setIsLoginOpen(true); // Mở popup đăng nhập sau khi đăng ký thành công
     } catch (error) {
-      console.error('Lỗi đăng ký:', error);
-
-      if (error.response) {
-        const { status, data } = error.response;
-        console.log('Chi tiết lỗi:', data.errors);
-
-        if (status === 400 && data.errors) {
-          let errorMessages = Object.values(data.errors).flat().join('\n');
-          alert(`Lỗi đăng ký:\n${errorMessages}`);
-        } else {
-          alert(`Lỗi đăng ký: ${data.message || 'Có lỗi xảy ra, thử lại sau.'}`);
-        }
-      } else if (error.request) {
-        // Trường hợp request được gửi nhưng không có phản hồi từ server
-        alert('Lỗi kết nối! Máy chủ không phản hồi.');
-      } else {
-        // Trường hợp lỗi khác (ví dụ: cấu hình sai request)
-        alert(`Lỗi không xác định: ${error.message}`);
-      }
+      alert(error.response?.data.message || 'Đăng ký thất bại!');
     }
+  };
+
+  const handleForgotPassword = async () => {
+    try {
+      const response = await forgotPassword(forgotEmail);
+      console.log('Phản hồi từ API:', response.data);
+      alert('Mã OTP đã được gửi qua email!');
+      setIsForgotPasswordOpen(false); // Đóng popup quên mật khẩu
+      setResetPasswordData({ ...resetPasswordData, email: forgotEmail }); // Điền email vào form đặt lại mật khẩu
+      setIsResetPasswordOpen(true); // Mở popup đặt lại mật khẩu
+    } catch (error) {
+      console.error('Lỗi từ API:', error.response?.data);
+      alert(error.response?.data?.message || 'Email không tồn tại hoặc có lỗi xảy ra!');
+    }
+  };
+
+  const handleResetPassword = async () => {
+    setLoading(true);
+    setMessage('');
+
+    try {
+      const response = await axios.post(
+        'http://localhost:5221/api/auth/reset-password',
+        resetPasswordData
+      );
+      setMessage(response.data.message);
+      alert('Mật khẩu đã được đặt lại thành công!');
+
+      setTimeout(() => {
+        setIsResetPasswordOpen(false);
+        setIsLoginOpen(true);
+      }, 2000);
+    } catch (error) {
+      setMessage(error.response?.data?.message || 'Lỗi đặt lại mật khẩu!');
+    }
+
+    setLoading(false);
   };
 
   return (
@@ -107,22 +192,33 @@ const Header = () => {
         <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
       </div>
 
-      {/* Buttons */}
-      <div className="flex items-center space-x-4 ">
-        <Button
-          variant="outline"
-          className="text-black font-semibold rounded-full hidden md:block"
-          onClick={() => setIsRegisterOpen(true)}
-        >
-          Đăng ký
-        </Button>
+      <div className="flex items-center space-x-4">
+        {!isLoggedIn && (
+          <>
+            <Button
+              variant="outline"
+              className="text-black font-semibold rounded-full hidden md:block"
+              onClick={() => setIsRegisterOpen(true)}
+            >
+              Đăng ký
+            </Button>
+            <Button
+              className="bg-gradient-to-r from-pink-500 to-pink-600 text-white px-4 py-2 rounded-full font-semibold"
+              onClick={() => setIsLoginOpen(true)}
+            >
+              Đăng nhập
+            </Button>
+          </>
+        )}
 
-        <Button
-          className="bg-gradient-to-r from-pink-500 to-pink-600 text-white px-4 py-2 rounded-full font-semibold"
-          onClick={() => setIsLoginOpen(true)}
-        >
-          Đăng nhập
-        </Button>
+        {isLoggedIn && (
+          <Button
+            className="bg-gradient-to-r from-pink-500 to-pink-600 text-white px-4 py-2 rounded-full font-semibold"
+            onClick={handleLogout}
+          >
+            Đăng xuất
+          </Button>
+        )}
       </div>
 
       {/* Popup Login */}
@@ -186,9 +282,12 @@ const Header = () => {
                     Ghi nhớ đăng nhập
                   </label>
                 </div>
-                <a href="#" className="text-blue-500 hover:text-red-500">
+                <button
+                  className="text-blue-500 hover:text-red-500"
+                  onClick={() => setIsForgotPasswordOpen(true)}
+                >
                   Quên mật khẩu?
-                </a>
+                </button>
               </div>
 
               {/* Login Button */}
@@ -345,6 +444,104 @@ const Header = () => {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Popup Forgot Password */}
+      {isForgotPasswordOpen && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div
+            ref={forgotPasswordRef}
+            className="bg-white shadow-lg rounded-lg p-6 w-full mx-4 md:max-w-xl max-w-sm relative "
+          >
+            <button
+              className="absolute top-2 right-2 text-gray-600 hover:text-red-500"
+              onClick={() => setIsForgotPasswordOpen(false)}
+            >
+              <FaTimes size={20} />
+            </button>
+            <h3 className="text-center text-lg font-bold text-gray-700 mb-3">Quên Mật Khẩu</h3>
+            <div className="relative mb-3">
+              <FaEnvelope className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <input
+                type="email"
+                placeholder="Nhập email"
+                value={forgotEmail}
+                onChange={(e) => setForgotEmail(e.target.value)}
+                className="w-full px-9 py-2 border rounded-lg focus:ring-2 focus:ring-pink-500"
+              />
+            </div>
+            <Button
+              className="w-full bg-pink-500 hover:bg-pink-600 text-white py-2 rounded-lg"
+              onClick={handleForgotPassword}
+            >
+              Gửi Yêu Cầu
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* Popup Reset Password */}
+      {isResetPasswordOpen && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white shadow-lg rounded-lg p-6 w-full mx-4 md:max-w-xl max-w-sm relative">
+            <button
+              className="absolute top-2 right-2 text-gray-600 hover:text-red-500"
+              onClick={() => setIsResetPasswordOpen(false)}
+            >
+              <FaTimes size={20} />
+            </button>
+            <h3 className="text-center text-lg font-bold text-gray-700 mb-3">Đặt Lại Mật Khẩu</h3>
+            <div className="relative mb-3">
+              <FaEnvelope className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <input
+                type="email"
+                placeholder="Nhập email"
+                value={resetPasswordData.email} // Email được điền sẵn từ forgotEmail
+                onChange={(e) =>
+                  setResetPasswordData({ ...resetPasswordData, email: e.target.value })
+                }
+                className="w-full px-9 py-2 border rounded-lg focus:ring-2 focus:ring-pink-500"
+              />
+            </div>
+            <div className="relative mb-3">
+              <FaLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                placeholder="Nhập mã xác nhận"
+                value={resetPasswordData.resetCode}
+                onChange={(e) =>
+                  setResetPasswordData({ ...resetPasswordData, resetCode: e.target.value })
+                }
+                className="w-full px-9 py-2 border rounded-lg focus:ring-2 focus:ring-pink-500"
+              />
+            </div>
+            <div className="relative mb-3">
+              <FaLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+              <input
+                type={showNewPassword ? 'text' : 'password'}
+                placeholder="Nhập mật khẩu mới"
+                value={resetPasswordData.newPassword}
+                onChange={(e) =>
+                  setResetPasswordData({ ...resetPasswordData, newPassword: e.target.value })
+                }
+                className="w-full px-9 py-2 border rounded-lg focus:ring-2 focus:ring-pink-500"
+              />
+              <button
+                type="button"
+                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+                onClick={() => setShowNewPassword(!showNewPassword)}
+              >
+                {showNewPassword ? <AiFillEyeInvisible /> : <AiFillEye />}
+              </button>
+            </div>
+            <Button
+              className="w-full bg-pink-500 hover:bg-pink-600 text-white py-2 rounded-lg"
+              onClick={handleResetPassword}
+            >
+              Xác nhận đặt lại mật khẩu
+            </Button>
           </div>
         </div>
       )}

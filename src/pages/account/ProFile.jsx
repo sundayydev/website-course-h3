@@ -3,7 +3,7 @@ import { useState } from 'react';
 
 const ProfilePage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [user, setUser] = useState(null); // Thêm trạng thái để lưu thông tin người dùng
+  const [user, setUser] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
