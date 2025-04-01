@@ -24,15 +24,15 @@ const sidebarItems = [
     items: [
       { icon: <Home size={16} />, text: 'Trang chủ', path: '/admin', active: true },
       { icon: <CreditCard size={16} />, text: 'Giao dịch' },
-      { icon: <Users size={16} />, text: 'Học viên', path: '/admin/users' },
+      { icon: <Users size={16} />, text: 'Học viên', path: '/admin/students' },
       { icon: <MessageSquare size={16} />, text: 'Message', badge: '8' },
     ],
   },
   {
     section: 'Tools',
     items: [
-      { icon: <Box size={16} />, text: 'Product' },
-      { icon: <FileText size={16} />, text: 'Invoice' },
+      { icon: <Box size={16} />, text: 'Khóa học', path: '/admin/courses' },
+      { icon: <FileText size={16} />, text: 'Bài giảng', path: '/admin/lessons' },
       { icon: <BarChart size={16} />, text: 'Analytics' },
       { icon: <Settings size={16} />, text: 'Automation', badge: 'BETA', badgeType: 'beta' },
     ],
