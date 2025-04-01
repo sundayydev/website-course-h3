@@ -1,4 +1,6 @@
 import { FaFacebook, FaYoutube, FaTiktok } from 'react-icons/fa';
+import { Link } from 'react-router-dom';
+
 import LogoH3 from '../assets/LogoH3.png';
 
 const Footer = () => {
@@ -16,16 +18,16 @@ const Footer = () => {
             </a>
           </h1>
           <p className="mt-3">
-            <strong>Điện thoại:</strong> 08 1919 8989
+            <strong>Điện thoại:</strong> 07 9782 3018
           </p>
           <p>
-            <strong>Email:</strong> contact@fullstack.edu.vn
+            <strong>Email:</strong> contact@developer.edu.vn
           </p>
           <p>
             <strong>Địa chỉ:</strong> Số 1, ngõ 41, Trần Duy Hưng, Cầu Giấy, Hà Nội
           </p>
           <img
-            src="https://upload.wikimedia.org/wikipedia/commons/3/33/DMCA_Protected.svg"
+            src="https://images.dmca.com/Badges/dmca-badge-w250-2x1-03.png"
             alt="DMCA Protected"
             className="mt-3 w-24"
           />
@@ -36,14 +38,14 @@ const Footer = () => {
           <h3 className="font-semibold text-lg mb-3 text-white">VỀ H3</h3>
           <ul className="space-y-2">
             <li>
-              <a href="#" className="hover:text-white">
+              <Link to="/about" className="hover:text-white">
                 Giới thiệu
-              </a>
+              </Link>
             </li>
             <li>
-              <a href="#" className="hover:text-white">
+              <Link to="/contact" className="hover:text-white">
                 Liên hệ
-              </a>
+              </Link>
             </li>
             <li>
               <a href="#" className="hover:text-white">
@@ -138,10 +140,10 @@ const Footer = () => {
             CÔNG TY CỔ PHẦN CÔNG NGHỆ GIÁO DỤC H3
           </h3>
           <p>
-            <strong>Mã số thuế:</strong> 0109922901
+            <strong>Mã số thuế:</strong> 0909090909 
           </p>
           <p>
-            <strong>Ngày thành lập:</strong> 04/03/2022
+            <strong>Ngày thành lập:</strong> 01/03/2025
           </p>
           <p className="mt-2">
             Lĩnh vực hoạt động: Giáo dục, công nghệ - lập trình. Chúng tôi tập trung xây dựng và

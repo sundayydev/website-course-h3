@@ -5,7 +5,6 @@ import LogoH3 from '../assets/LogoH3.png';
 import { AiFillEye, AiFillEyeInvisible } from 'react-icons/ai';
 import { FaSearch, FaFacebook, FaUser, FaEnvelope, FaLock, FaTimes } from 'react-icons/fa';
 import { FcGoogle } from 'react-icons/fc';
-import { forgotPassword, login, register } from '../api/authApi';
 import axios from 'axios';
 import { toast } from 'react-toastify';
 import {
@@ -16,11 +15,22 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { jwtDecode } from 'jwt-decode';
+import { useDispatch, useSelector } from 'react-redux';
+import { logout, setUser, setIsLoggedIn, setToken } from '@/reducers/authReducer';
+
+import { forgotPassword, login, register } from '../api/authApi';
+import { getUserInfo } from '../api/userApi';
 
 const Header = () => {
+  const dispatch = useDispatch();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const { user, isLoggedIn } = useSelector((state) => state.auth);
+
+  // State for form data
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [registerData, setRegisterData] = useState({
-    name: '',
+    fullName: '',
     email: '',
     password: '',
   });
@@ -29,32 +39,75 @@ const Header = () => {
     resetCode: '',
     newPassword: '',
   });
-
   const [forgotEmail, setForgotEmail] = useState('');
-  const [message, setMessage] = useState('');
-  const [loading, setLoading] = useState(false);
 
+  // UI state
+  const [showPassword, setShowPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
-
   const [isLoginOpen, setIsLoginOpen] = useState(false);
   const [isRegisterOpen, setIsRegisterOpen] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
   const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [loading, setLoading] = useState(false);
 
+  // Refs for click outside handling
   const loginRef = useRef(null);
   const registerRef = useRef(null);
   const forgotPasswordRef = useRef(null);
-  const navigate = useNavigate();
-  const location = useLocation();
-  const [user, setUser] = useState(null);
 
-  const [open, setOpen] = useState(false);
-
-  // Đóng popup khi click ra ngoài
   useEffect(() => {
-    function handleClickOutside(event) {
+    const fetchUserData = async () => {
+      const token = localStorage.getItem('authToken');
+      if (token) {
+        try {
+          const userResponse = await getUserInfo();
+          if (userResponse.data) {
+            // Cập nhật Redux store
+            dispatch(setUser(userResponse.data));
+            dispatch(setIsLoggedIn(true));
+            dispatch(setToken(token));
+            
+            // Lưu thông tin user vào localStorage để dùng cho AuthContext
+            localStorage.setItem('user', JSON.stringify(userResponse.data));
+          } else {
+            throw new Error('Không lấy được thông tin người dùng');
+          }
+        } catch (error) {
+          console.error('Lỗi khi lấy thông tin người dùng:', error);
+          localStorage.removeItem('authToken');
+          localStorage.removeItem('user');
+          dispatch(logout());
+          dispatch(setUser(null));
+          dispatch(setIsLoggedIn(false));
+          dispatch(setToken(null));
+        }
+      }
+    };
+
+    fetchUserData();
+  }, [dispatch]);
+
+  // Setup axios interceptor
+  useEffect(() => {
+    const interceptor = axios.interceptors.request.use(
+      (config) => {
+        const token = localStorage.getItem('authToken');
+        if (token) {
+          config.headers.Authorization = `Bearer ${token}`;
+        }
+        return config;
+      },
+      (error) => Promise.reject(error)
+    );
+
+    return () => {
+      axios.interceptors.request.eject(interceptor);
+    };
+  }, []);
+
+  // Handle click outside to close modals
+  useEffect(() => {
+    const handleClickOutside = (event) => {
       if (loginRef.current && !loginRef.current.contains(event.target)) {
         setIsLoginOpen(false);
       }
@@ -64,132 +117,104 @@ const Header = () => {
       if (forgotPasswordRef.current && !forgotPasswordRef.current.contains(event.target)) {
         setIsForgotPasswordOpen(false);
       }
-    }
+    };
 
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Xử lý đăng nhập
   const handleLogin = async () => {
     try {
       const response = await login(loginData);
       const token = response.data.token;
 
+      // Lưu token vào localStorage
       localStorage.setItem('authToken', token);
-      setIsLoggedIn(true);
-      setIsLoginOpen(false);
-      toast.success('Đăng nhập thành công!', {
-        position: 'top-right',
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        theme: 'colored',
-      });
-      navigate('/');
+
+      const userResponse = await getUserInfo();
+      if (userResponse.data) {
+        // Cập nhật Redux store
+        dispatch(setUser(userResponse.data));
+        dispatch(setIsLoggedIn(true));
+        dispatch(setToken(token));
+        
+        // Lưu thông tin user vào localStorage
+        localStorage.setItem('user', JSON.stringify(userResponse.data));
+        
+        // Đóng modal login
+        setIsLoginOpen(false);
+        
+        // Thông báo thành công
+        toast.success('Đăng nhập thành công!');
+        navigate('/');
+        return true;
+      }
     } catch (error) {
-      console.error('Login Error:', error.response?.data);
-      toast.error('Đăng nhập thất bại!', {
-        position: 'top-right',
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-        theme: 'colored',
-      });
+      console.error('Login Error:', error);
+      let errorMessage = 'Đăng nhập thất bại!';
+      
+      if (error.response?.data?.message) {
+        errorMessage = error.response.data.message;
+      }
+
+      toast.error(errorMessage);
+      return false;
     }
   };
 
-  // Kiểm tra trạng thái đăng nhập khi load trang
-  useEffect(() => {
-    const token = localStorage.getItem('authToken');
-    if (token) {
-      setIsLoggedIn(true);
-    }
-  }, []);
-
-  axios.interceptors.request.use(
-    (config) => {
-      const token = localStorage.getItem('authToken');
-      if (token) {
-        config.headers.Authorization = `Bearer ${token}`;
-      }
-      return config;
-    },
-    (error) => Promise.reject(error)
-  );
-
-  // Xử lý đăng ký
   const handleRegister = async () => {
     try {
-      const response = await register(registerData);
-      alert('Đăng ký thành công, vui lòng đăng nhập!');
+      await register(registerData);
+      toast.success('Đăng ký thành công, vui lòng đăng nhập!');
       setIsRegisterOpen(false);
-      setIsLoginOpen(true); // Mở popup đăng nhập sau khi đăng ký thành công
+      setIsLoginOpen(true);
     } catch (error) {
-      alert(error.response?.data.message || 'Đăng ký thất bại!');
+      toast.error('Đăng ký thất bại!');
     }
   };
 
   const handleForgotPassword = async () => {
     try {
-      const response = await forgotPassword(forgotEmail);
-      console.log('Phản hồi từ API:', response.data);
-      alert('Mã OTP đã được gửi qua email!');
-      setIsForgotPasswordOpen(false); // Đóng popup quên mật khẩu
-      setResetPasswordData({ ...resetPasswordData, email: forgotEmail }); // Điền email vào form đặt lại mật khẩu
-      setIsResetPasswordOpen(true); // Mở popup đặt lại mật khẩu
+      await forgotPassword(forgotEmail);
+      toast.success('Mã OTP đã được gửi qua mail thành công!');
+      setIsForgotPasswordOpen(false);
+      setResetPasswordData({ ...resetPasswordData, email: forgotEmail });
+      setIsResetPasswordOpen(true);
     } catch (error) {
-      console.error('Lỗi từ API:', error.response?.data);
-      alert(error.response?.data?.message || 'Email không tồn tại hoặc có lỗi xảy ra!');
+      toast.error('Email không tồn tại hoặc có lỗi xảy ra!');
     }
   };
 
   const handleResetPassword = async () => {
     setLoading(true);
-    setMessage('');
-
     try {
-      const response = await axios.post(
-        'http://localhost:5221/api/auth/reset-password',
-        resetPasswordData
-      );
-      setMessage(response.data.message);
-      alert('Mật khẩu đã được đặt lại thành công!');
-
+      await axios.post('http://localhost:5221/api/auth/reset-password', resetPasswordData);
+      toast.success('Mật khẩu đã được đặt lại thành công!');
+      
       setTimeout(() => {
         setIsResetPasswordOpen(false);
         setIsLoginOpen(true);
       }, 2000);
     } catch (error) {
-      setMessage(error.response?.data?.message || 'Lỗi đặt lại mật khẩu!');
+      toast.error(error.response?.data?.message || 'Lỗi đặt lại mật khẩu!');
+    } finally {
+      setLoading(false);
     }
-
-    setLoading(false);
   };
 
-  // Xử lý đăng xuất
   const handleLogout = () => {
+    // Xóa dữ liệu khỏi localStorage
     localStorage.removeItem('authToken');
-    setIsLoggedIn(false);
+    localStorage.removeItem('user');
+    
+    // Cập nhật Redux store
+    dispatch(logout());
+    dispatch(setUser(null));
+    dispatch(setIsLoggedIn(false));
+    dispatch(setToken(null));
+    
+    navigate('/');
   };
-
-  useEffect(() => {
-    // Lấy token từ localStorage
-    const token = localStorage.getItem('token');
-    if (token) {
-      try {
-        // Giải mã token để lấy thông tin user
-        const decoded = jwtDecode(token);
-        setUser(decoded);
-      } catch (error) {
-        console.error('Token không hợp lệ:', error);
-      }
-    }
-  }, []);
 
   return (
     <header className="flex justify-between items-center px-6 py-3 bg-white shadow-md relative">
@@ -239,20 +264,20 @@ const Header = () => {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-500 text-white font-bold shadow-xl hover:bg-blue-800">
-                {user ? user.username.charAt(0).toUpperCase() : '?'}
+                {user ? user.fullname.charAt(0).toUpperCase() : '?'}
               </button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-56 p-2 shadow-lg rounded-2xl m-4">
+            <DropdownMenuContent className="w-80 p-2 shadow-lg rounded-2xl m-4">
               <div className="flex items-center gap-3 p-3">
                 <Avatar className="w-10 h-10">
                   <AvatarFallback className="bg-blue-500 text-white font-bold">
-                    {user ? user.username.charAt(0).toUpperCase() : '?'}
+                    {user ? user.fullname.charAt(0).toUpperCase() : '?'}
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="font-semibold">{user ? user.username : 'Người dùng'}</p>
-                  <p className="text-gray-500 text-sm">
-                    @{user ? user.username.toLowerCase() : 'username'}
+                  <p className="font-semibold">{user ? user.fullname : 'Người dùng'}</p>
+                  <p className="text-gray-500 text-sm break-words">
+                    {user ? user.email : 'email'}
                   </p>
                 </div>
               </div>
@@ -357,12 +382,12 @@ const Header = () => {
               <Button
                 className="w-full bg-pink-500 hover:bg-pink-600 text-white py-2 rounded-lg font-semibold"
                 onClick={async () => {
-                  const success = await handleLogin(); // Gọi hàm đăng nhập
+                  const success = await handleLogin();
                   if (success) {
-                    if (location.pathname === '/home') {
+                    if (location.pathname === '/') {
                       setIsLoginOpen(false);
                     } else {
-                      navigate('/home');
+                      navigate('/');
                     }
                   }
                 }}
@@ -434,7 +459,7 @@ const Header = () => {
                   value={registerData.fullName}
                   required
                   placeholder="Nhập họ và tên"
-                  onChange={(e) => setRegisterData({ ...registerData, fullName: e.target.value })} // Cập nhật state khi nhập
+                  onChange={(e) => setRegisterData({ ...registerData, fullName: e.target.value })}
                   className="w-full px-9 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm md:text-base"
                 />
               </div>
@@ -561,7 +586,7 @@ const Header = () => {
               <input
                 type="email"
                 placeholder="Nhập email"
-                value={resetPasswordData.email} // Email được điền sẵn từ forgotEmail
+                value={resetPasswordData.email}
                 onChange={(e) =>
                   setResetPasswordData({ ...resetPasswordData, email: e.target.value })
                 }
@@ -602,8 +627,9 @@ const Header = () => {
             <Button
               className="w-full bg-pink-500 hover:bg-pink-600 text-white py-2 rounded-lg"
               onClick={handleResetPassword}
+              disabled={loading}
             >
-              Xác nhận đặt lại mật khẩu
+              {loading ? 'Đang xử lý...' : 'Xác nhận đặt lại mật khẩu'}
             </Button>
           </div>
         </div>

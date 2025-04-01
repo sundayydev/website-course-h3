@@ -1,13 +1,11 @@
-import { StrictMode } from 'react';
 import { createRoot } from 'react-dom/client';
+import { Provider } from 'react-redux';
 import './index.css';
 import App from './App.jsx';
-import { AuthProvider } from './context/AuthContext'; // 🔹 Đúng cú pháp named import
+import store from './store/store';
 
 createRoot(document.getElementById('root')).render(
-  <StrictMode>
-    <AuthProvider>
-      <App />
-    </AuthProvider>
-  </StrictMode>
+  <Provider store={store}>
+    <App />
+  </Provider>
 );
