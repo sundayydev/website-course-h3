@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { getPost } from '../../api/postApi';
 
 const CardPost = () => {
   const [posts, setPosts] = useState([]);
@@ -9,11 +10,15 @@ const CardPost = () => {
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        const response = await fetch('http://localhost:5221/api/Post');
-        const data = await response.json();
-        setPosts(data);
+        const response = await getPost();
+        if (Array.isArray(response.data) && response.data.length > 0) {
+          setPosts(response.data);
+        } else {
+          setError('Không có bài viết nào.');
+        }
       } catch (error) {
         console.error('Lỗi khi lấy bài viết:', error);
+        setError(`Có lỗi xảy ra khi tải bài viết: ${error.message}`);
       } finally {
         setLoading(false);
       }

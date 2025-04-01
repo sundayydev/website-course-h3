@@ -13,7 +13,8 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import axios from 'axios';
-
+import { getCourseById } from '@/api/courseApi';
+import { getLessionsByCourseId } from '@/api/lessionApi';
 const Details = () => {
   const { courseId } = useParams();
   const [course, setCourse] = useState(null);
@@ -26,15 +27,33 @@ const Details = () => {
   useEffect(() => {
     if (!courseId) return;
 
-    axios
-      .get(`http://localhost:5221/api/Course/${courseId}`)
-      .then((response) => setCourse(response.data))
-      .catch((error) => console.error('Lỗi khi lấy thông tin khóa học:', error));
+    const fetchCourse = async () => {
+      try {
+        const response = await getCourseById(courseId);
+        if (response.data) {
+          setCourse(response.data);
+        } else {
+          console.error('Không có dữ liệu khóa học');
+        }
+      } catch (error) {
+        console.error('Lỗi khi lấy thông tin khóa học:', error);
+      }
+    };
 
-    axios
-      .get(`http://localhost:5221/api/Lessons/course/${courseId}`)
-      .then((response) => setLessons(response.data))
-      .catch((error) => console.error('Lỗi khi lấy danh sách bài học:', error));
+    const fetchLessons = async () => {
+      try {
+        const response = await getLessionsByCourseId(courseId);
+        if (!response.data || !Array.isArray(response.data)) {
+          throw new Error('Dữ liệu bài học không hợp lệ');
+        }
+        setLessons(response.data);
+      } catch (error) {
+        console.error('Lỗi khi lấy danh sách bài học:', error);
+      }
+    };
+
+    fetchCourse();
+    fetchLessons();
   }, [courseId]);
 
   const toggleExpand = (index) => {

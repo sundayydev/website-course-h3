@@ -3,7 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import { Play, ArrowRight, ChevronDown, ChevronUp, ArrowLeft, Clock, Calendar } from 'lucide-react';
 import { FaPlayCircle } from 'react-icons/fa';
-
+import { getLessionsByCourseId, getLessonsById } from '@/api/lessionApi';
 const DetailsPageCourse = () => {
   const { lessonId } = useParams();
   const navigate = useNavigate();
@@ -57,7 +57,11 @@ const DetailsPageCourse = () => {
     const fetchLesson = async () => {
       if (!lessonId) return;
       try {
-        const response = await axios.get(`http://localhost:5221/api/lessons/${lessonId}`);
+        const response = await getLessonsById(lessonId);
+        if (!response.data) {
+          throw new Error('Không có dữ liệu bài học');
+        }
+
         setCurrentLesson(response.data);
       } catch (err) {
         console.error('Lỗi khi lấy bài học:', err);
@@ -73,9 +77,10 @@ const DetailsPageCourse = () => {
     const fetchLessonsByCourse = async () => {
       if (!currentLesson?.courseId) return;
       try {
-        const response = await axios.get(
-          `http://localhost:5221/api/lessons/course/${currentLesson.courseId}`
-        );
+        const response = await getLessionsByCourseId(currentLesson.courseId);
+        if (!response.data || !Array.isArray(response.data)) {
+          throw new Error('Dữ liệu bài học không hợp lệ');
+        }
         const lessons = response.data;
         setCompletedLessons(lessons.filter((lesson) => lesson.isCompleted).length);
         setSections([{ title: 'Danh sách bài học', lessons }]);

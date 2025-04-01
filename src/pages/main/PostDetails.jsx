@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
+import { getPostById } from '../../api/postApi';
 
 const PostDetails = () => {
   const { id } = useParams(); // Lấy ID từ URL
@@ -7,19 +8,14 @@ const PostDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const url = 'http://localhost:5221/';
+
   useEffect(() => {
     const fetchPostDetails = async () => {
       try {
-        const response = await fetch(`http://localhost:5221/api/Post/${id}`);
-
-        if (!response.ok) {
-          throw new Error('Bài viết không tồn tại!');
-        }
-
-        const data = await response.json();
-        setPost(data);
+        const response = await getPostById(id);
+        setPost(response.data);
       } catch (error) {
-        setError(error.message);
+        setError('Có lỗi xảy ra khi tải bài viết.');
       } finally {
         setLoading(false);
       }

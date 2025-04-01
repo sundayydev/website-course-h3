@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 const BannerShow = () => {
   const images = [
-    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcS-YfWiVVS33hOdPRzKCd3vsfj31zXvM6ajtg&s',
-    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRVN6nug1YWjqxTIEIZNbiaV6db8mvWWm7Oxw&s',
-    'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSlY5S9if3otF4kWAnwznYdyGhIaZU1yKXM5N37Z0WU1QFrYkO4ZVmBYZQhN9W3N-aMuzg&usqp=CAU',
+    './src/assets/imgs/banner1.png',
+    './src/assets/imgs/banner1.png',
+    './src/assets/imgs/banner1.png',
   ];
 
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -46,7 +46,7 @@ const BannerShow = () => {
         {/* Previous button */}
         <button
           onClick={goToPrevious}
-          className="absolute left-0 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 transition-all"
+          className="absolute left-4 top-1/2 transform -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-white text-black rounded-full shadow-xl hover:bg-gray-200 transition-all"
         >
           &#10094;
         </button>
@@ -54,7 +54,7 @@ const BannerShow = () => {
         {/* Next button */}
         <button
           onClick={goToNext}
-          className="absolute right-0 top-1/2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-75 transition-all"
+          className="absolute right-4 top-1/2 transform -translate-y-1/2 w-10 h-10 flex items-center justify-center bg-white text-black rounded-full shadow-xl hover:bg-gray-200 transition-all"
         >
           &#10095;
         </button>
