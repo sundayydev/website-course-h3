@@ -8,6 +8,14 @@ import { FcGoogle } from 'react-icons/fc';
 import { forgotPassword, login, register } from '../api/authApi';
 import axios from 'axios';
 import { toast } from 'react-toastify';
+import {
+  DropdownMenu,
+  DropdownMenuTrigger,
+  DropdownMenuContent,
+  DropdownMenuItem,
+} from '@/components/ui/dropdown-menu';
+import { Avatar, AvatarFallback } from '@/components/ui/avatar';
+import { jwtDecode } from 'jwt-decode';
 
 const Header = () => {
   const [loginData, setLoginData] = useState({ email: '', password: '' });
@@ -41,6 +49,8 @@ const Header = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [user, setUser] = useState(null);
+
+  const [open, setOpen] = useState(false);
 
   // Đóng popup khi click ra ngoài
   useEffect(() => {
@@ -100,12 +110,6 @@ const Header = () => {
       setIsLoggedIn(true);
     }
   }, []);
-
-  // Xử lý đăng xuất
-  const handleLogout = () => {
-    localStorage.removeItem('authToken');
-    setIsLoggedIn(false);
-  };
 
   axios.interceptors.request.use(
     (config) => {
@@ -167,6 +171,26 @@ const Header = () => {
     setLoading(false);
   };
 
+  // Xử lý đăng xuất
+  const handleLogout = () => {
+    localStorage.removeItem('authToken');
+    setIsLoggedIn(false);
+  };
+
+  useEffect(() => {
+    // Lấy token từ localStorage
+    const token = localStorage.getItem('token');
+    if (token) {
+      try {
+        // Giải mã token để lấy thông tin user
+        const decoded = jwtDecode(token);
+        setUser(decoded);
+      } catch (error) {
+        console.error('Token không hợp lệ:', error);
+      }
+    }
+  }, []);
+
   return (
     <header className="flex justify-between items-center px-6 py-3 bg-white shadow-md relative">
       {/* Logo */}
@@ -212,12 +236,51 @@ const Header = () => {
         )}
 
         {isLoggedIn && (
-          <Button
-            className="bg-gradient-to-r from-pink-500 to-pink-600 text-white px-4 py-2 rounded-full font-semibold"
-            onClick={handleLogout}
-          >
-            Đăng xuất
-          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-500 text-white font-bold shadow-xl hover:bg-blue-800">
+                {user ? user.username.charAt(0).toUpperCase() : '?'}
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent className="w-56 p-2 shadow-lg rounded-2xl m-4">
+              <div className="flex items-center gap-3 p-3">
+                <Avatar className="w-10 h-10">
+                  <AvatarFallback className="bg-blue-500 text-white font-bold">
+                    {user ? user.username.charAt(0).toUpperCase() : '?'}
+                  </AvatarFallback>
+                </Avatar>
+                <div>
+                  <p className="font-semibold">{user ? user.username : 'Người dùng'}</p>
+                  <p className="text-gray-500 text-sm">
+                    @{user ? user.username.toLowerCase() : 'username'}
+                  </p>
+                </div>
+              </div>
+              <hr />
+              <DropdownMenuItem className="p-3 hover:bg-gray-100 rounded-lg cursor-pointer">
+                Trang cá nhân
+              </DropdownMenuItem>
+              <DropdownMenuItem className="p-3 hover:bg-gray-100 rounded-lg cursor-pointer">
+                Viết blog
+              </DropdownMenuItem>
+              <DropdownMenuItem className="p-3 hover:bg-gray-100 rounded-lg cursor-pointer">
+                Bài viết của tôi
+              </DropdownMenuItem>
+              <DropdownMenuItem className="p-3 hover:bg-gray-100 rounded-lg cursor-pointer">
+                Bài viết đã lưu
+              </DropdownMenuItem>
+              <hr />
+              <DropdownMenuItem className="p-3 hover:bg-gray-100 rounded-lg cursor-pointer">
+                Cài đặt
+              </DropdownMenuItem>
+              <DropdownMenuItem
+                className="p-3 hover:bg-gray-100 rounded-lg cursor-pointer text-red-500"
+                onClick={handleLogout}
+              >
+                Đăng xuất
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         )}
       </div>
 
