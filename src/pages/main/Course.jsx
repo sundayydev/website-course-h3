@@ -16,8 +16,8 @@ const CourseList = () => {
       const response = await getCourses();
 
       console.log('API Response:', response); // Log response để kiểm tra
-      if (response?.data && Array.isArray(response.data)) {
-        setCourses(response.data);
+      if (Array.isArray(response)) {
+        setCourses(response);
       } else {
         throw new Error('Dữ liệu API không hợp lệ');
       }

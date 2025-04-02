@@ -76,7 +76,7 @@ const Dashboard = () => {
   }
 
   return (
-    <div className="p-6 space-y-6 w-[calc(1520px-250px)] overflow-y-auto scrollbar-none">
+    <div className="p-6 space-y-6 w-[calc(1520px-250px)]">
       <div className="flex justify-between items-center">
         <h1 className="text-2xl font-bold text-pink-500">Thống kê tổng quan</h1>
         <div className="text-sm text-gray-500">
