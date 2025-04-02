@@ -1,23 +1,122 @@
-import api from './axios'; // 🔹 Import Axios đã cấu hình
+import { jwtDecode } from 'jwt-decode';
+import api from './axios';
+const API_URL = '/course';
 
-const API_URL = '/course'; // Vì `baseURL` đã có sẵn `/api`
-
-export const getCourses = () => {
-  return api.get(`${API_URL}`);
+export const getCourses = async () => {
+  try {
+    const response = await api.get(`${API_URL}`, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi lấy danh sách khóa học:', error);
+    throw error;
+  }
 };
 
-export const getCourseById = (id) => {
-  return api.get(`${API_URL}/${id}`);
+export const getCourseById = async (id) => {
+  try {
+    const response = await api.get(`${API_URL}/${id}`);
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi lấy thông tin khóa học:', error);
+    throw error;
+  }
 };
 
-export const createCourse = (data) => {
-  return api.post(`${API_URL}`, data);
+export const createCourse = async (data) => {
+  const token = localStorage.getItem('authToken');
+  if (!token) {
+    throw new Error('Không tìm thấy token');
+  }
+
+  const decodedToken = jwtDecode(token);
+  
+  const newData = {
+    title: data.title,
+    description: data.description, 
+    price: data.price,
+    instructorId: decodedToken.id,
+  };
+  
+  try {
+    const response = await api.post(`${API_URL}`, newData, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi tạo khóa học:', error);
+    throw error;
+  }
 };
 
-export const updateCourse = (id, data) => {
-  return api.put(`${API_URL}/${id}`, data);
+export const updateCourse = async (id, data) => {
+  const token = localStorage.getItem('authToken');
+  if (!token) {
+    throw new Error('Không tìm thấy token');
+  }
+  try {
+    const response = await api.put(`${API_URL}/${id}`, data, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi cập nhật khóa học:', error);
+    throw error;
+  }
 };
 
-export const deleteCourse = (id) => {
-  return api.delete(`${API_URL}/${id}`);
+export const deleteCourse = async (id) => {
+  const token = localStorage.getItem('authToken');
+  if (!token) {
+    throw new Error('Không tìm thấy token');
+  }
+  try {
+    const response = await api.delete(`${API_URL}/${id}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi xóa khóa học:', error);
+    throw error;
+  }
+};
+
+export const uploadImage = async (id, urlImage) => {
+  const token = localStorage.getItem('authToken');
+  if (!token) {
+    throw new Error('Không tìm thấy token');
+  }
+
+  const data = 
+  {
+    file: urlImage
+  }
+
+  console.log('id: ', id);
+  console.log('data: ', data);
+  
+  try {
+    const response = await api.post(`${API_URL}/upload-image/${id}`, data, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        'Authorization': `Bearer ${token}`
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi tải lên hình ảnh:', error);
+    throw error;
+  }
 };

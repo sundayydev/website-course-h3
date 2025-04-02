@@ -10,7 +10,7 @@ const AdminLayout = () => {
         <AdminSidebar className="w-[250px] border-r bg-white shadow-sm" />
         
         {/* Main content area - takes remaining space */}
-        <main className="flex-1 overflow-auto w-[calc(100%-250px)]">
+        <main className="flex-1 overflow-y-auto scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           <div className="p-0">
             <Outlet />
           </div>
