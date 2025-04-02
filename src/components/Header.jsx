@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { useState, useRef, useEffect } from 'react';
 import LogoH3 from '../assets/LogoH3.png';
 import { AiFillEye, AiFillEyeInvisible } from 'react-icons/ai';
-import { FaSearch, FaFacebook, FaUser, FaEnvelope, FaLock, FaTimes } from 'react-icons/fa';
+import { FaSearch, FaFacebook, FaUser, FaEnvelope, FaLock, FaTimes, FaBook } from 'react-icons/fa';
 import { FcGoogle } from 'react-icons/fc';
 import axios from 'axios';
 import { toast } from 'react-toastify';
@@ -20,6 +20,7 @@ import { logout, setUser, setIsLoggedIn, setToken } from '@/reducers/authReducer
 
 import { forgotPassword, login, register } from '../api/authApi';
 import { getUserInfo } from '../api/userApi';
+import CoursePopup from './CoursePopup';
 
 const Header = () => {
   const dispatch = useDispatch();
@@ -49,11 +50,14 @@ const Header = () => {
   const [isForgotPasswordOpen, setIsForgotPasswordOpen] = useState(false);
   const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [isPopupOpen, setPopupOpen] = useState(false);
 
+  const togglePopup = () => setPopupOpen(!isPopupOpen);
   // Refs for click outside handling
   const loginRef = useRef(null);
   const registerRef = useRef(null);
   const forgotPasswordRef = useRef(null);
+  const [courses, setCourses] = useState([]);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -66,7 +70,7 @@ const Header = () => {
             dispatch(setUser(userResponse.data));
             dispatch(setIsLoggedIn(true));
             dispatch(setToken(token));
-            
+
             // Lưu thông tin user vào localStorage để dùng cho AuthContext
             localStorage.setItem('user', JSON.stringify(userResponse.data));
           } else {
@@ -137,13 +141,13 @@ const Header = () => {
         dispatch(setUser(userResponse.data));
         dispatch(setIsLoggedIn(true));
         dispatch(setToken(token));
-        
+
         // Lưu thông tin user vào localStorage
         localStorage.setItem('user', JSON.stringify(userResponse.data));
-        
+
         // Đóng modal login
         setIsLoginOpen(false);
-        
+
         // Thông báo thành công
         toast.success('Đăng nhập thành công!');
         navigate('/');
@@ -152,7 +156,7 @@ const Header = () => {
     } catch (error) {
       console.error('Login Error:', error);
       let errorMessage = 'Đăng nhập thất bại!';
-      
+
       if (error.response?.data?.message) {
         errorMessage = error.response.data.message;
       }
@@ -190,7 +194,7 @@ const Header = () => {
     try {
       await axios.post('http://localhost:5221/api/auth/reset-password', resetPasswordData);
       toast.success('Mật khẩu đã được đặt lại thành công!');
-      
+
       setTimeout(() => {
         setIsResetPasswordOpen(false);
         setIsLoginOpen(true);
@@ -206,13 +210,13 @@ const Header = () => {
     // Xóa dữ liệu khỏi localStorage
     localStorage.removeItem('authToken');
     localStorage.removeItem('user');
-    
+    toast.success('Đăng xuất thành công!');
     // Cập nhật Redux store
     dispatch(logout());
     dispatch(setUser(null));
     dispatch(setIsLoggedIn(false));
     dispatch(setToken(null));
-    
+
     navigate('/');
   };
 
@@ -240,6 +244,18 @@ const Header = () => {
         />
         <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
       </div>
+
+      <div>
+        <button
+          className="p-3 bg-yellow-500 rounded-full hover:bg-yellow-400 transition-all"
+          onClick={togglePopup}
+        >
+          <FaBook size={20} color="white" />
+        </button>
+      </div>
+
+      {/* Di chuyển popup lệch sang trái một chút */}
+      <CoursePopup isOpen={isPopupOpen} onClose={togglePopup} />
 
       <div className="flex items-center space-x-4">
         {!isLoggedIn && (
@@ -276,9 +292,7 @@ const Header = () => {
                 </Avatar>
                 <div>
                   <p className="font-semibold">{user ? user.fullname : 'Người dùng'}</p>
-                  <p className="text-gray-500 text-sm break-words">
-                    {user ? user.email : 'email'}
-                  </p>
+                  <p className="text-gray-500 text-sm break-words">{user ? user.email : 'email'}</p>
                 </div>
               </div>
               <hr />
@@ -316,8 +330,8 @@ const Header = () => {
             {/* Logo */}
             <div className="flex justify-center mb-4 mt-4">
               <img src={LogoH3} alt="Logo H3" className="h-10 rounded-lg" />
-            </div>
-
+            </div>{' '}
+            <CoursePopup courses={courses} />
             {/* Close Button */}
             <button
               className="absolute top-2 right-2 text-gray-600 hover:text-red-500"
@@ -325,7 +339,6 @@ const Header = () => {
             >
               <FaTimes size={20} />
             </button>
-
             <div className="mx-4 md:mx-10">
               <h3 className="text-center text-lg md:text-2xl font-bold text-gray-700 mb-3">
                 Đăng nhập vào H3
