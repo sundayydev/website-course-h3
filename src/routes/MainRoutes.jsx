@@ -18,7 +18,7 @@ const MainRoutes = {
     { path: 'about', element: <About /> }, // /about
     { path: 'contact', element: <Contact /> },
     { path: 'post', element: <Post /> },
-    { path: 'payment', element: <PaymentModal /> },
+    { path: 'payment/:courseId', element: <PaymentModal /> },
     { path: 'paymentpage', element: <PaymentPage /> },
     { path: 'detailspost/:id', element: <PostDetails /> },
     { path: 'details/:courseId', element: <Details /> },

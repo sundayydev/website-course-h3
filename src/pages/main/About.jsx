@@ -7,17 +7,19 @@ const About = () => {
     {
       name: 'Ngô Mạnh Hùng',
       role: 'Developer & CEO',
-      image: 'https://randomuser.me/api/portraits/women/44.jpg',
+      image:
+        'https://asd.mediacdn.vn/adt/tuyendungvccorp/lap-trinh-vien-la-gi_1b33bae8-ab72-4134-bb77-8d9df3b29def.jpg',
     },
     {
       name: 'Lê Hữu Duy Hoàng',
       role: 'Lead Designer',
-      image: 'https://randomuser.me/api/portraits/men/32.jpg',
+      image: 'https://laptrinhcuocsong.com/images/lap-trinh-vien.png',
     },
     {
       name: 'Lê Hoài Huân',
       role: 'Developer',
-      image: 'https://randomuser.me/api/portraits/women/68.jpg',
+      image:
+        'https://cdni.iconscout.com/illustration/premium/thumb/man-coder-programming-on-computer-7771249-6200255.png?f=webp',
     },
   ];
 
@@ -29,7 +31,7 @@ const About = () => {
           <div className="relative">
             <img
               className="rounded-full relative object-cover right-0 lg:w-[30rem] lg:h-[30rem] sm:w-[25rem] sm:h-[25rem] w-[12rem] h-[12rem] outline sm:outline-offset-[.77em] outline-offset-[.37em] outline-pink-500 mr-4"
-              src="https://images.unsplash.com/photo-1507290439931-a861b5a38200?crop=entropy&cs=tinysrgb&fit=max&fm=jpg&ixid=M3w0NzEyNjZ8MHwxfHNlYXJjaHwxM3x8Zmxvd2VyfGVufDB8MHwwfHx8MTcyMDk0OTQ2MHww&ixlib=rb-4.0.3&q=80&w=1080"
+              src="https://watermark.lovepik.com/photo/20211201/large/lovepik-programmer-professional-image-picture_501301385.jpg"
               alt="About us"
             />
           </div>
