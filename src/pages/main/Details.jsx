@@ -12,9 +12,20 @@ import {
   Globe,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
-import axios from 'axios';
 import { getCourseById } from '@/api/courseApi';
 import { getLessionsByCourseId } from '@/api/lessionApi';
+import { getEnrollmentByUserId } from '@/api/enrollmentApi';
+import Review from './Review';
+const getUserIdFromToken = () => {
+  const token = localStorage.getItem('authToken');
+  if (token) {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const decoded = JSON.parse(atob(base64));
+    return decoded.userId;
+  }
+  return null;
+};
 const Details = () => {
   const { courseId } = useParams();
   const [course, setCourse] = useState(null);
@@ -22,8 +33,12 @@ const Details = () => {
   const [expanded, setExpanded] = useState(null);
   const [videoModalOpen, setVideoModalOpen] = useState(false);
   const [selectedVideo, setSelectedVideo] = useState('');
+  const [isEnrolled, setIsEnrolled] = useState(false);
   const navigate = useNavigate();
 
+  const userId = getUserIdFromToken();
+  console.log(userId); // Kiểm tra giá trị của userId
+  console.log('isEnrolled:', isEnrolled);
   useEffect(() => {
     if (!courseId) return;
 
@@ -52,9 +67,30 @@ const Details = () => {
       }
     };
 
+    const checkUserEnrollment = async () => {
+      if (!userId) return;
+
+      try {
+        const response = await getEnrollmentByUserId(userId);
+        const enrolledCourses = response.data;
+
+        console.log('Danh sách khóa học đã đăng ký:', enrolledCourses); // Kiểm tra danh sách các khóa học đã đăng ký
+        console.log('courseId đang kiểm tra:', courseId); // Kiểm tra khóa học đang kiểm tra
+
+        // So sánh đúng với trường courseId trong enrolledCourses
+        const isAlreadyEnrolled = enrolledCourses.some((course) => course.courseId === courseId);
+        console.log('isAlreadyEnrolled:', isAlreadyEnrolled); // Kiểm tra trạng thái đăng ký
+
+        setIsEnrolled(isAlreadyEnrolled);
+      } catch (error) {
+        console.error('Lỗi khi kiểm tra tình trạng đăng ký:', error);
+      }
+    };
+
     fetchCourse();
     fetchLessons();
-  }, [courseId]);
+    checkUserEnrollment();
+  }, [courseId, userId]);
 
   const toggleExpand = (index) => {
     setExpanded(expanded === index ? null : index);
@@ -156,6 +192,9 @@ const Details = () => {
             </div>
           ))}
         </ul>
+        <div className="mt-6">
+          <Review courseId={courseId} />
+        </div>
       </div>
 
       {/* Thanh bên phải - Video bài học đầu tiên & Đăng ký */}
@@ -182,10 +221,18 @@ const Details = () => {
 
         {/* Nút đăng ký học */}
         <Button
-          className="w-64 bg-pink-600 text-white rounded-2xl shadow-lg hover:bg-gray-600"
-          onClick={() => lessons.length > 0 && navigate(`/detailsPageCourse/${lessons[0].id}`)}
+          className={`w-64 text-white rounded-2xl shadow-lg ${isEnrolled ? 'bg-blue-600 hover:bg-blue-700' : 'bg-pink-600 hover:bg-pink-700'}`}
+          onClick={() => {
+            if (isEnrolled) {
+              if (lessons.length > 0) {
+                navigate(`/detailsPageCourse/${lessons[0].id}`);
+              }
+            } else {
+              navigate(`/payment/${courseId}`);
+            }
+          }}
         >
-          Đăng ký học
+          {isEnrolled ? 'Đã đăng ký' : 'Đăng ký học'}
         </Button>
 
         {/* Thông tin khóa học */}
