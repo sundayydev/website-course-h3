@@ -1,108 +1,206 @@
-import { useState } from 'react';
-import { FaHandPointRight, FaTimes, FaLock } from 'react-icons/fa';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { FaTimes, FaLock } from 'react-icons/fa';
+import { useNavigate, useParams } from 'react-router-dom';
+import axios from 'axios';
+import { v4 as uuidv4 } from 'uuid';
+
+// Hàm lấy userId từ token
+const getUserIdFromToken = () => {
+  const token = localStorage.getItem('authToken');
+  if (token) {
+    const base64Url = token.split('.')[1];
+    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
+    const decoded = JSON.parse(atob(base64));
+    return decoded.userId;
+  }
+  return null;
+};
 
 const PaymentModal = ({ onClose }) => {
+  const [total, setTotal] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [course, setCourse] = useState(null);
+  const { courseId } = useParams();
   const navigate = useNavigate();
-  const originalPrice = 3299000;
-  const discountPrice = 1399000;
-  const [coupon, setCoupon] = useState('');
-  const [total, setTotal] = useState(discountPrice);
 
-  const applyCoupon = () => {
-    if (coupon.toLowerCase() === 'giam10') {
-      setTotal(discountPrice * 0.9);
-    } else {
-      alert('Mã giảm giá không hợp lệ!');
+  // Lấy userId từ token
+  const userId = getUserIdFromToken();
+
+  // Kiểm tra nếu không có userId
+  if (!userId) {
+    alert('Bạn cần đăng nhập để thực hiện thanh toán!');
+    return null; // Trả về null thay vì undefined
+  }
+
+  // Lấy thông tin khóa học từ API khi component được render
+  useEffect(() => {
+    const fetchCourse = async () => {
+      try {
+        const response = await axios.get(`http://localhost:5221/api/course/${courseId}`);
+        if (response.data) {
+          setCourse(response.data);
+          const price = response.data.discountPrice || response.data.price;
+          setTotal(parseFloat(price) || 0);
+        } else {
+          alert('Không thể lấy thông tin khóa học');
+        }
+      } catch (error) {
+        console.error('Lỗi khi lấy thông tin khóa học:', error);
+        alert('Lỗi khi lấy thông tin khóa học');
+      }
+    };
+
+    fetchCourse();
+  }, [courseId]);
+
+  const handlePayment = async () => {
+    setIsLoading(true);
+
+    if (!course || !course.id) {
+      alert('Thông tin khóa học chưa được tải, vui lòng thử lại!');
+      setIsLoading(false);
+      return;
+    }
+
+    const orderData = {
+      UserId: userId,
+      TotalAmount: total,
+      Status: 'pending',
+      CreatedAt: new Date().toISOString(),
+      OrderDetails: [
+        {
+          Id: uuidv4(),
+          OrderId: '00000000-0000-0000-0000-000000000000',
+          CourseId: course.id,
+          Price: total,
+          CreatedAt: new Date().toISOString(),
+        },
+      ],
+    };
+
+    console.log('✅ Order Data to Send:', JSON.stringify(orderData, null, 2));
+
+    try {
+      const orderResponse = await axios.post('http://localhost:5221/api/order/create', orderData);
+      const orderId = orderResponse.data.id;
+      console.log('✅ Order ID from backend:', orderId);
+
+      const paymentRequest = {
+        Id: orderId,
+        TotalAmount: parseFloat(orderResponse.data.totalAmount),
+        UserId: userId,
+        Status: 'pending',
+        CreatedAt: new Date().toISOString(),
+        OrderDetails: [
+          {
+            Id: uuidv4(),
+            OrderId: orderId,
+            CourseId: course.id,
+            Price: parseFloat(orderResponse.data.totalAmount),
+            CreatedAt: new Date().toISOString(),
+          },
+        ],
+      };
+      console.log('✅ Payment Request:', JSON.stringify(paymentRequest, null, 2));
+
+      const paymentResponse = await axios.post(
+        'http://localhost:5221/api/payment/create-payment-url',
+        paymentRequest
+      );
+      console.log('📌 Full Payment Response:', paymentResponse);
+      console.log('📌 Payment URL:', paymentResponse.data.paymentUrl);
+
+      if (paymentResponse.data && paymentResponse.data.paymentUrl) {
+        console.log('✅ Navigating to /paymentpage with URL:', paymentResponse.data.paymentUrl);
+        navigate('/paymentpage', {
+          state: { paymentUrl: paymentResponse.data.paymentUrl, orderId, amount: total },
+        });
+      } else {
+        console.error('❌ No payment URL found:', paymentResponse.data);
+        alert('Không thể tạo URL thanh toán');
+      }
+    } catch (error) {
+      console.error('❌ Lỗi:', error.response?.data || error.message);
+      if (error.response && error.response.data) {
+        console.error('Chi tiết lỗi từ API:', JSON.stringify(error.response.data, null, 2));
+      }
+      alert('Có lỗi xảy ra, vui lòng thử lại');
+    } finally {
+      setIsLoading(false);
     }
   };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-lg shadow-lg w-[95%] max-w-sm md:max-w-3xl p-4 md:p-6 flex flex-col md:flex-row relative">
-        {/* Nút đóng */}
         <button onClick={onClose} className="absolute top-2 right-2 cursor-pointer">
           <FaTimes className="w-5 h-5 text-gray-500 hover:text-gray-700" />
         </button>
 
-        {/* Phần thông tin khóa học */}
-        <div className="md:w-1/2 p-4">
-          <div className="flex items-center space-x-3">
-            <img
-              src="https://via.placeholder.com/50"
-              alt="Khóa học"
-              className="w-12 h-12 rounded-full"
-            />
-            <h2 className="text-lg md:text-xl font-bold">Khóa học JavaScript Pro</h2>
+        {course && (
+          <div className="md:w-1/2 p-4">
+            <div className="flex items-center space-x-3">
+              <img
+                src={
+                  course.urlImage
+                    ? `http://localhost:5221/${course.urlImage}`
+                    : 'https://via.placeholder.com/50'
+                }
+                alt={course.title}
+                className="w-12 h-12 rounded-full"
+              />
+              <h2 className="text-lg md:text-xl font-bold">{course.title}</h2>
+            </div>
+            <p className="text-gray-600 mt-3 text-sm md:text-base">{course.description}</p>
           </div>
-          <p className="text-gray-600 mt-3 text-sm md:text-base">
-            Khóa học giúp bạn làm chủ JavaScript và xây dựng ứng dụng thực tế.
-          </p>
-          <h3 className="hidden md:block font-semibold mt-4">Bạn nhận được gì?</h3>
-          <ul className="hidden md:block list-disc list-inside text-gray-700 space-y-1 text-sm md:text-base">
-            <li>Hiểu sâu về JavaScript</li>
-            <li>Thành thạo tư duy lập trình</li>
-            <li>Xây dựng ứng dụng web phức tạp</li>
-            <li>Làm việc với API, RESTful</li>
-            <li>Ứng dụng thực tế</li>
-          </ul>
-        </div>
+        )}
 
-        {/* Phần thanh toán */}
         <div className="md:w-1/2 p-4 bg-gray-100 rounded-lg">
           <h3 className="text-lg font-semibold text-center md:text-left">Chi tiết thanh toán</h3>
 
           <div className="mt-3">
-            <p className="text-gray-700 font-semibold text-center md:text-left">
-              Khóa học JavaScript Pro
-            </p>
-            <div className="flex justify-between text-sm">
-              <p>Giá gốc:</p>
-              <p className="text-gray-500 line-through">{originalPrice.toLocaleString()}đ</p>
-            </div>
-            <div className="flex justify-between text-sm md:text-base">
-              <p>Giá khuyến mãi:</p>
-              <p className="text-lg font-bold text-red-600">{discountPrice.toLocaleString()}đ</p>
-            </div>
+            {course ? (
+              <>
+                <p className="text-gray-700 font-semibold text-center md:text-left">
+                  {course.title}
+                </p>
+                <div className="flex justify-between text-sm">
+                  <p>Giá gốc:</p>
+                  <p className="text-gray-500 line-through">
+                    {course.price ? course.price.toLocaleString() : 'N/A'}đ
+                  </p>
+                </div>
+                <div className="flex justify-between text-sm md:text-base">
+                  <p>Giá khuyến mãi:</p>
+                  <p className="text-lg font-bold text-red-600">
+                    {total ? total.toLocaleString() : 'N/A'}đ
+                  </p>
+                </div>
+              </>
+            ) : (
+              <p>Đang tải thông tin khóa học...</p>
+            )}
           </div>
 
-          {/* Nhập mã giảm giá */}
-          <div className="mt-4">
-            <input
-              type="text"
-              className="w-full border rounded-lg p-2 text-sm"
-              placeholder="Nhập mã giảm giá"
-              value={coupon}
-              onChange={(e) => setCoupon(e.target.value)}
-            />
-            <button
-              onClick={applyCoupon}
-              className="mt-2 w-full bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600"
-            >
-              Áp dụng
-            </button>
-          </div>
-
-          <p className="text-sm text-blue-500 mt-2 cursor-pointer flex items-center justify-center md:justify-start">
-            <FaHandPointRight className="w-4 h-4 mr-2 text-yellow-500" /> Xem danh sách mã giảm giá
-          </p>
-
-          {/* Tổng tiền */}
           <div className="mt-4 flex justify-between items-center text-sm md:text-lg">
             <span className="font-semibold">TỔNG</span>
-            <span className="font-bold text-blue-600">{total.toLocaleString()}đ</span>
+            <span className="font-bold text-blue-600">
+              {total ? total.toLocaleString() : 'N/A'}đ
+            </span>
           </div>
 
-          {/* Nút thanh toán */}
           <button
-            onClick={() => navigate('/paymentpage')}
-            className="mt-4 w-full bg-blue-600 text-white py-2 md:py-3 rounded-lg text-lg hover:bg-blue-700"
+            onClick={handlePayment}
+            disabled={isLoading || !course}
+            className={`mt-4 w-full ${
+              isLoading ? 'bg-gray-400' : 'bg-blue-600'
+            } text-white py-2 md:py-3 rounded-lg text-lg hover:bg-blue-700`}
           >
-            Tiếp tục thanh toán
+            {isLoading ? 'Đang xử lý...' : 'Tiếp tục thanh toán'}
           </button>
 
           <p className="text-xs text-gray-500 text-center mt-2 flex items-center justify-center">
-            <FaLock className="w-3 h-3 mr-1 text-red-300" /> Thanh toán an toàn với SePay
+            <FaLock className="w-3 h-3 mr-1 text-red-300" /> Thanh toán an toàn với VnPay
           </p>
         </div>
       </div>
