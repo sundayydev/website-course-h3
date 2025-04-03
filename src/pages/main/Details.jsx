@@ -44,9 +44,9 @@ const Details = () => {
 
     const fetchCourse = async () => {
       try {
-        const response = await getCourseById(courseId);
-        if (response.data) {
-          setCourse(response.data);
+        const data = await getCourseById(courseId);
+        if (data) {
+          setCourse(data);
         } else {
           console.error('Không có dữ liệu khóa học');
         }

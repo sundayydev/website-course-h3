@@ -16,12 +16,5 @@ export default defineConfig({
   define: {
     'process.env': {}
 
-  },
-  optimizeDeps: {
-    include: ['jwt-decode'],
-  },
-  optimizeDeps: {
-    include: ['jwt-decode'],
-
-  }
+  }  
 });
