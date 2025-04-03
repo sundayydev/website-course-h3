@@ -16,9 +16,9 @@ export const getCourses = async () => {
   }
 };
 
-export const getCourseById = async (id) => {
+export const getCourseById = async (courseId) => {
   try {
-    const response = await api.get(`${API_URL}/${id}`);
+    const response = await api.get(`${API_URL}/${courseId}`);
     return response.data;
   } catch (error) {
     console.error('Lỗi khi lấy thông tin khóa học:', error);

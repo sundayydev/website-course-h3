@@ -118,7 +118,7 @@ const Courses = () => {
   };
 
   const handleViewLessons = (courseId) => {
-    navigate(`/admin/courses/${courseId}/lessons`);
+    navigate(`/admin/course-detail/${courseId}`);
   };
 
   const filteredCourses = courses.filter(
