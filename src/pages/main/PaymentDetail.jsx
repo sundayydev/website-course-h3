@@ -1,30 +1,57 @@
 import { useEffect, useState } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation ,useNavigate} from 'react-router-dom';
 import QRCode from 'react-qr-code'; // Import QRCode từ react-qr-code
 
 const PaymentPage = () => {
-  const location = useLocation();
-  const [paymentData, setPaymentData] = useState(null);
+    const location = useLocation();
+    const navigate = useNavigate();
+    const [paymentData, setPaymentData] = useState(null);
 
-  useEffect(() => {
-    const storedData = location.state || JSON.parse(localStorage.getItem('paymentData'));
-    if (storedData) {
-      setPaymentData(storedData);
-      localStorage.setItem('paymentData', JSON.stringify(storedData));
-    } else {
-      console.error('Không có thông tin thanh toán!');
+    useEffect(() => {
+        // Xử lý dữ liệu thanh toán ban đầu
+        const storedData = location.state || JSON.parse(localStorage.getItem('paymentData'));
+        if (storedData) {
+            setPaymentData(storedData);
+            localStorage.setItem('paymentData', JSON.stringify(storedData));
+        } else {
+            console.error('Không có thông tin thanh toán!');
+        }
+
+        // Xử lý callback từ VNPay
+        const searchParams = new URLSearchParams(location.search);
+        const vnp_ResponseCode = searchParams.get('vnp_ResponseCode');
+
+        if (vnp_ResponseCode) {
+            if (vnp_ResponseCode === '00') {
+                // Thanh toán thành công
+                navigate('/payment-success', {
+                    state: {
+                        orderId: searchParams.get('vnp_TxnRef'),
+                        amount: searchParams.get('vnp_Amount'),
+                        transactionId: searchParams.get('vnp_TransactionNo')
+                    }
+                });
+            } else {
+                // Thanh toán thất bại
+                navigate('/payment-failure', {
+                    state: {
+                        errorCode: vnp_ResponseCode,
+                        message: 'Thanh toán không thành công'
+                    }
+                });
+            }
+        }
+    }, [location, navigate]);
+
+    if (!paymentData) {
+        return <p className="text-center text-red-500">Lỗi: Không có thông tin thanh toán.</p>;
     }
-  }, [location.state]);
 
-  if (!paymentData) {
-    return <p className="text-center text-red-500">Lỗi: Không có thông tin thanh toán.</p>;
-  }
+    const { paymentUrl, orderId, amount } = paymentData;
 
-  const { paymentUrl, orderId, amount } = paymentData;
-
-  const handleVNPayPayment = () => {
-    window.location.href = paymentUrl;
-  };
+    const handleVNPayPayment = () => {
+        window.location.href = paymentUrl;
+    };
 
   return (
     <div className="max-w-lg mx-auto p-6 bg-white shadow-lg rounded-lg mt-20">
