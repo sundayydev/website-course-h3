@@ -30,8 +30,8 @@ const CourseList = () => {
   };
 
   useEffect(() => {
-    fetchCourses(); // Gọi hàm fetchCourses khi component được render
-  }, []); // Gọi 1 lần khi component mount
+    fetchCourses();
+  }, []);
 
   // Hiển thị loading khi đang tải dữ liệu
   if (loading)
