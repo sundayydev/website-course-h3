@@ -1,19 +1,22 @@
 import { useState, useEffect } from 'react';
 import { FaTimes, FaLock } from 'react-icons/fa';
 import { useNavigate, useParams } from 'react-router-dom';
-import axios from 'axios';
 import { v4 as uuidv4 } from 'uuid';
+import { jwtDecode } from 'jwt-decode';
+import api from '@/api/axios';
 
 // Hàm lấy userId từ token
 const getUserIdFromToken = () => {
   const token = localStorage.getItem('authToken');
-  if (token) {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const decoded = JSON.parse(atob(base64));
-    return decoded.userId;
+  if (!token) return null;
+ 
+  try {
+    const decoded = jwtDecode(token);
+    return decoded.id;
+  } catch (error) {
+    console.error('Lỗi khi giải mã token:', error);
+    return null;
   }
-  return null;
 };
 
 const PaymentModal = ({ onClose }) => {
@@ -25,7 +28,7 @@ const PaymentModal = ({ onClose }) => {
 
   // Lấy userId từ token
   const userId = getUserIdFromToken();
-
+  console.log(userId)
   // Kiểm tra nếu không có userId
   if (!userId) {
     alert('Bạn cần đăng nhập để thực hiện thanh toán!');
@@ -36,7 +39,7 @@ const PaymentModal = ({ onClose }) => {
   useEffect(() => {
     const fetchCourse = async () => {
       try {
-        const response = await axios.get(`http://localhost:5221/api/course/${courseId}`);
+        const response = await api.get(`/course/${courseId}`);
         if (response.data) {
           setCourse(response.data);
           const price = response.data.discountPrice || response.data.price;
@@ -81,7 +84,7 @@ const PaymentModal = ({ onClose }) => {
     console.log('✅ Order Data to Send:', JSON.stringify(orderData, null, 2));
 
     try {
-      const orderResponse = await axios.post('http://localhost:5221/api/order/create', orderData);
+      const orderResponse = await api.post('/order/create', orderData);
       const orderId = orderResponse.data.id;
       console.log('✅ Order ID from backend:', orderId);
 
@@ -103,10 +106,7 @@ const PaymentModal = ({ onClose }) => {
       };
       console.log('✅ Payment Request:', JSON.stringify(paymentRequest, null, 2));
 
-      const paymentResponse = await axios.post(
-        'http://localhost:5221/api/payment/create-payment-url',
-        paymentRequest
-      );
+      const paymentResponse = await api.post('/payment/create-payment-url', paymentRequest);
       console.log('📌 Full Payment Response:', paymentResponse);
       console.log('📌 Payment URL:', paymentResponse.data.paymentUrl);
 

@@ -1,25 +1,53 @@
-import api from './axios'; // 🔹 Import Axios đã cấu hình
+import { jwtDecode } from 'jwt-decode';
+import api from './axios';
 
-const API_URL = '/enrollment'; // Vì `baseURL` đã có sẵn `/api`
+const API_URL = '/enrollment';
 
-export const getEnrollment = () => {
-  return api.get(`${API_URL}`);
-};
-export const getEnrollmentByUserId = (userId) => {
-  return api.get(`${API_URL}/user/${userId}`);
-};
-export const getEnrollmentById = (id) => {
-  return api.get(`${API_URL}/${id}`);
+const getAuthToken = () => {
+  const token = localStorage.getItem('authToken');
+  if (!token) throw new Error('Không tìm thấy token');
+  return token;
 };
 
-export const createEnrollment = (data) => {
-  return api.post(`${API_URL}`, data);
+const getUserId = () => {
+  const token = getAuthToken();
+  const decoded = jwtDecode(token);
+  if (!decoded.id) throw new Error('Token không hợp lệ');
+  return decoded.id;
 };
 
-export const updateEnrollment = (id, data) => {
-  return api.put(`${API_URL}/${id}`, data);
+export const getEnrollment = () => api.get(API_URL);
+
+export const getEnrollmentByUserId = async () => {
+  const token = getAuthToken();
+  const userId = getUserId();
+  
+  const response = await api.get(`${API_URL}/user/${userId}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+  return response;
 };
 
-export const deleteEnrollment = (id) => {
-  return api.delete(`${API_URL}/${id}`);
+export const getEnrollmentById = (id) => api.get(`${API_URL}/${id}`);
+
+export const createEnrollment = async (courseId) => {
+  const token = getAuthToken();
+  const userId = getUserId();
+
+  return await api.post(API_URL, 
+    { userId, courseId },
+    {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json', 
+      },
+    }
+  );
 };
+
+export const updateEnrollment = (id, data) => api.put(`${API_URL}/${id}`, data);
+
+export const deleteEnrollment = (id) => api.delete(`${API_URL}/${id}`);
