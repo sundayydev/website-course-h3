@@ -13,19 +13,11 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getCourseById } from '@/api/courseApi';
-import { getLessionsByCourseId } from '@/api/lessionApi';
-import { getEnrollmentByUserId } from '@/api/enrollmentApi';
+import { getLessonsByCourseId } from '@/api/lessionApi';
+import { getEnrollmentByUserId, createEnrollment } from '@/api/enrollmentApi';
 import Review from './Review';
-const getUserIdFromToken = () => {
-  const token = localStorage.getItem('authToken');
-  if (token) {
-    const base64Url = token.split('.')[1];
-    const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-    const decoded = JSON.parse(atob(base64));
-    return decoded.userId;
-  }
-  return null;
-};
+import { jwtDecode } from 'jwt-decode';
+
 const Details = () => {
   const { courseId } = useParams();
   const [course, setCourse] = useState(null);
@@ -36,9 +28,6 @@ const Details = () => {
   const [isEnrolled, setIsEnrolled] = useState(false);
   const navigate = useNavigate();
 
-  const userId = getUserIdFromToken();
-  console.log(userId); // Kiểm tra giá trị của userId
-  console.log('isEnrolled:', isEnrolled);
   useEffect(() => {
     if (!courseId) return;
 
@@ -57,7 +46,7 @@ const Details = () => {
 
     const fetchLessons = async () => {
       try {
-        const response = await getLessionsByCourseId(courseId);
+        const response = await getLessonsByCourseId(courseId);
         if (!response.data || !Array.isArray(response.data)) {
           throw new Error('Dữ liệu bài học không hợp lệ');
         }
@@ -68,29 +57,34 @@ const Details = () => {
     };
 
     const checkUserEnrollment = async () => {
-      if (!userId) return;
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        setIsEnrolled(false);
+        return;
+      }
 
       try {
-        const response = await getEnrollmentByUserId(userId);
+        const response = await getEnrollmentByUserId();
         const enrolledCourses = response.data;
 
-        console.log('Danh sách khóa học đã đăng ký:', enrolledCourses); // Kiểm tra danh sách các khóa học đã đăng ký
-        console.log('courseId đang kiểm tra:', courseId); // Kiểm tra khóa học đang kiểm tra
-
-        // So sánh đúng với trường courseId trong enrolledCourses
-        const isAlreadyEnrolled = enrolledCourses.some((course) => course.courseId === courseId);
-        console.log('isAlreadyEnrolled:', isAlreadyEnrolled); // Kiểm tra trạng thái đăng ký
-
+        const isAlreadyEnrolled = enrolledCourses.some(enrollment => 
+          enrollment.courseId === courseId && enrollment.status === "Active"
+        );
         setIsEnrolled(isAlreadyEnrolled);
+        console.log(isAlreadyEnrolled);
+        console.log(enrolledCourses);
+        console.log(isAlreadyEnrolled ? 'Sinh viên đã đăng ký khóa học này' : 'Sinh viên chưa đăng ký khóa học này');
+
       } catch (error) {
-        console.error('Lỗi khi kiểm tra tình trạng đăng ký:', error);
+        console.error('Lỗi khi kiểm tra đăng ký:', error);
+        setIsEnrolled(false);
       }
     };
 
     fetchCourse();
     fetchLessons();
     checkUserEnrollment();
-  }, [courseId, userId]);
+  }, [courseId]);
 
   const toggleExpand = (index) => {
     setExpanded(expanded === index ? null : index);
@@ -104,6 +98,52 @@ const Details = () => {
   const closeVideoModal = () => {
     setVideoModalOpen(false);
     setSelectedVideo('');
+  };
+
+  const handleEnrollClick = async () => {
+    const token = localStorage.getItem('authToken');
+    
+    try {
+      // Kiểm tra token có hợp lệ không
+      if (token) {
+        const decodedToken = jwtDecode(token);
+        if (decodedToken && decodedToken.exp * 1000 > Date.now()) {
+          // Token hợp lệ và chưa hết hạn
+          if (isEnrolled) {
+            if (lessons.length > 0) {
+              navigate(`/detailsPageCourse/${lessons[0].id}`);
+            }
+          } else {
+            if (!course.price) {
+              // Khóa học miễn phí - đăng ký trực tiếp
+              try {
+                await createEnrollment(courseId);
+                setIsEnrolled(true);
+                
+                if (lessons.length > 0) {
+                  navigate(`/detailsPageCourse/${lessons[0].id}`);
+                }
+              } catch (error) {
+                console.error('Lỗi khi đăng ký khóa học:', error);
+                alert('Có lỗi xảy ra khi đăng ký khóa học. Vui lòng thử lại!');
+              }
+            } else {
+              // Khóa học có phí - chuyển đến trang thanh toán  
+              navigate(`/payment/${courseId}`);
+            }
+          }
+          return;
+        }
+      }
+      // Token không hợp lệ hoặc hết hạn
+      localStorage.removeItem('authToken'); // Xóa token không hợp lệ
+      alert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!');
+      navigate('/login');
+    } catch (error) {
+      console.error('Lỗi khi xử lý token:', error);
+      alert('Có lỗi xảy ra. Vui lòng đăng nhập lại!');
+      navigate('/login');
+    }
   };
 
   if (!course) {
@@ -120,25 +160,12 @@ const Details = () => {
         <div className="mt-6">
           <h2 className="text-xl font-bold mb-4 text-gray-800">Bạn sẽ học được gì?</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
-            {/* Cột 1 */}
-            <div className="flex items-center space-x-3">
-              <CheckCircle className="text-orange-500" size={20} />
-              <span className="text-gray-700">Các kiến thức cơ bản, nền tảng về ngành IT</span>
-            </div>
-            <div className="flex items-center space-x-3">
-              <CheckCircle className="text-orange-500" size={20} />
-              <span className="text-gray-700">Các thuật ngữ quan trọng trong lập trình</span>
-            </div>
-
-            {/* Cột 2 */}
-            <div className="flex items-center space-x-3">
-              <CheckCircle className="text-orange-500" size={20} />
-              <span className="text-gray-700">Hiểu cách Internet và máy tính hoạt động</span>
-            </div>
-            <div className="flex items-center space-x-3">
-              <CheckCircle className="text-orange-500" size={20} />
-              <span className="text-gray-700">Kiến trúc ứng dụng và mô hình phát triển</span>
-            </div>
+            {course.contents && course.contents.map((content, index) => (
+              <div key={index} className="flex items-center space-x-3">
+                <CheckCircle className="text-orange-500" size={20} />
+                <span className="text-gray-700">{content}</span>
+              </div>
+            ))}
           </div>
         </div>
 
@@ -213,7 +240,6 @@ const Details = () => {
             </div>
           </div>
         )}
-
         {/* Hiển thị giá khóa học */}
         <div className="flex items-center text-lg font-bold text-rose-500">
           {course.price ? `${course.price.toLocaleString()} VND` : 'Miễn phí'}
@@ -222,17 +248,9 @@ const Details = () => {
         {/* Nút đăng ký học */}
         <Button
           className={`w-64 text-white rounded-2xl shadow-lg ${isEnrolled ? 'bg-blue-600 hover:bg-blue-700' : 'bg-pink-600 hover:bg-pink-700'}`}
-          onClick={() => {
-            if (isEnrolled) {
-              if (lessons.length > 0) {
-                navigate(`/detailsPageCourse/${lessons[0].id}`);
-              }
-            } else {
-              navigate(`/payment/${courseId}`);
-            }
-          }}
+          onClick={handleEnrollClick}
         >
-          {isEnrolled ? 'Đã đăng ký' : 'Đăng ký học'}
+          {isEnrolled ? 'Vào học' : 'Đăng ký học'}
         </Button>
 
         {/* Thông tin khóa học */}

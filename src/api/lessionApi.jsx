@@ -6,20 +6,34 @@ export const getLessons = () => {
   return api.get(`${API_URL}`);
 };
 
-export const getLessonsById = (id) => {
-  return api.get(`${API_URL}/${id}`);
+export const getLessonById = (id) => {
+  return api.get(`${API_URL}/${id}`)
+    .then(response => {
+      if (response.status === 404) {
+        throw new Error('Không tìm thấy bài học');
+      }
+      return response.data;
+    })
+    .catch(error => {
+      if (error.response?.status === 404) {
+        throw new Error('Không tìm thấy bài học');
+      }
+      throw error;
+    });
 };
-export const getLessionsByCourseId = (courseId) => {
+
+export const getLessonsByCourseId = (courseId) => {
   return api.get(`${API_URL}/course/${courseId}`);
 };
-export const createLessons = (data) => {
+
+export const createLesson = (data) => {
   return api.post(`${API_URL}`, data);
 };
 
-export const updateLessons = (id, data) => {
+export const updateLesson = (id, data) => {
   return api.put(`${API_URL}/${id}`, data);
 };
 
-export const deleteLessons = (id) => {
+export const deleteLesson = (id) => {
   return api.delete(`${API_URL}/${id}`);
 };

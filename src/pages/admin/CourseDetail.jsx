@@ -6,7 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Loader2, ArrowLeft, BookOpen, Clock, FileVideo, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import { getCourseById } from '@/api/courseApi';
-import { getLessionsByCourseId } from '@/api/lessionApi';
+import { getLessonsByCourseId } from '@/api/lessionApi';
 import {
   Dialog,
   DialogTrigger,
@@ -38,7 +38,7 @@ const CourseDetail = () => {
   const fetchCourseData = async () => {
     try {
       const courseResponse = await getCourseById(courseId);
-      const lessonsResponse = await getLessionsByCourseId(courseId);
+      const lessonsResponse = await getLessonsByCourseId(courseId);
 
       setCourse(courseResponse);
       setLessons(lessonsResponse.data);
