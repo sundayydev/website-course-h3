@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import axios from 'axios';
 import { Play, ArrowRight, ChevronDown, ChevronUp, ArrowLeft, Clock, Calendar } from 'lucide-react';
 import { FaPlayCircle } from 'react-icons/fa';
-import { getLessionsByCourseId, getLessonsById } from '@/api/lessionApi';
+import { getLessonsByCourseId, getLessonById } from '@/api/lessionApi';
+
 const DetailsPageCourse = () => {
   const { lessonId } = useParams();
   const navigate = useNavigate();
@@ -25,8 +25,8 @@ const DetailsPageCourse = () => {
   // Lưu tiến độ và ghi chú
   const saveProgress = () => {
     if (videoRef.current) {
-      console.log('VideoRef:', videoRef.current); // Kiểm tra giá trị videoRef
-      console.log('CurrentTime:', videoRef.current.currentTime); // Kiểm tra thời gian hiện tại
+      console.log('VideoRef:', videoRef.current); 
+      console.log('CurrentTime:', videoRef.current.currentTime); 
 
       if (!isNaN(videoRef.current.currentTime)) {
         const currentTime = Math.floor(videoRef.current.currentTime);
@@ -57,39 +57,36 @@ const DetailsPageCourse = () => {
     const fetchLesson = async () => {
       if (!lessonId) return;
       try {
-        const response = await getLessonsById(lessonId);
-        if (!response.data) {
+        const response = await getLessonById(lessonId);
+        if (!response) {
           throw new Error('Không có dữ liệu bài học');
         }
 
-        setCurrentLesson(response.data);
+        setCurrentLesson(response);
+        
+        if (response.courseId) {
+          const lessonsResponse = await getLessonsByCourseId(response.courseId);
+          if (!lessonsResponse || !Array.isArray(lessonsResponse.data)) {
+            throw new Error('Dữ liệu bài học không hợp lệ');
+          }
+          const lessons = lessonsResponse.data;
+          setCompletedLessons(lessons.filter((lesson) => lesson.isCompleted).length);
+          setSections([{ title: 'Danh sách bài học', lessons }]);
+        }
+
       } catch (err) {
         console.error('Lỗi khi lấy bài học:', err);
-        setError('Bài học không tồn tại.');
+        if (err.response?.status === 404) {
+          setError('Không tìm thấy bài học này.');
+        } else {
+          setError('Có lỗi xảy ra khi tải bài học. Vui lòng thử lại sau.');
+        }
       } finally {
         setLoading(false);
       }
     };
     fetchLesson();
   }, [lessonId]);
-
-  useEffect(() => {
-    const fetchLessonsByCourse = async () => {
-      if (!currentLesson?.courseId) return;
-      try {
-        const response = await getLessionsByCourseId(currentLesson.courseId);
-        if (!response.data || !Array.isArray(response.data)) {
-          throw new Error('Dữ liệu bài học không hợp lệ');
-        }
-        const lessons = response.data;
-        setCompletedLessons(lessons.filter((lesson) => lesson.isCompleted).length);
-        setSections([{ title: 'Danh sách bài học', lessons }]);
-      } catch (error) {
-        console.error('Lỗi khi lấy danh sách bài học:', error);
-      }
-    };
-    fetchLessonsByCourse();
-  }, [currentLesson?.courseId]);
 
   const formatDate = (isoString) => {
     if (!isoString) return 'Không rõ ngày';

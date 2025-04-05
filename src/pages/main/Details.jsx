@@ -13,8 +13,8 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getCourseById } from '@/api/courseApi';
-import { getLessionsByCourseId } from '@/api/lessionApi';
-import { getEnrollmentByUserId } from '@/api/enrollmentApi';
+import { getLessonsByCourseId } from '@/api/lessionApi';
+import { getEnrollmentByUserId, createEnrollment } from '@/api/enrollmentApi';
 import Review from './Review';
 import { jwtDecode } from 'jwt-decode';
 
@@ -46,7 +46,7 @@ const Details = () => {
 
     const fetchLessons = async () => {
       try {
-        const response = await getLessionsByCourseId(courseId);
+        const response = await getLessonsByCourseId(courseId);
         if (!response.data || !Array.isArray(response.data)) {
           throw new Error('Dữ liệu bài học không hợp lệ');
         }
@@ -68,11 +68,11 @@ const Details = () => {
         const enrolledCourses = response.data;
 
         const isAlreadyEnrolled = enrolledCourses.some(enrollment => 
-          enrollment.courseId === parseInt(courseId)
+          enrollment.courseId === courseId && enrollment.status === "Active"
         );
-
         setIsEnrolled(isAlreadyEnrolled);
-        
+        console.log(isAlreadyEnrolled);
+        console.log(enrolledCourses);
         console.log(isAlreadyEnrolled ? 'Sinh viên đã đăng ký khóa học này' : 'Sinh viên chưa đăng ký khóa học này');
 
       } catch (error) {
@@ -100,7 +100,7 @@ const Details = () => {
     setSelectedVideo('');
   };
 
-  const handleEnrollClick = () => {
+  const handleEnrollClick = async () => {
     const token = localStorage.getItem('authToken');
     
     try {
@@ -114,7 +114,23 @@ const Details = () => {
               navigate(`/detailsPageCourse/${lessons[0].id}`);
             }
           } else {
-            navigate(`/payment/${courseId}`);
+            if (!course.price) {
+              // Khóa học miễn phí - đăng ký trực tiếp
+              try {
+                await createEnrollment(courseId);
+                setIsEnrolled(true);
+                
+                if (lessons.length > 0) {
+                  navigate(`/detailsPageCourse/${lessons[0].id}`);
+                }
+              } catch (error) {
+                console.error('Lỗi khi đăng ký khóa học:', error);
+                alert('Có lỗi xảy ra khi đăng ký khóa học. Vui lòng thử lại!');
+              }
+            } else {
+              // Khóa học có phí - chuyển đến trang thanh toán  
+              navigate(`/payment/${courseId}`);
+            }
           }
           return;
         }
@@ -224,7 +240,6 @@ const Details = () => {
             </div>
           </div>
         )}
-
         {/* Hiển thị giá khóa học */}
         <div className="flex items-center text-lg font-bold text-rose-500">
           {course.price ? `${course.price.toLocaleString()} VND` : 'Miễn phí'}
