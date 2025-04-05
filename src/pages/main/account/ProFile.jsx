@@ -2,6 +2,7 @@ import { FaEnvelope, FaPhone, FaMapMarkerAlt, FaEdit, FaTimes, FaBirthdayCake, F
 import { useState, useEffect } from 'react';
 import { getUserInfo, updateUserInfo, uploadProfileImage } from '@/api/userApi';
 import { toast } from 'react-toastify';
+import { jwtDecode } from 'jwt-decode';
 
 const ProfilePage = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -13,7 +14,7 @@ const ProfilePage = () => {
     fullname: '',
     email: '',
     birthDate: '',
-    password: '',
+    password: '', // Giữ rỗng, không lấy từ dữ liệu hiện tại
     profileImage: null
   });
 
@@ -21,19 +22,20 @@ const ProfilePage = () => {
     const fetchUserData = async () => {
       try {
         const response = await getUserInfo();
-        console.log("User data received:", response);
-        setUser(response.data);
+        console.log("User data received:", response.data);
+        const userData = response.data;
+        setUser(userData);
         setEditForm({
-          fullname: response.data.fullname || '',
-          email: response.data.email || '',
-          birthDate: response.data.birthDate || '',
-          password: '',
-          profileImage: response.data.profileImage || null
+          fullname: userData.fullname || '',
+          email: userData.email || '',
+          birthDate: userData.birthDate ? new Date(userData.birthDate).toISOString().slice(0, 10) : '',
+          password: '', // Không gán giá trị từ backend
+          profileImage: userData.profileImage || null
         });
         setIsLoading(false);
       } catch (err) {
         console.error("Error fetching user data:", err);
-        setError("Failed to load user data. Please try again later.");
+        setError("Không thể tải dữ liệu người dùng. Vui lòng thử lại sau.");
         setIsLoading(false);
       }
     };
@@ -43,26 +45,35 @@ const ProfilePage = () => {
 
   const handleEditSubmit = async (e) => {
     e.preventDefault();
+    setIsLoading(true);
     try {
-      const userId = user.id;
-      const formData = new FormData();
-      
-      // Only include password if it was changed
-      const dataToUpdate = {...editForm};
-      if (!dataToUpdate.password) {
-        delete dataToUpdate.password;
+      const token = localStorage.getItem('authToken');
+      const decodedToken = jwtDecode(token);
+      const userId = decodedToken.id;
+
+      const dataToUpdate = {
+        fullname: editForm.fullname,
+        email: editForm.email,
+        birthDate: editForm.birthDate ? new Date(editForm.birthDate).toISOString() : null,
+      };
+
+      // Chỉ thêm password nếu người dùng nhập giá trị mới
+      if (editForm.password.trim()) {
+        dataToUpdate.password = editForm.password;
       }
 
-      // Handle file upload separately if exists
-      if (editForm.profileImage) {
-        formData.append('profileImage', editForm.profileImage);
-        await uploadProfileImage(formData);
+      console.log("Data to update:", dataToUpdate);
+
+      const updatedUser = await updateUserInfo(userId, dataToUpdate);
+      setUser(updatedUser);
+
+      if (editForm.profileImage && editForm.profileImage instanceof File) {
+        const imageResponse = await uploadProfileImage(editForm.profileImage);
+        setUser(prev => ({ ...prev, profileImage: imageResponse.profileImage }));
       }
 
-      const response = await updateUserInfo(userId, dataToUpdate);
-      setUser(response);
       setIsEditModalOpen(false);
-      toast.success('Profile updated successfully!', {
+      toast.success('Cập nhật hồ sơ thành công!', {
         position: "top-right",
         autoClose: 3000,
         hideProgressBar: false,
@@ -71,18 +82,13 @@ const ProfilePage = () => {
         draggable: true
       });
     } catch (err) {
-      console.error("Error updating user:", err);
-      if (err.response?.status === 405) {
-        toast.error("Method not allowed. Please check your permissions.", {
-          position: "top-right",
-          autoClose: 3000
-        });
-      } else {
-        toast.error("Failed to update profile. Please try again later.", {
-          position: "top-right",
-          autoClose: 3000
-        });
-      }
+      console.error("Lỗi khi cập nhật người dùng:", err);
+      toast.error(err.response?.data?.message || 'Không thể cập nhật hồ sơ. Vui lòng thử lại sau.', {
+        position: "top-right",
+        autoClose: 3000
+      });
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -94,35 +100,15 @@ const ProfilePage = () => {
     }));
   };
 
-  const handleImageUpload = async (e) => {
+  const handleImageChange = (e) => {
     const file = e.target.files[0];
-    if (!file) return;
-
-    try {
-      const response = await uploadProfileImage(file);
-      setUser(prev => ({
-        ...prev,
-        profileImage: response.profileImage
-      }));
-      toast.success('Profile image updated successfully!', {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true
-      });
-    } catch (err) {
-      console.error("Error uploading image:", err);
-      toast.error(err.message || "Failed to upload image. Please try again.", {
-        position: "top-right",
-        autoClose: 3000
-      });
+    if (file) {
+      setEditForm(prev => ({ ...prev, profileImage: file }));
     }
   };
 
   if (isLoading) {
-    return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+    return <div className="min-h-screen flex items-center justify-center">Đang tải...</div>;
   }
 
   if (error) {
@@ -134,7 +120,7 @@ const ProfilePage = () => {
             onClick={() => setError(null)}
             className="mt-4 px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700"
           >
-            Try Again
+            Thử lại
           </button>
         </div>
       </div>
@@ -154,38 +140,39 @@ const ProfilePage = () => {
                 className="rounded-full w-32 h-32 sm:w-48 sm:h-48 mx-auto mb-4 border-4 border-pink-500 transition-transform duration-300 hover:scale-105"
                 onClick={() => setIsModalOpen(true)}
               />
-
               <label className="absolute bottom-4 right-4 bg-pink-600 text-white rounded-full p-2 cursor-pointer hover:bg-pink-700 transition-colors">
                 <FaCamera />
                 <input 
                   type="file" 
                   className="hidden" 
                   accept="image/*"
-                  onChange={handleImageUpload}
+                  onChange={handleImageChange}
                 />
               </label>
             </div>
-            <h1 className="text-xl sm:text-2xl font-bold text-pink-500 mb-1 sm:mb-2">{user?.fullname || "Loading..."}</h1>
-            <p className="text-gray-600 text-sm sm:text-base">{user?.role || "User"}</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-pink-500 mb-1 sm:mb-2">
+              {user?.fullname || "Đang tải..."}
+            </h1>
+            <p className="text-gray-600 text-sm sm:text-base">{user?.role || "Người dùng"}</p>
             <div className="flex justify-center mt-3 sm:mt-4">
               <button 
                 className="bg-pink-600 text-white px-4 sm:px-6 py-2 rounded-lg hover:bg-pink-700 transition-colors duration-300 flex items-center gap-2"
                 onClick={() => setIsEditModalOpen(true)}
               >
-                <FaEdit /> Edit Profile
+                <FaEdit /> Chỉnh sửa hồ sơ
               </button>
             </div>
           </div>
 
           {/* Thông tin chi tiết */}
           <div className="w-full md:w-2/3 md:pl-8">
-            <Section title="About Me">
+            <Section title="Giới thiệu">
               <p className="text-gray-700 text-sm sm:text-base">
-                {user?.bio || "No bio available"}
+                {user?.bio || "Chưa có thông tin giới thiệu"}
               </p>
             </Section>
 
-            <Section title="Skills">
+            <Section title="Kỹ năng">
               <div className="flex flex-wrap gap-2">
                 {(user?.skills || ['JavaScript', 'React', 'Node.js', 'Python', 'SQL']).map((skill) => (
                   <SkillTag key={skill} skill={skill} />
@@ -193,14 +180,14 @@ const ProfilePage = () => {
               </div>
             </Section>
 
-            <Section title="Contact Information">
+            <Section title="Thông tin liên hệ">
               <ul className="space-y-2 text-gray-700">
-                <ContactItem icon={<FaEnvelope />} text={user?.email || "No email available"} />
-                <ContactItem icon={<FaPhone />} text={user?.phone || "No phone available"} />
-                <ContactItem icon={<FaMapMarkerAlt />} text={user?.address || "No address available"} />
+                <ContactItem icon={<FaEnvelope />} text={user?.email || "Chưa có email"} />
+                <ContactItem icon={<FaPhone />} text={user?.phone || "Chưa có số điện thoại"} />
+                <ContactItem icon={<FaMapMarkerAlt />} text={user?.address || "Chưa có địa chỉ"} />
                 <ContactItem 
                   icon={<FaBirthdayCake />} 
-                  text={user?.birthDate ? new Date(user.birthDate).toLocaleDateString('vi-VN') : "No birthday available"}
+                  text={user?.birthDate ? new Date(user.birthDate).toLocaleDateString('vi-VN') : "Chưa có ngày sinh"}
                 />
               </ul>
             </Section>
@@ -208,7 +195,7 @@ const ProfilePage = () => {
         </div>
       </div>
 
-      {/* Modal Hiển thị ảnh khi click vào Avatar */}
+      {/* Modal Hiển thị ảnh */}
       {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-75 p-4">
           <div className="relative w-full max-w-xs sm:max-w-md">
@@ -231,17 +218,18 @@ const ProfilePage = () => {
       {isEditModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-75 p-4 z-50">
           <div className="bg-white rounded-xl w-full max-w-md p-6">
-            <h2 className="text-2xl font-bold text-pink-500 mb-4">Edit Profile</h2>
+            <h2 className="text-2xl font-bold text-pink-500 mb-4">Chỉnh sửa hồ sơ</h2>
             <form onSubmit={handleEditSubmit}>
               <div className="space-y-4">
                 <div>
-                  <label className="block text-gray-700 mb-2">Full Name</label>
+                  <label className="block text-gray-700 mb-2">Họ và tên</label>
                   <input
                     type="text"
                     name="fullname"
                     value={editForm.fullname}
                     onChange={handleInputChange}
                     className="w-full border rounded-lg p-2"
+                    required
                   />
                 </div>
                 <div>
@@ -252,27 +240,38 @@ const ProfilePage = () => {
                     value={editForm.email}
                     onChange={handleInputChange}
                     className="w-full border rounded-lg p-2"
+                    required
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-700 mb-2">Password</label>
+                  <label className="block text-gray-700 mb-2">Mật khẩu mới</label>
                   <input
                     type="password"
                     name="password"
                     value={editForm.password}
                     onChange={handleInputChange}
-                    placeholder="Leave blank to keep current password"
+                    placeholder="Nhập mật khẩu mới nếu muốn thay đổi"
                     className="w-full border rounded-lg p-2"
                   />
                 </div>
                 <div>
-                  <label className="block text-gray-700 mb-2">Birth Date</label>
+                  <label className="block text-gray-700 mb-2">Ngày sinh</label>
                   <input
                     type="date"
                     name="birthDate"
                     value={editForm.birthDate}
                     onChange={handleInputChange}
                     className="w-full border rounded-lg p-2"
+                  />
+                </div>
+                <div>
+                  <label className="block text-gray-700 mb-2">Ảnh đại diện</label>
+                  <input
+                    type="file"
+                    name="profileImage"
+                    onChange={handleImageChange}
+                    className="w-full border rounded-lg p-2"
+                    accept="image/*"
                   />
                 </div>
               </div>
@@ -282,13 +281,14 @@ const ProfilePage = () => {
                   onClick={() => setIsEditModalOpen(false)}
                   className="px-4 py-2 text-gray-600 hover:text-gray-800"
                 >
-                  Cancel
+                  Hủy
                 </button>
                 <button
                   type="submit"
                   className="px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700"
+                  disabled={isLoading}
                 >
-                  Save Changes
+                  {isLoading ? 'Đang lưu...' : 'Lưu thay đổi'}
                 </button>
               </div>
             </form>
@@ -299,7 +299,7 @@ const ProfilePage = () => {
   );
 };
 
-// Component hiển thị từng phần nội dung (About, Skills, Contact)
+// Các component phụ
 const Section = ({ title, children }) => (
   <div className="mb-4 sm:mb-6">
     <h2 className="text-lg sm:text-xl font-semibold text-pink-500 mb-2 sm:mb-4">{title}</h2>
@@ -307,14 +307,12 @@ const Section = ({ title, children }) => (
   </div>
 );
 
-// Component hiển thị từng kỹ năng với hiệu ứng hover
 const SkillTag = ({ skill }) => (
   <span className="px-3 py-1 rounded-full text-xs sm:text-sm bg-indigo-100 text-pink-500 transition-colors duration-300 cursor-pointer hover:bg-pink-700 hover:text-white">
     {skill}
   </span>
 );
 
-// Component hiển thị thông tin liên hệ với icon
 const ContactItem = ({ icon, text }) => (
   <li className="flex items-center gap-2 text-sm sm:text-lg">
     <span className="text-pink-500">{icon}</span>

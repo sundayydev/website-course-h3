@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { getPostById } from '../../api/postApi';
+import CommentPost from './Comment';
 
 const PostDetails = () => {
   const { id } = useParams(); // Lấy ID từ URL
@@ -72,6 +73,7 @@ const PostDetails = () => {
           ))}
         </div>
       )}
+      <CommentPost postId={id} />
     </div>
   );
 };

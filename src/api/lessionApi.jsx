@@ -1,39 +1,74 @@
-import api from './axios'; // 🔹 Import Axios đã cấu hình
+import api from './axios';
 
-const API_URL = '/lessons'; // Vì `baseURL` đã có sẵn `/api`
+const API_URL = '/lesson';
 
-export const getLessons = () => {
-  return api.get(`${API_URL}`);
+// Lấy tất cả bài học
+export const getLessons = async () => {
+  try {
+    const response = await api.get(`${API_URL}`);
+    return response.data;
+  } catch (error) {
+    throw new Error('Không thể lấy danh sách bài học');
+  }
 };
 
-export const getLessonById = (id) => {
-  return api.get(`${API_URL}/${id}`)
-    .then(response => {
-      if (response.status === 404) {
-        throw new Error('Không tìm thấy bài học');
-      }
-      return response.data;
-    })
-    .catch(error => {
-      if (error.response?.status === 404) {
-        throw new Error('Không tìm thấy bài học');
-      }
-      throw error;
+// Lấy bài học theo ID
+export const getLessonById = async (id) => {
+  try {
+    const response = await api.get(`${API_URL}/${id}`);
+    return response.data;
+  } catch (error) {
+    if (error.response?.status === 404) {
+      throw new Error('Không tìm thấy bài học');
+    }
+    throw new Error('Lỗi khi lấy thông tin bài học');
+  }
+};
+
+// Lấy bài học theo khóa học
+export const getLessonsByCourseId = async (courseId) => {
+  try {
+    const response = await api.get(`${API_URL}/course/${courseId}`);
+    console.log('API Response:', response);
+    if (!Array.isArray(response.data)) {
+      throw new Error('Dữ liệu bài học không phải mảng');
+    }
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching lessons:', {
+      status: error.response?.status,
+      data: error.response?.data,
+      message: error.message,
     });
+    throw new Error('Không thể lấy danh sách bài học của khóa học');
+  }
+};
+// Tạo bài học mới
+export const createLesson = async (lessonData) => {
+  try {
+    const response = await api.post(API_URL, lessonData);
+    return response.data;
+  } catch (error) {
+    throw new Error('Không thể tạo bài học mới');
+  }
 };
 
-export const getLessonsByCourseId = (courseId) => {
-  return api.get(`${API_URL}/course/${courseId}`);
+// Cập nhật bài học
+export const updateLesson = async (id, lessonData) => {
+  try {
+    const response = await api.put(`${API_URL}/${id}`, lessonData);
+    return response.data;
+  } catch (error) {
+    throw new Error('Không thể cập nhật bài học');
+  }
 };
 
-export const createLesson = (data) => {
-  return api.post(`${API_URL}`, data);
-};
-
-export const updateLesson = (id, data) => {
-  return api.put(`${API_URL}/${id}`, data);
-};
-
-export const deleteLesson = (id) => {
-  return api.delete(`${API_URL}/${id}`);
+// Xóa bài học
+export const deleteLesson = async (id) => {
+  try {
+    const response = await api.delete(`${API_URL}/${id}`);
+    return response.data;
+  } catch (error) {
+    throw new Error('Không thể xóa bài học');
+  }
 };
