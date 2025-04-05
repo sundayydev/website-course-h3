@@ -16,38 +16,83 @@ const getUserId = () => {
   return decoded.id;
 };
 
-export const getEnrollment = () => api.get(API_URL);
+export const getEnrollments = async () => {
+  const token = getAuthToken();
+  return await api.get(API_URL, {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+};
 
 export const getEnrollmentByUserId = async () => {
   const token = getAuthToken();
   const userId = getUserId();
   
-  const response = await api.get(`${API_URL}/user/${userId}`, {
+  return await api.get(`${API_URL}/user/${userId}`, {
     headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
+      Authorization: `Bearer ${token}`
+    }
   });
-  return response;
 };
 
-export const getEnrollmentById = (id) => api.get(`${API_URL}/${id}`);
+export const getEnrollmentById = async (id) => {
+  const token = getAuthToken();
+  return await api.get(`${API_URL}/${id}`, {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+};
 
 export const createEnrollment = async (courseId) => {
-  const token = getAuthToken();
-  const userId = getUserId();
+  try {
+    const token = getAuthToken();
+    const userId = getUserId();
 
-  return await api.post(API_URL, 
-    { userId, courseId },
+    const response = await api.post(
+      API_URL,
+      {
+        UserId: userId,
+        CourseId: courseId,
+        Progress: 0,
+        CompletedLessons: 0,
+        Status: "Active"
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      }
+    );
+    return response;
+  } catch (error) {
+    if (error.response?.data) {
+      throw new Error(JSON.stringify(error.response.data));
+    }
+    throw error;
+  }
+};
+
+export const updateEnrollment = async (id, data) => {
+  const token = getAuthToken();
+  return await api.put(
+    `${API_URL}/${id}`, 
+    data,
     {
       headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json', 
-      },
+        Authorization: `Bearer ${token}`
+      }
     }
   );
 };
 
-export const updateEnrollment = (id, data) => api.put(`${API_URL}/${id}`, data);
-
-export const deleteEnrollment = (id) => api.delete(`${API_URL}/${id}`);
+export const deleteEnrollment = async (id) => {
+  const token = getAuthToken();
+  return await api.delete(`${API_URL}/${id}`, {
+    headers: {
+      Authorization: `Bearer ${token}`
+    }
+  });
+};

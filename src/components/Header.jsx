@@ -280,36 +280,36 @@ const Header = () => {
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <button className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-500 text-white font-bold shadow-xl hover:bg-blue-800">
-                {user ? user.fullname.charAt(0).toUpperCase() : '?'}
+                {user?.fullname?.charAt(0).toUpperCase() || '?'}
               </button>
             </DropdownMenuTrigger>
             <DropdownMenuContent className="w-80 p-2 shadow-lg rounded-2xl m-4">
               <div className="flex items-center gap-3 p-3">
                 <Avatar className="w-10 h-10">
                   <AvatarFallback className="bg-blue-500 text-white font-bold">
-                    {user ? user.fullname.charAt(0).toUpperCase() : '?'}
+                    {user?.fullname?.charAt(0).toUpperCase() || '?'}
                   </AvatarFallback>
                 </Avatar>
                 <div>
-                  <p className="font-semibold">{user ? user.fullname : 'Người dùng'}</p>
-                  <p className="text-gray-500 text-sm break-words">{user ? user.email : 'email'}</p>
+                  <p className="font-semibold">{user?.fullname || 'Người dùng'}</p>
+                  <p className="text-gray-500 text-sm break-words">{user?.email || 'email'}</p>
                 </div>
               </div>
               <hr />
-              <DropdownMenuItem className="p-3 hover:bg-gray-100 rounded-lg cursor-pointer">
+              <DropdownMenuItem className="p-3 hover:bg-gray-100 rounded-lg cursor-pointer" onClick={() => navigate('/profile')}>
                 Trang cá nhân
               </DropdownMenuItem>
-              <DropdownMenuItem className="p-3 hover:bg-gray-100 rounded-lg cursor-pointer">
+              <DropdownMenuItem className="p-3 hover:bg-gray-100 rounded-lg cursor-pointer" onClick={() => navigate('/write-blog')}>
                 Viết blog
               </DropdownMenuItem>
-              <DropdownMenuItem className="p-3 hover:bg-gray-100 rounded-lg cursor-pointer">
+              <DropdownMenuItem className="p-3 hover:bg-gray-100 rounded-lg cursor-pointer" onClick={() => navigate('/my-posts')}>
                 Bài viết của tôi
               </DropdownMenuItem>
-              <DropdownMenuItem className="p-3 hover:bg-gray-100 rounded-lg cursor-pointer">
+              <DropdownMenuItem className="p-3 hover:bg-gray-100 rounded-lg cursor-pointer" onClick={() => navigate('/saved-posts')}>
                 Bài viết đã lưu
               </DropdownMenuItem>
               <hr />
-              <DropdownMenuItem className="p-3 hover:bg-gray-100 rounded-lg cursor-pointer">
+              <DropdownMenuItem className="p-3 hover:bg-gray-100 rounded-lg cursor-pointer" onClick={() => navigate('/settings')}>
                 Cài đặt
               </DropdownMenuItem>
               <DropdownMenuItem
