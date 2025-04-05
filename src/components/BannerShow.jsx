@@ -2,8 +2,8 @@ import React, { useState, useEffect } from 'react';
 const BannerShow = () => {
   const images = [
     './src/assets/imgs/banner1.png',
-    './src/assets/imgs/banner1.png',
-    './src/assets/imgs/banner1.png',
+    './src/assets/imgs/banner2.png',
+    './src/assets/imgs/banner3.png',
   ];
 
   const [currentIndex, setCurrentIndex] = useState(0);

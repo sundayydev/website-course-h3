@@ -17,13 +17,13 @@ const Footer = () => {
               Học Lập Trình Cùng H3
             </a>
           </h1>
-          <p className="mt-3">
+          <p className="mt-3 text-sm">
             <strong>Điện thoại:</strong> 07 9782 3018
           </p>
-          <p>
+          <p className="text-sm">
             <strong>Email:</strong> contact@developer.edu.vn
           </p>
-          <p>
+          <p className="text-sm">
             <strong>Địa chỉ:</strong> Số 1, ngõ 41, Trần Duy Hưng, Cầu Giấy, Hà Nội
           </p>
           <img
@@ -33,10 +33,10 @@ const Footer = () => {
           />
         </div>
 
-        {/* Cột 2: Về F8 */}
+        {/* Cột 2: Về H3 */}
         <div>
           <h3 className="font-semibold text-lg mb-3 text-white">VỀ H3</h3>
-          <ul className="space-y-2">
+          <ul className="space-y-2 text-sm">
             <li>
               <Link to="/about" className="hover:text-white">
                 Giới thiệu
@@ -63,7 +63,7 @@ const Footer = () => {
         {/* Cột 3: Sản phẩm */}
         <div>
           <h3 className="font-semibold text-lg mb-3 text-white">SẢN PHẨM</h3>
-          <ul className="space-y-2">
+          <ul className="space-y-2 text-sm">
             <li>
               <a href="#" className="hover:text-white">
                 Game Nester
@@ -100,7 +100,7 @@ const Footer = () => {
         {/* Cột 4: Công cụ */}
         <div>
           <h3 className="font-semibold text-lg mb-3 text-white">CÔNG CỤ</h3>
-          <ul className="space-y-2">
+          <ul className="space-y-2 text-sm">
             <li>
               <a href="#" className="hover:text-white">
                 Tạo CV xin việc
@@ -139,13 +139,13 @@ const Footer = () => {
           <h3 className="font-semibold text-lg mb-3 text-white">
             CÔNG TY CỔ PHẦN CÔNG NGHỆ GIÁO DỤC H3
           </h3>
-          <p>
-            <strong>Mã số thuế:</strong> 0909090909 
+          <p className="text-sm">
+            <strong>Mã số thuế:</strong> 0909090909
           </p>
-          <p>
+          <p className="text-sm">
             <strong>Ngày thành lập:</strong> 01/03/2025
           </p>
-          <p className="mt-2">
+          <p className="mt-2 text-sm">
             Lĩnh vực hoạt động: Giáo dục, công nghệ - lập trình. Chúng tôi tập trung xây dựng và
             phát triển các sản phẩm mang lại giá trị cho cộng đồng lập trình viên Việt Nam.
           </p>
@@ -166,7 +166,7 @@ const Footer = () => {
       </div>
 
       {/* Copyright */}
-      <div className="text-center text-gray-500 text-sm mt-10">
+      <div className="text-center text-gray-500 text-xs mt-10">
         © 2025 H3. Nền tảng học lập trình hàng đầu Việt Nam (Bốc phét)
       </div>
     </footer>

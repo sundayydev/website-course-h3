@@ -53,40 +53,45 @@ const DetailsPageCourse = () => {
     }
   }, [videoProgress]);
 
-  useEffect(() => {
-    const fetchLesson = async () => {
-      if (!lessonId) return;
-      try {
-        const response = await getLessonById(lessonId);
-        if (!response) {
-          throw new Error('Không có dữ liệu bài học');
-        }
-
-        setCurrentLesson(response);
-        
-        if (response.courseId) {
-          const lessonsResponse = await getLessonsByCourseId(response.courseId);
-          if (!lessonsResponse || !Array.isArray(lessonsResponse.data)) {
-            throw new Error('Dữ liệu bài học không hợp lệ');
-          }
-          const lessons = lessonsResponse.data;
-          setCompletedLessons(lessons.filter((lesson) => lesson.isCompleted).length);
-          setSections([{ title: 'Danh sách bài học', lessons }]);
-        }
-
-      } catch (err) {
-        console.error('Lỗi khi lấy bài học:', err);
-        if (err.response?.status === 404) {
-          setError('Không tìm thấy bài học này.');
-        } else {
-          setError('Có lỗi xảy ra khi tải bài học. Vui lòng thử lại sau.');
-        }
-      } finally {
-        setLoading(false);
+ useEffect(() => {
+  const fetchLesson = async () => {
+    if (!lessonId) {
+      setError('Không có lessonId trong URL');
+      setLoading(false);
+      return;
+    }
+    console.log('lessonId từ useParams:', lessonId); // Log để kiểm tra
+    try {
+      const lessonResponse = await getLessonById(lessonId);
+      console.log('Response từ getLessonById:', lessonResponse); // Log dữ liệu trả về
+      if (!lessonResponse) {
+        throw new Error('Không có dữ liệu bài học');
       }
-    };
-    fetchLesson();
-  }, [lessonId]);
+      setCurrentLesson(lessonResponse); // Sửa từ lessonResponse.data thành lessonResponse
+      
+      if (lessonResponse.courseId) {
+        const lessonsResponse = await getLessonsByCourseId(lessonResponse.courseId);
+        console.log('Response từ getLessonsByCourseId:', lessonsResponse); // Log dữ liệu
+        if (!lessonsResponse || !Array.isArray(lessonsResponse)) {
+          throw new Error('Dữ liệu bài học không hợp lệ');
+        }
+        const lessons = lessonsResponse;
+        setCompletedLessons(lessons.filter((lesson) => lesson.isCompleted).length);
+        setSections([{ title: 'Danh sách bài học', lessons }]);
+      }
+    } catch (err) {
+      console.error('Lỗi khi lấy bài học:', err);
+      if (err.response?.status === 404) {
+        setError('Không tìm thấy bài học này.');
+      } else {
+        setError('Có lỗi xảy ra khi tải bài học. Vui lòng thử lại sau.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+  fetchLesson();
+}, [lessonId]);
 
   const formatDate = (isoString) => {
     if (!isoString) return 'Không rõ ngày';
@@ -135,20 +140,20 @@ const DetailsPageCourse = () => {
               ref={videoRef}
               width="1000px"
               height="500px"
-              src={currentLesson.videoUrl}
-              title={currentLesson.title}
+              src={currentLesson?.videoUrl}
+              title={currentLesson?.title}
               allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
               allowFullScreen
             />
           </div>
 
           <div className="bg-white border-t border-gray-200 py-6 px-8">
-            <h2 className="text-2xl font-bold">{currentLesson.title}</h2>
+            <h2 className="text-2xl font-bold">{currentLesson?.title}</h2>
             <div className="flex items-center text-gray-500 mb-6">
               <Calendar size={16} className="mr-2" />
-              <span className="text-sm mr-3">{formatDate(currentLesson.createdAt)}</span>
+              <span className="text-sm mr-3">{formatDate(currentLesson?.createdAt)}</span>
             </div>
-            <p>{currentLesson.content || 'Không có mô tả.'}</p>
+            <p>{currentLesson?.content || 'Không có mô tả.'}</p>
             <button
               onClick={saveProgress}
               className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg"

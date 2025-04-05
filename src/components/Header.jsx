@@ -245,83 +245,87 @@ const Header = () => {
         <FaSearch className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
       </div>
 
-      <div>
-        <button
-          className="p-3 bg-yellow-500 rounded-full hover:bg-yellow-400 transition-all"
-          onClick={togglePopup}
+      <div className="flex items-center justify-between space-x-4">
+  {/* Nút "Khóa học của tôi" */}
+  <div>
+    <button
+      className="p-3"
+      onClick={togglePopup}
+    >
+      Khóa học của tôi
+    </button>
+  </div>
+
+  {/* Các nút đăng nhập/đăng ký hoặc menu người dùng */}
+  <div className="flex items-center space-x-4">
+    {!isLoggedIn && (
+      <>
+        <Button
+          variant="outline"
+          className="text-black font-semibold rounded-full hidden md:block"
+          onClick={() => setIsRegisterOpen(true)}
         >
-          <FaBook size={20} color="white" />
-        </button>
-      </div>
+          Đăng ký
+        </Button>
+        <Button
+          className="bg-gradient-to-r from-pink-500 to-pink-600 text-white px-4 py-2 rounded-full font-semibold"
+          onClick={() => setIsLoginOpen(true)}
+        >
+          Đăng nhập
+        </Button>
+      </>
+    )}
 
-      {/* Di chuyển popup lệch sang trái một chút */}
-      <CoursePopup isOpen={isPopupOpen} onClose={togglePopup} />
-
-      <div className="flex items-center space-x-4">
-        {!isLoggedIn && (
-          <>
-            <Button
-              variant="outline"
-              className="text-black font-semibold rounded-full hidden md:block"
-              onClick={() => setIsRegisterOpen(true)}
-            >
-              Đăng ký
-            </Button>
-            <Button
-              className="bg-gradient-to-r from-pink-500 to-pink-600 text-white px-4 py-2 rounded-full font-semibold"
-              onClick={() => setIsLoginOpen(true)}
-            >
-              Đăng nhập
-            </Button>
-          </>
-        )}
-
-        {isLoggedIn && (
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-500 text-white font-bold shadow-xl hover:bg-blue-800">
+    {isLoggedIn && (
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <button className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-500 text-white font-bold shadow-xl hover:bg-blue-800">
+            {user?.fullname?.charAt(0).toUpperCase() || '?'}
+          </button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent className="w-80 p-2 shadow-lg rounded-2xl m-4">
+          <div className="flex items-center gap-3 p-3">
+            <Avatar className="w-10 h-10">
+              <AvatarFallback className="bg-blue-500 text-white font-bold">
                 {user?.fullname?.charAt(0).toUpperCase() || '?'}
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-80 p-2 shadow-lg rounded-2xl m-4">
-              <div className="flex items-center gap-3 p-3">
-                <Avatar className="w-10 h-10">
-                  <AvatarFallback className="bg-blue-500 text-white font-bold">
-                    {user?.fullname?.charAt(0).toUpperCase() || '?'}
-                  </AvatarFallback>
-                </Avatar>
-                <div>
-                  <p className="font-semibold">{user?.fullname || 'Người dùng'}</p>
-                  <p className="text-gray-500 text-sm break-words">{user?.email || 'email'}</p>
-                </div>
-              </div>
-              <hr />
-              <DropdownMenuItem className="p-3 hover:bg-gray-100 rounded-lg cursor-pointer" onClick={() => navigate('/profile')}>
-                Trang cá nhân
-              </DropdownMenuItem>
-              <DropdownMenuItem className="p-3 hover:bg-gray-100 rounded-lg cursor-pointer" onClick={() => navigate('/write-blog')}>
-                Viết blog
-              </DropdownMenuItem>
-              <DropdownMenuItem className="p-3 hover:bg-gray-100 rounded-lg cursor-pointer" onClick={() => navigate('/my-posts')}>
-                Bài viết của tôi
-              </DropdownMenuItem>
-              <DropdownMenuItem className="p-3 hover:bg-gray-100 rounded-lg cursor-pointer" onClick={() => navigate('/saved-posts')}>
-                Bài viết đã lưu
-              </DropdownMenuItem>
-              <hr />
-              <DropdownMenuItem className="p-3 hover:bg-gray-100 rounded-lg cursor-pointer" onClick={() => navigate('/settings')}>
-                Cài đặt
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="p-3 hover:bg-gray-100 rounded-lg cursor-pointer text-red-500"
-                onClick={handleLogout}
-              >
-                Đăng xuất
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        )}
-      </div>
+              </AvatarFallback>
+            </Avatar>
+            <div>
+              <p className="font-semibold">{user?.fullname || 'Người dùng'}</p>
+              <p className="text-gray-500 text-sm break-words">{user?.email || 'email'}</p>
+            </div>
+          </div>
+          <hr />
+          <DropdownMenuItem className="p-3 hover:bg-gray-100 rounded-lg cursor-pointer" onClick={() => navigate('/profile')}>
+            Trang cá nhân
+          </DropdownMenuItem>
+          <DropdownMenuItem className="p-3 hover:bg-gray-100 rounded-lg cursor-pointer" onClick={() => navigate('/write-blog')}>
+            Viết blog
+          </DropdownMenuItem>
+          <DropdownMenuItem className="p-3 hover:bg-gray-100 rounded-lg cursor-pointer" onClick={() => navigate('/my-posts')}>
+            Bài viết của tôi
+          </DropdownMenuItem>
+          <DropdownMenuItem className="p-3 hover:bg-gray-100 rounded-lg cursor-pointer" onClick={() => navigate('/saved-posts')}>
+            Bài viết đã lưu
+          </DropdownMenuItem>
+          <hr />
+          <DropdownMenuItem className="p-3 hover:bg-gray-100 rounded-lg cursor-pointer" onClick={() => navigate('/settings')}>
+            Cài đặt
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            className="p-3 hover:bg-gray-100 rounded-lg cursor-pointer text-red-500"
+            onClick={handleLogout}
+          >
+            Đăng xuất
+          </DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    )}
+  </div>
+</div>
+
+{/* Popup khóa học */}
+<CoursePopup isOpen={isPopupOpen} onClose={togglePopup} />
 
       {/* Popup Login */}
       {isLoginOpen && (

@@ -26,6 +26,7 @@ const Details = () => {
   const [videoModalOpen, setVideoModalOpen] = useState(false);
   const [selectedVideo, setSelectedVideo] = useState('');
   const [isEnrolled, setIsEnrolled] = useState(false);
+  const [error, setError] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -33,28 +34,30 @@ const Details = () => {
 
     const fetchCourse = async () => {
       try {
+        console.log('CourseId:', courseId); // Log courseId trước khi gọi API
         const data = await getCourseById(courseId);
         if (data) {
+          console.log('Course data:', data); // Log data trả về từ API
           setCourse(data);
         } else {
-          console.error('Không có dữ liệu khóa học');
+          setError('Không có dữ liệu khóa học');
         }
       } catch (error) {
+        setError('Lỗi khi lấy thông tin khóa học');
         console.error('Lỗi khi lấy thông tin khóa học:', error);
       }
     };
 
-    const fetchLessons = async () => {
-      try {
-        const response = await getLessonsByCourseId(courseId);
-        if (!response.data || !Array.isArray(response.data)) {
-          throw new Error('Dữ liệu bài học không hợp lệ');
-        }
-        setLessons(response.data);
-      } catch (error) {
-        console.error('Lỗi khi lấy danh sách bài học:', error);
-      }
-    };
+   const fetchLessons = async () => {
+  try {
+    const data = await getLessonsByCourseId(courseId);
+    console.log('Fetched lessons:', data);
+    setLessons(data);
+  } catch (error) {
+    setError('Không thể lấy danh sách bài học của khóa học');
+    console.error('Error in fetchLessons:', error);
+  }
+};
 
     const checkUserEnrollment = async () => {
       const token = localStorage.getItem('authToken');
@@ -145,6 +148,10 @@ const Details = () => {
       navigate('/login');
     }
   };
+
+  if (error) {
+    return <p className="text-center text-red-500 pt-10">{error}</p>;
+  }
 
   if (!course) {
     return <p className="text-center">Đang tải thông tin khóa học...</p>;
