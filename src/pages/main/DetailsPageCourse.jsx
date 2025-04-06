@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Play, ArrowRight, ChevronDown, ChevronUp, ArrowLeft, Clock, Calendar } from 'lucide-react';
 import { FaPlayCircle } from 'react-icons/fa';
-import { getLessonsByCourseId, getLessonById } from '@/api/lessionApi';
+import { getLessonsByCourseId, getLessonById } from '@/api/lessonApi';
 
 const DetailsPageCourse = () => {
   const { lessonId } = useParams();

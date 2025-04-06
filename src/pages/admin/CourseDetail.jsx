@@ -68,8 +68,11 @@ const CourseDetail = () => {
       const courseResponse = await getCourseById(courseId);
       const lessonsResponse = await getLessonsByCourseId(courseId);
 
+      console.log('courseResponse: ', courseResponse);
+      console.log('lessonsResponse: ', lessonsResponse);
+
       setCourse(courseResponse);
-      setLessons(lessonsResponse.data);
+      setLessons(lessonsResponse);
 
       console.log('courseResponse: ', courseResponse);
       console.log('lessonsResponse: ', lessonsResponse);

@@ -13,7 +13,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getCourseById } from '@/api/courseApi';
-import { getLessonsByCourseId } from '@/api/lessionApi';
+import { getLessonsByCourseId } from '@/api/lessonApi';
 import { getEnrollmentByUserId, createEnrollment } from '@/api/enrollmentApi';
 import Review from './Review';
 import { jwtDecode } from 'jwt-decode';
