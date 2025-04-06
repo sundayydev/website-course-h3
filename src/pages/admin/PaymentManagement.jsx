@@ -28,11 +28,15 @@ import {
   Search,
   Filter,
   Download,
-  Eye
+  Eye,
+  ChevronLeft,
+  ChevronRight,
+  X,
+  Trash2
 } from 'lucide-react';
 
 // Import API từ orderApi
-import { getAllOrders, updateOrderStatus } from '@/api/orderApi';
+import { getAllOrders, updateOrderStatus, deleteOrder } from '@/api/orderApi';
 
 const PaymentManagement = () => {
   const [orders, setOrders] = useState([]);
@@ -40,15 +44,20 @@ const PaymentManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
+  const [pageNumber, setPageNumber] = useState(1);
+  const [pageSize] = useState(5);
+  const [totalPages, setTotalPages] = useState(1);
+  const [selectedOrder, setSelectedOrder] = useState(null);
 
   useEffect(() => {
     fetchOrders();
-  }, []);
+  }, [pageNumber]);
 
   const fetchOrders = async () => {
     try {
-      const response = await getAllOrders();
-      setOrders(response);
+      const response = await getAllOrders({ pageNumber, pageSize });
+      setOrders(response.data);
+      setTotalPages(response.totalPages);
     } catch (error) {
       toast.error('Không thể tải danh sách đơn hàng');
       console.error('Error:', error);
@@ -66,6 +75,20 @@ const PaymentManagement = () => {
       toast.success('Cập nhật trạng thái thành công');
     } catch (error) {
       toast.error('Cập nhật trạng thái thất bại');
+      console.error('Error:', error);
+    }
+  };
+
+  const handleDeleteOrder = async (orderId) => {
+    if (!window.confirm('Bạn có chắc muốn xóa đơn hàng này?')) {
+      return;
+    }
+    try {
+      await deleteOrder(orderId);
+      setOrders(orders.filter(order => order.id !== orderId));
+      toast.success('Xóa đơn hàng thành công');
+    } catch (error) {
+      toast.error('Xóa đơn hàng thất bại');
       console.error('Error:', error);
     }
   };
@@ -136,6 +159,26 @@ const PaymentManagement = () => {
     });
   };
 
+  const handlePreviousPage = () => {
+    if (pageNumber > 1) {
+      setPageNumber(pageNumber - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (pageNumber < totalPages) {
+      setPageNumber(pageNumber + 1);
+    }
+  };
+
+  const handleViewDetails = (order) => {
+    setSelectedOrder(order);
+  };
+
+  const closeModal = () => {
+    setSelectedOrder(null);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
@@ -203,24 +246,34 @@ const PaymentManagement = () => {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>Người dùng</TableHead>
-                <TableHead>Khóa học</TableHead>
-                <TableHead>Số tiền</TableHead>
-                <TableHead>Phương thức</TableHead>
-                <TableHead>Trạng thái</TableHead>
-                <TableHead>Ngày tạo</TableHead>
-                <TableHead>Thao tác</TableHead>
+                <TableHead className="w-[15%] text-pink-500">ID</TableHead>
+                <TableHead className="w-[20%] text-pink-500">Người dùng</TableHead>
+                <TableHead className="w-[15%] text-pink-500">Khóa học</TableHead>
+                <TableHead className="w-[10%] text-pink-500">Số tiền</TableHead>
+                <TableHead className="w-[10%] text-pink-500">Phương thức</TableHead>
+                <TableHead className="w-[15%] text-pink-500">Trạng thái</TableHead>
+                <TableHead className="w-[15%] text-pink-500">Ngày tạo</TableHead>
+                <TableHead className="w-[15%] text-pink-500">Thao tác</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {filteredOrders.map((order) => (
                 <TableRow key={order.id}>
-                  <TableCell>{order.id}</TableCell>
-                  <TableCell>{order.userName || order.userId}</TableCell>
-                  <TableCell>{order.courseName || order.courseId}</TableCell>
-                  <TableCell>{formatCurrency(order.amount)}</TableCell>
-                  <TableCell>VNPay</TableCell>
+                  <TableCell className="truncate max-w-[150px]" title={order.id}>
+                    {order.id}
+                  </TableCell>
+                  <TableCell className="truncate max-w-[200px]" title={order.userName || order.userId}>
+                    {order.userName || order.userId}
+                  </TableCell>
+                  <TableCell className="truncate max-w-[150px]" title={order.courseName || order.courseId}>
+                    {order.courseName || order.courseId}
+                  </TableCell>
+                  <TableCell className="truncate max-w-[100px]">
+                    {formatCurrency(order.amount)}
+                  </TableCell>
+                  <TableCell className="truncate max-w-[100px]">
+                    VNPay
+                  </TableCell>
                   <TableCell>
                     <Select
                       value={order.status.toLowerCase()}
@@ -237,18 +290,83 @@ const PaymentManagement = () => {
                       </SelectContent>
                     </Select>
                   </TableCell>
-                  <TableCell>{formatDate(order.createdAt)}</TableCell>
-                  <TableCell>
-                    <Button variant="ghost" size="icon">
+                  <TableCell className="truncate max-w-[150px]">
+                    {formatDate(order.createdAt)}
+                  </TableCell>
+                  <TableCell className="flex gap-2">
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => handleViewDetails(order)}
+                    >
                       <Eye className="h-4 w-4" />
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={() => handleDeleteOrder(order.id)}
+                      className="text-red-500 hover:text-red-700"
+                    >
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </TableCell>
                 </TableRow>
               ))}
             </TableBody>
           </Table>
+          <div className="flex items-center justify-between mt-4">
+            <Button
+              variant="outline"
+              onClick={handlePreviousPage}
+              disabled={pageNumber === 1}
+            >
+              <ChevronLeft className="h-4 w-4 mr-2" />
+              Trang trước
+            </Button>
+            <span>
+              Trang {pageNumber} / {totalPages}
+            </span>
+            <Button
+              variant="outline"
+              onClick={handleNextPage}
+              disabled={pageNumber === totalPages}
+            >
+              Trang sau
+              <ChevronRight className="h-4 w-4 ml-2" />
+            </Button>
+          </div>
         </CardContent>
       </Card>
+
+      {/* Modal chi tiết đơn hàng */}
+      {selectedOrder && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg shadow-lg p-6 w-full max-w-md relative">
+            <button 
+              onClick={closeModal} 
+              className="absolute top-2 right-2 text-gray-500 hover:text-gray-700"
+            >
+              <X className="h-6 w-6" />
+            </button>
+            <h2 className="text-xl font-bold mb-4">Chi tiết đơn hàng</h2>
+            <div className="space-y-2">
+              <p><strong>ID:</strong> {selectedOrder.id}</p>
+              <p><strong>Người dùng:</strong> {selectedOrder.userName || selectedOrder.userId}</p>
+              <p><strong>Khóa học:</strong> {selectedOrder.courseName || selectedOrder.courseId}</p>
+              <p><strong>Số tiền:</strong> {formatCurrency(selectedOrder.amount)}</p>
+              <p><strong>Phương thức:</strong> VNPay</p>
+              <p><strong>Trạng thái:</strong> {selectedOrder.status}</p>
+              <p><strong>Ngày tạo:</strong> {formatDate(selectedOrder.createdAt)}</p>
+            </div>
+            <Button 
+              className="mt-4 w-full bg-pink-500 hover:bg-pink-600" 
+              onClick={closeModal}
+            >
+              Đóng
+            </Button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

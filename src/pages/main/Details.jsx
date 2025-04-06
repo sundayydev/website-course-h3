@@ -17,6 +17,8 @@ import { getLessonsByCourseId } from '@/api/lessonApi';
 import { getEnrollmentByUserId, createEnrollment } from '@/api/enrollmentApi';
 import Review from './Review';
 import { jwtDecode } from 'jwt-decode';
+import PaymentModal from './Payment';
+
 
 const Details = () => {
   const { courseId } = useParams();
@@ -24,6 +26,7 @@ const Details = () => {
   const [lessons, setLessons] = useState([]);
   const [expanded, setExpanded] = useState(null);
   const [videoModalOpen, setVideoModalOpen] = useState(false);
+  const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
   const [selectedVideo, setSelectedVideo] = useState('');
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [error, setError] = useState(null);
@@ -34,10 +37,10 @@ const Details = () => {
 
     const fetchCourse = async () => {
       try {
-        console.log('CourseId:', courseId); // Log courseId trước khi gọi API
+        console.log('CourseId:', courseId); 
         const data = await getCourseById(courseId);
         if (data) {
-          console.log('Course data:', data); // Log data trả về từ API
+          console.log('Course data:', data); 
           setCourse(data);
         } else {
           setError('Không có dữ liệu khóa học');
@@ -130,9 +133,9 @@ const Details = () => {
                 console.error('Lỗi khi đăng ký khóa học:', error);
                 alert('Có lỗi xảy ra khi đăng ký khóa học. Vui lòng thử lại!');
               }
-            } else {
-              // Khóa học có phí - chuyển đến trang thanh toán  
-              navigate(`/payment/${courseId}`);
+            } else { 
+             //setIsPaymentModalOpen(true);
+             navigate(`/payment/${courseId}`)
             }
           }
           return;
@@ -149,6 +152,9 @@ const Details = () => {
     }
   };
 
+  const closePaymentModal = () => {
+    setIsPaymentModalOpen(false); 
+  };
   if (error) {
     return <p className="text-center text-red-500 pt-10">{error}</p>;
   }
@@ -312,6 +318,10 @@ const Details = () => {
             </div>
           </div>
         </div>
+      )}
+      {/* PaymentModal */}
+      {isPaymentModalOpen && (
+        <PaymentModal onClose={closePaymentModal} />
       )}
     </div>
   );

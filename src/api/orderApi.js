@@ -4,13 +4,18 @@ import api from './axios';
 const API_URL = '/order';
 
 // Lấy tất cả đơn hàng (giả định cần thêm endpoint GET /api/order trong backend)
-export const getAllOrders = async () => {
+export const getAllOrders = async ({pageNumber=1, pageSize=10}) => {
   const token = localStorage.getItem('authToken');
   if (!token) {
     throw new Error('Không tìm thấy token');
   }
+
+  const queryParams = new URLSearchParams();
+  queryParams.append('pageNumber', pageNumber);
+  queryParams.append('pageSize', pageSize);
   try {
-    const response = await api.get(`${API_URL}`, {
+    const response = await api.get(`${API_URL}?${queryParams.toString()}`, 
+    {
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
@@ -135,6 +140,26 @@ export const updateOrderStatus = async (orderId, status) => {
     return response.data;
   } catch (error) {
     console.error(`Lỗi khi cập nhật trạng thái đơn hàng ${orderId}:`, error.response?.data || error.message);
+    throw error;
+  }
+};
+
+export const deleteOrder = async (orderId) => {
+  const token = localStorage.getItem('authToken');
+  if (!token) {
+    throw new Error('Không tìm thấy token');
+  }
+  try {
+    const response = await api.delete(`${API_URL}/${orderId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    console.log(`Deleted order ${orderId}:`, response.data);
+    return response.data;
+  } catch (error) {
+    console.error(`Lỗi khi xóa đơn hàng ${orderId}:`, error.response?.data || error.message);
     throw error;
   }
 };
