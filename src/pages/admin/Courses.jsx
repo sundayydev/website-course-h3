@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useMemo, useState, useEffect } from 'react';
 import {
   Table,
   TableBody,
@@ -109,7 +109,7 @@ const Courses = () => {
   const resetForm = () => {
     setFormData({
       title: '',
-      description: '', 
+      description: '',
       price: 0,
       urlImage: '',
       instructorId: '',
@@ -208,7 +208,8 @@ const Courses = () => {
                         type="file"
                         accept="image/*"
                         className="hidden"
-                        onChange={(e) => {setFormData({ ...formData, urlImage: e.target.files[0] });
+                        onChange={(e) => {
+                          setFormData({ ...formData, urlImage: e.target.files[0] });
                         }}
                       />
                       <label
@@ -229,12 +230,22 @@ const Courses = () => {
               </div>
               <div className="w-[230px] flex flex-col items-center gap-2">
                 <div className="w-[230px] h-[129px] bg-gray-100 rounded-lg overflow-hidden">
-                  {formData.urlImage || editingCourse?.urlImage ? (
+                  {formData?.urlImage ? (
+                    <img
+                      src={
+                        formData.urlImage instanceof Blob || formData.urlImage instanceof File
+                          ? URL.createObjectURL(formData.urlImage)
+                          : import.meta.env.VITE_API_URL + editingCourse.urlImage
+                      }
+                      alt="Preview"
+                      className="w-full h-full object-cover"
+                    />
+                  ) : editingCourse?.urlImage ? (
                     <img
                       src={
                         editingCourse?.urlImage
                           ? import.meta.env.VITE_API_URL + editingCourse.urlImage
-                          : formData.urlImage
+                          : import.meta.env.VITE_API_URL + '/uploads/placeholder.png'
                       }
                       alt="Preview"
                       className="w-full h-full object-cover"
