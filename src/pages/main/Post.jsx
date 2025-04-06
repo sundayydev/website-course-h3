@@ -25,6 +25,10 @@ const Post = () => {
       setLoading(false);
     }
   };
+  const isValidDate = (date) => {
+    const parsedDate = new Date(date);
+    return !isNaN(parsedDate.getTime());
+  };
 
   // Gọi hàm fetchPosts khi component mount
   useEffect(() => {
@@ -106,9 +110,12 @@ const Post = () => {
                         </span>
                       )}
                       {/* Ngày tạo bài viết */}
-                      <p className="text-xs flex-shrink-0">
-                        {new Date(post.createdAt).toLocaleDateString()}
+                      <p className="text-gray-500 text-sm">
+                        {isValidDate(post.createdAt)
+                            ? new Date(post.createdAt).toLocaleDateString()
+                            : 'Không rõ thời gian'}
                       </p>
+
                     </div>
                   </div>
                 ))

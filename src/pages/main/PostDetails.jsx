@@ -9,7 +9,10 @@ const PostDetails = () => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const url = 'http://localhost:5221/';
-
+  const isValidDate = (date) => {
+    const parsedDate = new Date(date);
+    return !isNaN(parsedDate.getTime());
+  };
   useEffect(() => {
     const fetchPostDetails = async () => {
       try {
@@ -43,7 +46,7 @@ const PostDetails = () => {
         />
         <div>
           <p className="font-semibold">{post.user?.fullName || 'Tác giả ẩn danh'}</p>
-          <p className="text-gray-500 text-sm">{new Date(post.createdAt).toLocaleDateString()}</p>
+          <p className="text-gray-500 text-sm">{isValidDate(post.createdAt) ? new Date(post.createdAt).toLocaleDateString() : 'Không rõ thời gian'}</p>
         </div>
       </div>
 
