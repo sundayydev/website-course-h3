@@ -6,6 +6,9 @@ import Students from '../pages/admin/Students';
 import Courses from '../pages/admin/Courses';
 import Lessons from '../pages/admin/Lessons';
 import CourseDetail from '../pages/admin/CourseDetail';
+import LessonDetail from '../pages/admin/LessonDetail';
+import PaymentManagement from '../pages/admin/PaymentManagement';
+
 const AdminRoutes = {
   path: '/admin',
   element: (
@@ -21,6 +24,8 @@ const AdminRoutes = {
     { path: 'courses', element: <Courses /> }, // /admin/courses
     { path: 'lessons', element: <Lessons /> }, // /admin/lessons
     { path: 'course-detail/:courseId', element: <CourseDetail /> }, // /admin/course-detail/:courseId
+    { path: 'lesson-detail/:lessonId', element: <LessonDetail /> }, // /admin/lesson-detail/:lessonId
+    { path: 'payment-management', element: <PaymentManagement /> }, // /admin/payment-management
   ],
 };
 
