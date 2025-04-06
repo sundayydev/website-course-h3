@@ -6,6 +6,7 @@ import HashLoader from 'react-spinners/HashLoader';
 import { getCourses } from '../../api/courseApi'; 
 import { getReviewsByCourseId } from '../../api/reviewApi';
 import { getEnrollmentsByCourseId } from '../../api/enrollmentApi';
+import { getLessonsByCourseId } from '../../api/lessonApi';
 
 const CourseList = () => {
   const [courses, setCourses] = useState([]);
@@ -31,10 +32,7 @@ const CourseList = () => {
           try {
             const enrollmentResponse = await getEnrollmentsByCourseId(course.id);
             console.log(`Enrollments for ${course.id}:`, enrollmentResponse);
-            
-            // Tạo một Set chứa userId duy nhất
             const uniqueUsers = new Set(enrollmentResponse.map(e => e.userId));
-            console.log("uniqueUsers", uniqueUsers);
             totalStudents = uniqueUsers.size;
           } catch (enrollmentError) {
             console.warn(`Không thể lấy đăng ký cho khóa học ${course.id}:`, enrollmentError);
@@ -54,12 +52,34 @@ const CourseList = () => {
           } catch (reviewError) {
             console.warn(`Không thể lấy đánh giá cho khóa học ${course.id}:`, reviewError);
           }
-          console.log(totalStudents, averageRating, totalReviews);
+
+            let totalHours = 0;
+          try {
+            const lessons = await getLessonsByCourseId(course.id);
+            console.log(`Lessons for course ${course.id}:`, lessons);
+            if (lessons && Array.isArray(lessons)) {
+              const totalMinutes = lessons.reduce((sum, lesson) => {
+                console.log('Lesson Duration:', lesson.duration);
+                return sum + (Number(lesson.duration) || 0);
+              }, 0);
+              if (totalMinutes >= 60) {
+                const hours = Math.floor(totalMinutes / 60); // Lấy số giờ
+                const minutes = totalMinutes % 60; // Lấy số phút còn lại
+                totalHours = `${hours}h${minutes}p`; // Định dạng ?h?p
+              } else {
+                totalHours = `${totalMinutes} phút`; // Dưới 1 giờ thì hiển thị phút
+              }
+            }
+          } catch (lessonError) {
+            console.warn(`Không thể lấy lessons cho khóa học ${course.id}:`, lessonError);
+          }
+          console.log(totalStudents, averageRating, totalReviews, totalHours);
           return {
             ...course,
-            students: totalStudents, // Số học viên duy nhất
+            students: totalStudents,
             averageRating: averageRating.toFixed(1),
             totalReviews,
+            totalHours, 
           };
         })
       );
@@ -115,30 +135,28 @@ const CourseList = () => {
                 </p>
               </div>
               <div className="flex justify-between text-sm font-semibold items-center">
-  {/* Thay vì 3 cột, chúng ta có thể cho chúng nằm trong 1 hàng */}
-  <div className="flex items-center gap-4">
-    {/* Học viên */}
-    <div className="flex items-center gap-1">
-      <FaUser />
-      <p className="text-center truncate">{course.students} học viên</p>
-    </div>
+                <div className="flex items-center gap-4">
+                  {/* Học viên */}
+                  <div className="flex items-center gap-1">
+                    <FaUser />
+                    <p className="text-center truncate">{course.students} học viên</p>
+                  </div>
 
-    {/* Thời gian */}
-    <div className="flex items-center gap-1">
-      <FaClock />
-      <p className="text-center truncate">{course.duration}</p>
-    </div>
+                  {/* Tổng số giờ */}
+                  <div className="flex items-center gap-1">
+                    <FaClock />
+                    <p className="text-center truncate">{course.totalHours} giờ</p>
+                  </div>
 
-    {/* Đánh giá */}
-    <div className="flex items-center gap-1">
-      <FaStar className="text-yellow-500" />
-      <p className="text-center truncate">
-        {course.averageRating} ({course.totalReviews})
-      </p>
-    </div>
-  </div>
-</div>
-
+                  {/* Đánh giá */}
+                  <div className="flex items-center gap-1">
+                    <FaStar className="text-yellow-500" />
+                    <p className="text-center truncate">
+                      {course.averageRating} ({course.totalReviews})
+                    </p>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         ))}

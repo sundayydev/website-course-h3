@@ -72,6 +72,24 @@ export const getCommentById = async (id) => {
   }
 };
 
+export const getCommentsByPostId = async (postId) => {
+  const token = getAuthToken();
+  try {
+    const response = await api.get(`${API_URL}/Post`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      params: {
+        postId: postId, 
+      },
+    });
+    console.log('Dữ liệu trả về:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error(`Lỗi khi lấy bình luận theo postId ${postId}:`, error.response?.data || error.message);
+    throw error;
+  }
+};
 // Tạo bình luận mới (POST /api/Comment)
 export const createComment = async (commentData) => {
   const token = getAuthToken();

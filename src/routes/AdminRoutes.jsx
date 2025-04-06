@@ -8,6 +8,7 @@ import Lessons from '../pages/admin/Lessons';
 import CourseDetail from '../pages/admin/CourseDetail';
 import LessonDetail from '../pages/admin/LessonDetail';
 import PaymentManagement from '../pages/admin/PaymentManagement';
+import Comment from '../pages/admin/Comment';
 
 const AdminRoutes = {
   path: '/admin',
@@ -26,6 +27,7 @@ const AdminRoutes = {
     { path: 'course-detail/:courseId', element: <CourseDetail /> }, // /admin/course-detail/:courseId
     { path: 'lesson-detail/:lessonId', element: <LessonDetail /> }, // /admin/lesson-detail/:lessonId
     { path: 'payment-management', element: <PaymentManagement /> }, // /admin/payment-management
+    { path: 'comment', element: <Comment /> }, // /admin/comment
   ],
 };
 
