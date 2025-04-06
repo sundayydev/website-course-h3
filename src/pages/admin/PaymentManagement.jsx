@@ -31,37 +31,37 @@ import {
   Eye
 } from 'lucide-react';
 
-// Import các API
-import { getAllPayments, updatePaymentStatus } from '@/api/paymentApi';
+// Import API từ orderApi
+import { getAllOrders, updateOrderStatus } from '@/api/orderApi';
 
 const PaymentManagement = () => {
-  const [payments, setPayments] = useState([]);
+  const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
 
   useEffect(() => {
-    fetchPayments();
+    fetchOrders();
   }, []);
 
-  const fetchPayments = async () => {
+  const fetchOrders = async () => {
     try {
-      const response = await getAllPayments();
-      setPayments(response.data);
+      const response = await getAllOrders();
+      setOrders(response);
     } catch (error) {
-      toast.error('Không thể tải danh sách thanh toán');
+      toast.error('Không thể tải danh sách đơn hàng');
       console.error('Error:', error);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleStatusChange = async (paymentId, newStatus) => {
+  const handleStatusChange = async (orderId, newStatus) => {
     try {
-      await updatePaymentStatus(paymentId, newStatus);
-      setPayments(payments.map(payment => 
-        payment._id === paymentId ? { ...payment, status: newStatus } : payment
+      await updateOrderStatus(orderId, newStatus);
+      setOrders(orders.map(order => 
+        order.id === orderId ? { ...order, status: newStatus } : order
       ));
       toast.success('Cập nhật trạng thái thành công');
     } catch (error) {
@@ -70,48 +70,50 @@ const PaymentManagement = () => {
     }
   };
 
-  const filteredPayments = payments.filter(payment => {
-    const matchesSearch = payment.userName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         payment.courseName.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'all' || payment.status === statusFilter;
+  const filteredOrders = orders.filter(order => {
+    const matchesSearch = (order.userName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          order.courseName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          order.userId.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
+                          order.courseId.toString().toLowerCase().includes(searchTerm.toLowerCase()));
+    const matchesStatus = statusFilter === 'all' || order.status.toLowerCase() === statusFilter;
     const matchesDate = dateFilter === 'all' || 
-                       (dateFilter === 'today' && isToday(payment.createdAt)) ||
-                       (dateFilter === 'week' && isThisWeek(payment.createdAt)) ||
-                       (dateFilter === 'month' && isThisMonth(payment.createdAt));
+                        (dateFilter === 'today' && isToday(order.createdAt)) ||
+                        (dateFilter === 'week' && isThisWeek(order.createdAt)) ||
+                        (dateFilter === 'month' && isThisMonth(order.createdAt));
     return matchesSearch && matchesStatus && matchesDate;
   });
 
   const isToday = (date) => {
     const today = new Date();
-    const paymentDate = new Date(date);
-    return paymentDate.toDateString() === today.toDateString();
+    const orderDate = new Date(date);
+    return orderDate.toDateString() === today.toDateString();
   };
 
   const isThisWeek = (date) => {
     const today = new Date();
-    const paymentDate = new Date(date);
-    const diffTime = Math.abs(today - paymentDate);
+    const orderDate = new Date(date);
+    const diffTime = Math.abs(today - orderDate);
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     return diffDays <= 7;
   };
 
   const isThisMonth = (date) => {
     const today = new Date();
-    const paymentDate = new Date(date);
-    return paymentDate.getMonth() === today.getMonth() && 
-           paymentDate.getFullYear() === today.getFullYear();
+    const orderDate = new Date(date);
+    return orderDate.getMonth() === today.getMonth() && 
+           orderDate.getFullYear() === today.getFullYear();
   };
 
   const getStatusBadge = (status) => {
-    switch (status) {
+    switch (status.toLowerCase()) {
       case 'pending':
         return <Badge variant="secondary">Đang chờ</Badge>;
-      case 'completed':
+      case 'paid':
         return <Badge variant="default">Hoàn thành</Badge>;
       case 'failed':
         return <Badge variant="destructive">Thất bại</Badge>;
-      case 'refunded':
-        return <Badge variant="outline">Đã hoàn tiền</Badge>;
+      case 'cancelled':
+        return <Badge variant="outline">Đã hủy</Badge>;
       default:
         return <Badge variant="secondary">{status}</Badge>;
     }
@@ -143,9 +145,9 @@ const PaymentManagement = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-8 w-[calc(1500px-250px)]">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">Quản lý thanh toán</h1>
+        <h1 className="text-2xl font-bold">Quản lý đơn hàng</h1>
         <div className="flex gap-2">
           <Button variant="outline">
             <Download className="h-4 w-4 mr-2" />
@@ -173,9 +175,9 @@ const PaymentManagement = () => {
               <SelectContent>
                 <SelectItem value="all">Tất cả trạng thái</SelectItem>
                 <SelectItem value="pending">Đang chờ</SelectItem>
-                <SelectItem value="completed">Hoàn thành</SelectItem>
+                <SelectItem value="paid">Hoàn thành</SelectItem>
                 <SelectItem value="failed">Thất bại</SelectItem>
-                <SelectItem value="refunded">Đã hoàn tiền</SelectItem>
+                <SelectItem value="cancelled">Đã hủy</SelectItem>
               </SelectContent>
             </Select>
             <Select value={dateFilter} onValueChange={setDateFilter}>
@@ -195,7 +197,7 @@ const PaymentManagement = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Danh sách thanh toán</CardTitle>
+          <CardTitle>Danh sách đơn hàng</CardTitle>
         </CardHeader>
         <CardContent>
           <Table>
@@ -212,30 +214,30 @@ const PaymentManagement = () => {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredPayments.map((payment) => (
-                <TableRow key={payment._id}>
-                  <TableCell>{payment._id}</TableCell>
-                  <TableCell>{payment.userName}</TableCell>
-                  <TableCell>{payment.courseName}</TableCell>
-                  <TableCell>{formatCurrency(payment.amount)}</TableCell>
-                  <TableCell>{payment.paymentMethod}</TableCell>
+              {filteredOrders.map((order) => (
+                <TableRow key={order.id}>
+                  <TableCell>{order.id}</TableCell>
+                  <TableCell>{order.userName || order.userId}</TableCell>
+                  <TableCell>{order.courseName || order.courseId}</TableCell>
+                  <TableCell>{formatCurrency(order.amount)}</TableCell>
+                  <TableCell>VNPay</TableCell>
                   <TableCell>
                     <Select
-                      value={payment.status}
-                      onValueChange={(value) => handleStatusChange(payment._id, value)}
+                      value={order.status.toLowerCase()}
+                      onValueChange={(value) => handleStatusChange(order.id, value)}
                     >
                       <SelectTrigger className="w-[180px]">
-                        {getStatusBadge(payment.status)}
+                        {getStatusBadge(order.status)}
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="pending">Đang chờ</SelectItem>
-                        <SelectItem value="completed">Hoàn thành</SelectItem>
+                        <SelectItem value="paid">Hoàn thành</SelectItem>
                         <SelectItem value="failed">Thất bại</SelectItem>
-                        <SelectItem value="refunded">Đã hoàn tiền</SelectItem>
+                        <SelectItem value="cancelled">Đã hủy</SelectItem>
                       </SelectContent>
                     </Select>
                   </TableCell>
-                  <TableCell>{formatDate(payment.createdAt)}</TableCell>
+                  <TableCell>{formatDate(order.createdAt)}</TableCell>
                   <TableCell>
                     <Button variant="ghost" size="icon">
                       <Eye className="h-4 w-4" />
@@ -251,4 +253,4 @@ const PaymentManagement = () => {
   );
 };
 
-export default PaymentManagement; 
+export default PaymentManagement;

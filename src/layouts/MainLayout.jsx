@@ -9,7 +9,7 @@ const MainLayout = () => {
   const [isNotFoundPage, setIsNotFoundPage] = useState(false);
 
   // Danh sách các trang không hiển thị Sidebar và Footer
-  const hiddenRoutes = ['/account', '/account-setting', '/lesson', '/detailsPageCourse', '*'];
+  const hiddenRoutes = ['/account', '/setting', '/lesson', '/detailsPageCourse', '*'];
   const shouldHideComponents = hiddenRoutes.some((route) => location.pathname.includes(route));
 
   // Kiểm tra xem có phải đang ở trang NotFoundPage không

@@ -36,13 +36,19 @@ export const getEnrollmentByUserId = async () => {
   });
 };
 
-export const getEnrollmentById = async (id) => {
+export const getEnrollmentsByCourseId = async (courseId) => {
   const token = getAuthToken();
-  return await api.get(`${API_URL}/${id}`, {
-    headers: {
-      Authorization: `Bearer ${token}`
-    }
-  });
+  try {
+    const response = await api.get(`${API_URL}/course/${courseId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data; // Giả sử trả về mảng các enrollment
+  } catch (error) {
+    console.error(`Lỗi khi lấy danh sách đăng ký cho khóa học ${courseId}:`, error);
+    throw error;
+  }
 };
 
 export const createEnrollment = async (courseId) => {
@@ -55,8 +61,6 @@ export const createEnrollment = async (courseId) => {
       {
         UserId: userId,
         CourseId: courseId,
-        Progress: 0,
-        CompletedLessons: 0,
         Status: "Active"
       },
       {
