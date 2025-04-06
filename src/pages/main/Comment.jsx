@@ -1,25 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { Send } from 'lucide-react';
-import { getCommentsByUserId, createComment, updateComment } from '../../api/commentApi';
+import { getCommentsByPostId, createComment, updateComment } from '../../api/commentApi'; 
 import { jwtDecode } from 'jwt-decode';
 import { toast } from 'react-toastify';
 
 const CommentPost = ({ postId }) => {
-  const [commentText, setCommentText] = useState(''); // Nội dung bình luận
-  const [comments, setComments] = useState([]); // Danh sách bình luận
-  const [isSubmitting, setIsSubmitting] = useState(false); // Trạng thái gửi
-  const [existingComment, setExistingComment] = useState(null); // Bình luận hiện có của người dùng
+  const [commentText, setCommentText] = useState('');
+  const [comments, setComments] = useState([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [existingComment, setExistingComment] = useState(null);
 
-  // Lấy bình luận khi component được mount
   useEffect(() => {
-    const fetchUserComments = async () => {
+    console.log(postId);
+    const fetchPostComments = async () => {
       try {
-        const userComments = await getCommentsByUserId();
-        // Lọc các bình luận theo postId
-        const postComments = userComments.filter(comment => comment.postId === postId);
+        const postComments = await getCommentsByPostId(postId); 
+        console.log(postComments);
         setComments(postComments);
 
-        // Kiểm tra xem người dùng hiện tại đã có bình luận chưa
         const authToken = localStorage.getItem('authToken');
         if (authToken) {
           const decodedToken = jwtDecode(authToken);
@@ -30,27 +28,20 @@ const CommentPost = ({ postId }) => {
           }
         }
       } catch (error) {
-        console.error('Lỗi khi tải bình luận của người dùng:', error);
+        console.error('Lỗi khi tải bình luận của bài viết:', error);
         setComments([]);
       }
     };
 
     if (postId) {
-      fetchUserComments();
+      fetchPostComments();
     }
   }, [postId]);
 
   // Xử lý gửi bình luận
   const handleSubmitComment = async () => {
     if (!commentText.trim()) {
-      toast.error('Bạn cần nhập nội dung bình luận!', {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-      });
+      toast.error('Bạn cần nhập nội dung bình luận!');
       return;
     }
 
@@ -58,14 +49,7 @@ const CommentPost = ({ postId }) => {
     const authToken = localStorage.getItem('authToken');
 
     if (!authToken || authToken.split('.').length !== 3) {
-      toast.error('Token không hợp lệ hoặc thiếu cấu trúc!', {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-      });
+      toast.error('Token không hợp lệ hoặc thiếu cấu trúc!');
       setIsSubmitting(false);
       return;
     }
@@ -73,48 +57,29 @@ const CommentPost = ({ postId }) => {
     try {
       const commentData = {
         postId: postId,
-        content: commentText
+        content: commentText,
       };
 
       let response;
       if (existingComment) {
         // Cập nhật bình luận hiện có
         response = await updateComment(existingComment.id, commentData);
-        setComments(prevComments => prevComments.map(comment => 
-          comment.id === existingComment.id ? response : comment
-        ));
-        toast.success('Bình luận đã được cập nhật thành công!', {
-          position: "top-right",
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-        });
+        setComments(prevComments =>
+          prevComments.map(comment =>
+            comment.id === existingComment.id ? response : comment
+          )
+        );
+        toast.success('Bình luận đã được cập nhật thành công!');
       } else {
         // Tạo bình luận mới
         response = await createComment(commentData);
         setComments(prevComments => [...prevComments, response]);
         setExistingComment(response);
-        toast.success('Bình luận đã được gửi thành công!', {
-          position: "top-right",
-          autoClose: 3000,
-          hideProgressBar: false,
-          closeOnClick: true,
-          pauseOnHover: true,
-          draggable: true,
-        });
+        toast.success('Bình luận đã được gửi thành công!');
       }
     } catch (error) {
       console.error('Lỗi khi gửi bình luận:', error);
-      toast.error('Có lỗi xảy ra khi gửi bình luận!', {
-        position: "top-right",
-        autoClose: 3000,
-        hideProgressBar: false,
-        closeOnClick: true,
-        pauseOnHover: true,
-        draggable: true,
-      });
+      toast.error('Có lỗi xảy ra khi gửi bình luận!');
     } finally {
       setIsSubmitting(false);
     }
@@ -143,19 +108,30 @@ const CommentPost = ({ postId }) => {
         <Send className="ml-2" size={18} />
       </button>
 
-      {/* Hiển thị các bình luận đã có */}
-      {comments.length > 0 && (
-        <div className="mt-6">
-          <h4 className="font-semibold text-lg mb-4">Bình luận của người dùng:</h4>
-          <div className="space-y-4">
-            {comments.map((comment, idx) => (
-              <div key={idx} className="border-b pb-4">
-                <p className="text-gray-700">{comment.content}</p>
-                <p className="text-gray-500 text-sm">
-                  {new Date(comment.createdAt).toLocaleString('vi-VN')}
-                </p>
-              </div>
-            ))}
+      {/* Hiển thị tất cả bình luận của bài viết */}
+   {/* Hiển thị tất cả bình luận của bài viết */}
+        {comments.length > 0 && (
+          <div className="mt-8">
+            <h4 className="text-xl font-semibold mb-6 border-b pb-2 text-gray-800">Bình luận của người dùng</h4>
+            <div className="space-y-6">
+              {comments.map((comment, idx) => (
+                <div key={idx} className="bg-gray-50 p-4 rounded-lg shadow-sm">
+                  <div className="flex items-center justify-between mb-2">
+                    <div className="flex items-center space-x-3">
+                      <img
+                        src={comment.avatarUrl || '/default-avatar.png'}
+                        alt="avatar"
+                        className="w-10 h-10 rounded-full object-cover"
+                      />
+                      <span className="font-medium text-gray-900">{comment.userName || 'Ẩn danh'}</span>
+                    </div>
+                    <span className="text-sm text-gray-500">
+                      {new Date(comment.createdAt).toLocaleString('vi-VN')}
+                    </span>
+                  </div>
+                  <p className="text-gray-700 whitespace-pre-line">{comment.content}</p>
+                </div>
+              ))}
           </div>
         </div>
       )}
