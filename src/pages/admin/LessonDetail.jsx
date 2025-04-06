@@ -53,7 +53,6 @@ const LessonDetail = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [editedLesson, setEditedLesson] = useState(null);
   const [showDeleteDialog, setShowDeleteDialog] = useState(false);
-  const videoRef = useRef(null);
   const [videoDuration, setVideoDuration] = useState('');
   const [videoViews, setVideoViews] = useState('');
 
@@ -113,30 +112,6 @@ const LessonDetail = () => {
       ...prev,
       [name]: value
     }));
-  };
-
-  const handleVideoLoad = async () => {
-    if (editedLesson?.videoUrl) {
-      try {
-        const videoId = editedLesson.videoUrl.split('v=')[1];
-        const response = await fetch(
-          `https://www.googleapis.com/youtube/v3/videos?id=${videoId}&part=contentDetails,statistics&key=${import.meta.env.VITE_YOUTUBE_API_KEY}`
-        );
-        const data = await response.json();
-        const duration = data.items[0].contentDetails.duration;
-        const views = data.items[0].statistics.viewCount;
-        setVideoDuration(duration);
-        setVideoViews(views);
-        
-        setEditedLesson(prev => ({
-          ...prev,
-          videoDuration: duration,
-          videoViews: views
-        }));
-      } catch (error) {
-        console.error('Error fetching video data:', error);
-      }
-    }
   };
 
   const handleVideoUrlChange = async (e) => {
@@ -210,7 +185,7 @@ const LessonDetail = () => {
           <Button
             variant="outline"
             size="icon"
-            onClick={() => navigate('/admin/lessons')}
+            onClick={() => navigate('admin/courses')}
           >
             <ArrowLeft className="h-4 w-4" />
           </Button>
@@ -322,6 +297,22 @@ const LessonDetail = () => {
                 />
               ) : (
                 <p className="text-gray-900 font-medium">{lesson.orderNumber}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-sm font-medium text-gray-700">Thời gián</Label>
+              {isEditing ? (
+                <Input
+                  type="number"
+                  name="duration"
+                  value={editedLesson.duration}
+                  onChange={handleInputChange}
+                  className="w-32 focus:ring-2 focus:ring-pink-500"
+                  min="1"
+                />
+              ) : (
+                <p className="text-gray-900 font-medium">{lesson.duration} Phút</p>
               )}
             </div>
           </CardContent>
