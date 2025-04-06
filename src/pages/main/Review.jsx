@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Star, Send } from 'lucide-react';
+import { FaStar } from 'react-icons/fa';
 import { getReviewsByCourseId, createReview, updateReview } from '../../api/reviewApi';
 import { jwtDecode } from 'jwt-decode';
 import { toast } from 'react-toastify';
@@ -140,7 +141,7 @@ const Review = ({ courseId }) => {
       {/* Đánh giá theo sao */}
       <div className="flex items-center space-x-1 mb-4">
         {[1, 2, 3, 4, 5].map((star) => (
-          <Star
+          <FaStar
             key={star}
             size={24}
             className={`cursor-pointer ${rating >= star ? 'text-yellow-500' : 'text-gray-300'}`}
@@ -177,7 +178,7 @@ const Review = ({ courseId }) => {
               <div key={idx} className="border-b pb-4">
                 <div className="flex items-center space-x-2 mb-2">
                   {[1, 2, 3, 4, 5].map((star) => (
-                    <Star
+                    <FaStar
                       key={star}
                       size={16}
                       className={review.rating >= star ? 'text-yellow-500' : 'text-gray-300'}
