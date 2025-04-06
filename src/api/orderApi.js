@@ -102,10 +102,10 @@ export const createOrder = async (data) => {
   const decodedToken = jwtDecode(token);
   
   const newData = {
-    userId: decodedToken.id, // Lấy userId từ token
+    userId: decodedToken.id, 
     courseId: data.courseId,
     amount: data.amount,
-    status: 'Pending', // Mặc định là Pending
+    status: 'Pending', 
   };
 
   try {
@@ -130,20 +130,19 @@ export const updateOrderStatus = async (orderId, status) => {
     throw new Error('Không tìm thấy token');
   }
   try {
+    console.log(`Updating status for order ${orderId} to ${status}`); // Thêm log để kiểm tra
     const response = await api.put(`${API_URL}/${orderId}/status`, status, {
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
     });
-    console.log(`Updated status for order ${orderId}:`, response.data);
     return response.data;
   } catch (error) {
     console.error(`Lỗi khi cập nhật trạng thái đơn hàng ${orderId}:`, error.response?.data || error.message);
     throw error;
   }
 };
-
 export const deleteOrder = async (orderId) => {
   const token = localStorage.getItem('authToken');
   if (!token) {

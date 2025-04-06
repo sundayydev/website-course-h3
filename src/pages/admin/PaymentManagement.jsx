@@ -35,7 +35,6 @@ import {
   Trash2
 } from 'lucide-react';
 
-// Import API từ orderApi
 import { getAllOrders, updateOrderStatus, deleteOrder } from '@/api/orderApi';
 
 const PaymentManagement = () => {
@@ -67,17 +66,18 @@ const PaymentManagement = () => {
   };
 
   const handleStatusChange = async (orderId, newStatus) => {
-    try {
-      await updateOrderStatus(orderId, newStatus);
-      setOrders(orders.map(order => 
-        order.id === orderId ? { ...order, status: newStatus } : order
-      ));
-      toast.success('Cập nhật trạng thái thành công');
-    } catch (error) {
-      toast.error('Cập nhật trạng thái thất bại');
-      console.error('Error:', error);
-    }
-  };
+  try {
+    await updateOrderStatus(orderId, newStatus);
+    setOrders(orders.map(order => 
+      order.id === orderId ? { ...order, status: newStatus } : order
+    ));
+    toast.success('Cập nhật trạng thái thành công');
+  } catch (error) {
+    const errorMessage = error.response?.data || 'Cập nhật trạng thái thất bại';
+    toast.error(`Lỗi: ${errorMessage}`);
+    console.error('Error:', error);
+  }
+};
 
   const handleDeleteOrder = async (orderId) => {
     if (!window.confirm('Bạn có chắc muốn xóa đơn hàng này?')) {
@@ -283,8 +283,8 @@ const PaymentManagement = () => {
                         {getStatusBadge(order.status)}
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="pending">Đang chờ</SelectItem>
-                        <SelectItem value="paid">Hoàn thành</SelectItem>
+                        <SelectItem value="Pending">Đang chờ</SelectItem>
+                        <SelectItem value="Paid">Hoàn thành</SelectItem>
                         <SelectItem value="failed">Thất bại</SelectItem>
                         <SelectItem value="cancelled">Đã hủy</SelectItem>
                       </SelectContent>

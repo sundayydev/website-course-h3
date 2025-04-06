@@ -32,6 +32,7 @@ const sidebarItems = [
       { icon: <GraduationCap size={16} />, text: 'Khóa học', path: '/admin/courses' },
       { icon: <BookOpen size={16} />, text: 'Bài giảng', path: '/admin/lessons' },
       { icon: <CreditCard size={16} />, text: 'Quản lý khóa học', path: '/admin/course-management', badge: 'NEW', badgeType: 'beta' },
+     { icon: <BookOpen size={16} />, text: 'Bình luận bài viết', path: '/admin/comment' },
     ],
   },
   {
