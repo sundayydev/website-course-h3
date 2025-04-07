@@ -119,7 +119,7 @@ const CommentPost = ({ postId }) => {
                   <div className="flex items-center justify-between mb-2">
                     <div className="flex items-center space-x-3">
                       <img
-                        src={comment.avatarUrl || '/default-avatar.png'}
+                        src={import.meta.env.VITE_API_URL + comment.userAvatar || 'https://avatar.iran.liara.run/public/30'}
                         alt="avatar"
                         className="w-10 h-10 rounded-full object-cover"
                       />

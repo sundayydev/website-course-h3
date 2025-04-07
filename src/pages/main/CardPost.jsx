@@ -54,7 +54,7 @@ const CardPost = () => {
               <div className="flex items-center justify-between text-xs text-gray-500">
                 <div className="flex items-center gap-2">
                   <img
-                    src={post.user?.profileImage || 'https://via.placeholder.com/150'}
+                    src={import.meta.env.VITE_API_URL + post.user?.profileImage || 'https://via.placeholder.com/150'}
                     alt="Avatar"
                     className="w-8 h-8 rounded-full object-cover"
                   />
