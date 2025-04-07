@@ -1,7 +1,16 @@
 import { useEffect, useState } from 'react';
 import { getDashboardStats } from '@/api/dashboardApi';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Users, BookOpen, GraduationCap, Activity, TrendingUp, DollarSign, Clock, Award } from 'lucide-react';
+import {
+  Users,
+  BookOpen,
+  GraduationCap,
+  Activity,
+  TrendingUp,
+  DollarSign,
+  Clock,
+  Award,
+} from 'lucide-react';
 import { toast } from 'react-toastify';
 import {
   LineChart,
@@ -15,8 +24,12 @@ import {
   Bar,
   PieChart,
   Pie,
-  Cell
+  Cell,
 } from 'recharts';
+
+import { getCourses } from '@/api/courseApi';
+import { getStudents } from '@/api/studentApi';
+import { getEnrollments } from '@/api/enrollmentApi';
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
@@ -27,7 +40,7 @@ const Dashboard = () => {
     totalRevenue: 0,
     averageCompletionRate: 0,
     recentEnrollments: [],
-    coursePopularity: []
+    coursePopularity: [],
   });
   const [loading, setLoading] = useState(true);
 
@@ -41,15 +54,33 @@ const Dashboard = () => {
     { name: 'T6', enrollments: 105 },
   ];
 
-  const courseData = [
-    { name: 'React', value: 35 },
-    { name: 'Node.js', value: 25 },
-    { name: 'Python', value: 20 },
-    { name: 'Java', value: 15 },
-    { name: 'Khác', value: 5 },
-  ];
-
   const COLORS = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEEAD'];
+
+  const [courses, setCourses] = useState([]);
+  const [students, setStudents] = useState([]);
+  const [enrollments, setEnrollments] = useState([]);
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const coursesResponse = await getCourses();
+        const studentsResponse = await getStudents();
+        const enrollmentsResponse = await getEnrollments();
+
+        setCourses(coursesResponse);
+        setStudents(studentsResponse);
+        setEnrollments(enrollmentsResponse);
+
+        console.log('Courses:', coursesResponse);
+        console.log('Students:', studentsResponse);
+        console.log('Enrollments:', enrollmentsResponse);
+      } catch (error) {
+        console.error('Error fetching data:', error);
+      }
+    };
+
+    fetchData();
+  }, []);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -83,70 +114,54 @@ const Dashboard = () => {
           Cập nhật lần cuối: {new Date().toLocaleString('vi-VN')}
         </div>
       </div>
-      
+
       {/* Card Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Card Tổng số học viên */}
         <Card className="bg-white shadow-lg hover:shadow-xl transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-lg font-medium text-gray-500">
-              Tổng số học viên
-            </CardTitle>
+            <CardTitle className="text-lg font-medium text-gray-500">Tổng số học viên</CardTitle>
             <Users className="h-6 w-6 text-pink-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalStudents}</div>
-            <p className="text-xs text-gray-500">
-              Tổng số học viên đã đăng ký
-            </p>
+            <div className="text-2xl font-bold">{students.length}</div>
+            <p className="text-xs text-gray-500">Tổng số học viên đã đăng ký</p>
           </CardContent>
         </Card>
 
         {/* Card Số lượng đăng ký khóa học */}
         <Card className="bg-white shadow-lg hover:shadow-xl transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-lg font-medium text-gray-500">
-              Đăng ký khóa học
-            </CardTitle>
+            <CardTitle className="text-lg font-medium text-gray-500">Đăng ký khóa học</CardTitle>
             <BookOpen className="h-6 w-6 text-blue-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.totalEnrollments}</div>
-            <p className="text-xs text-gray-500">
-              Tổng số lượt đăng ký khóa học
-            </p>
+            <div className="text-2xl font-bold">{enrollments.length}</div>
+            <p className="text-xs text-gray-500">Tổng số lượt đăng ký khóa học</p>
           </CardContent>
         </Card>
 
         {/* Card Số lượng đang học */}
         <Card className="bg-white shadow-lg hover:shadow-xl transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-lg font-medium text-gray-500">
-              Đang học
-            </CardTitle>
-            <GraduationCap className="h-6 w-6 text-green-500" />
+            <CardTitle className="text-lg font-medium text-gray-500">Đang học</CardTitle>
+            <BookOpen className="h-6 w-6 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{stats.activeStudents}</div>
-            <p className="text-xs text-gray-500">
-              Số học viên đang tham gia học tập
-            </p>
+            <div className="text-2xl font-bold">{courses.size}</div>
+            <p className="text-xs text-gray-500">Số học viên đang tham gia học tập</p>
           </CardContent>
         </Card>
 
         {/* Card Số lượng người online */}
         <Card className="bg-white shadow-lg hover:shadow-xl transition-shadow">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-lg font-medium text-gray-500">
-              Đang online
-            </CardTitle>
+            <CardTitle className="text-lg font-medium text-gray-500">Đang online</CardTitle>
             <Activity className="h-6 w-6 text-orange-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.onlineUsers}</div>
-            <p className="text-xs text-gray-500">
-              Số người dùng đang trực tuyến
-            </p>
+            <p className="text-xs text-gray-500">Số người dùng đang trực tuyến</p>
           </CardContent>
         </Card>
       </div>
@@ -166,10 +181,10 @@ const Dashboard = () => {
                   <XAxis dataKey="name" />
                   <YAxis />
                   <Tooltip />
-                  <Line 
-                    type="monotone" 
-                    dataKey="enrollments" 
-                    stroke="#FF6B6B" 
+                  <Line
+                    type="monotone"
+                    dataKey="enrollments"
+                    stroke="#FF6B6B"
                     strokeWidth={2}
                     dot={{ fill: '#FF6B6B', r: 4 }}
                   />
@@ -189,7 +204,7 @@ const Dashboard = () => {
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
                   <Pie
-                    data={courseData}
+                    data={courses}
                     cx="50%"
                     cy="50%"
                     labelLine={false}
@@ -197,9 +212,9 @@ const Dashboard = () => {
                     fill="#8884d8"
                     dataKey="value"
                   >
-                    {courseData.map((entry, index) => (
+                    {/* {courses.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
+                    ))} */}
                   </Pie>
                   <Tooltip />
                 </PieChart>
@@ -213,33 +228,27 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <Card className="bg-white shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-lg font-medium text-gray-500">
-              Doanh thu
-            </CardTitle>
+            <CardTitle className="text-lg font-medium text-gray-500">Doanh thu</CardTitle>
             <DollarSign className="h-6 w-6 text-green-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(stats.totalRevenue)}
+              {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(
+                stats.totalRevenue
+              )}
             </div>
-            <p className="text-xs text-gray-500">
-              Tổng doanh thu
-            </p>
+            <p className="text-xs text-gray-500">Tổng doanh thu</p>
           </CardContent>
         </Card>
 
         <Card className="bg-white shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-lg font-medium text-gray-500">
-              Tỷ lệ hoàn thành
-            </CardTitle>
+            <CardTitle className="text-lg font-medium text-gray-500">Tỷ lệ hoàn thành</CardTitle>
             <Award className="h-6 w-6 text-yellow-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.averageCompletionRate}%</div>
-            <p className="text-xs text-gray-500">
-              Tỷ lệ hoàn thành trung bình
-            </p>
+            <p className="text-xs text-gray-500">Tỷ lệ hoàn thành trung bình</p>
           </CardContent>
         </Card>
 
@@ -252,24 +261,18 @@ const Dashboard = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">2.5h</div>
-            <p className="text-xs text-gray-500">
-              Mỗi ngày
-            </p>
+            <p className="text-xs text-gray-500">Mỗi ngày</p>
           </CardContent>
         </Card>
 
         <Card className="bg-white shadow-lg">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-lg font-medium text-gray-500">
-              Tăng trưởng
-            </CardTitle>
+            <CardTitle className="text-lg font-medium text-gray-500">Tăng trưởng</CardTitle>
             <TrendingUp className="h-6 w-6 text-blue-500" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">+15%</div>
-            <p className="text-xs text-gray-500">
-              So với tháng trước
-            </p>
+            <p className="text-xs text-gray-500">So với tháng trước</p>
           </CardContent>
         </Card>
       </div>

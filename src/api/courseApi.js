@@ -39,8 +39,9 @@ export const createCourse = async (data) => {
     description: data.description, 
     price: data.price,
     instructorId: decodedToken.id,
+    contents: data.contents.split('\n').filter(line => line.trim() !== '')
   };
-  
+  console.log('New Data: ', newData);
   try {
     const response = await api.post(`${API_URL}`, newData, {
       headers: {
@@ -60,8 +61,18 @@ export const updateCourse = async (id, data) => {
   if (!token) {
     throw new Error('Không tìm thấy token');
   }
+
+  const decodedToken = jwtDecode(token);
+
+  const updatedData = {
+    title: data.title,
+    description: data.description,
+    price: data.price,
+    instructorId: decodedToken.id,
+    contents: data.contents.split('\n').filter((line) => line.trim() !== '')
+  }
   try {
-    const response = await api.put(`${API_URL}/${id}`, data, {
+    const response = await api.put(`${API_URL}/${id}`, updatedData, {
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
@@ -103,9 +114,6 @@ export const uploadImage = async (id, urlImage) => {
   {
     file: urlImage
   }
-
-  console.log('id: ', id);
-  console.log('data: ', data);
   
   try {
     const response = await api.post(`${API_URL}/upload-image/${id}`, data, {

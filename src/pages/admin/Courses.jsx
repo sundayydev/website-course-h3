@@ -38,6 +38,7 @@ const Courses = () => {
     price: 0,
     urlImage: null,
     instructorId: '',
+    contents: [],
   });
 
   useEffect(() => {
@@ -58,27 +59,45 @@ const Courses = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    try {
       if (editingCourse) {
-        await updateCourse(editingCourse.id, formData);
-        if (formData.urlImage) {
-          await uploadImage(editingCourse.id, formData.urlImage);
+        try {
+          // Cập nhật khóa học nếu đang trong chế độ chỉnh sửa
+          await updateCourse(editingCourse.id, formData);
+
+          console.log('formData: ', formData);
+          // Kiểm tra nếu có ảnh mới để tải lên
+          if (formData.urlImage && formData.urlImage instanceof File && formData.urlImage != "") {
+            await uploadImage(editingCourse.id, formData.urlImage);
+          }
+          toast.success('Cập nhật khóa học thành công');
+          setIsDialogOpen(false);
+          fetchCourses();
+          resetForm();
+        } catch (error) {
+          console.error('Error updating course:', error);
+          toast.error('Có lỗi xảy ra khi cập nhật khóa học');
+          // Xử lý lỗi nếu cần thiết, ví dụ: thông báo cho người dùng
         }
       } else {
-        const response = await createCourse(formData);
-        if (formData.urlImage) {
-          await uploadImage(response.id, formData.urlImage);
+        try {
+          // Tạo khóa học mới nếu không phải chỉnh sửa
+          const response = await createCourse(formData);
+
+          // Kiểm tra nếu có ảnh mới để tải lên
+          if (formData.urlImage && formData.urlImage instanceof File && formData.urlImage != "") {
+            await uploadImage(response.id, formData.urlImage);
+          }
+          toast.success('Thêm khóa học thành công');
+          setIsDialogOpen(false);
+          fetchCourses();
+          resetForm();
+        } catch (error) {
+          console.error('Error creating course:', error);
+          toast.error('Có lỗi xảy ra khi tạo khóa học');
+          // Xử lý lỗi nếu cần thiết, ví dụ: thông báo cho người dùng
         }
       }
 
-      toast.success(editingCourse ? 'Cập nhật khóa học thành công' : 'Thêm khóa học thành công');
-      setIsDialogOpen(false);
-      fetchCourses();
-      resetForm();
-    } catch (error) {
-      toast.error('Có lỗi xảy ra');
-      console.error('Error:', error);
-    }
   };
 
   const handleDelete = async (id) => {
@@ -95,6 +114,7 @@ const Courses = () => {
   };
 
   const handleEdit = (course) => {
+    console.log('course: ', course);
     setEditingCourse(course);
     setFormData({
       title: course.title,
@@ -102,7 +122,9 @@ const Courses = () => {
       price: course.price,
       urlImage: course.urlImage || '',
       instructorId: course.instructorId,
+      contents: course.contents,
     });
+    console.log('formData: ', formData);
     setIsDialogOpen(true);
   };
 
@@ -111,8 +133,9 @@ const Courses = () => {
       title: '',
       description: '',
       price: 0,
-      urlImage: '',
+      urlImage: null,
       instructorId: '',
+      contents: [],
     });
     setEditingCourse(null);
   };
@@ -176,6 +199,25 @@ const Courses = () => {
                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                     required
                     placeholder="Nhập mô tả khóa học"
+                    rows={4}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="content">Tóm tắt nội dung</Label>
+                  <Textarea
+                    id="content"
+                    value={
+                      Array.isArray(formData.contents)
+                        ? formData.contents.join('\n')
+                        : formData.contents
+                    }
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        contents: e.target.value,
+                      })
+                    }
+                    placeholder="Nhập tóm tắt nội dung khóa học"
                     rows={4}
                   />
                 </div>
