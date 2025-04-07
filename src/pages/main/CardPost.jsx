@@ -40,7 +40,7 @@ const CardPost = () => {
           >
             <div className="flex-grow">
               <img
-                src={`http://localhost:5221/${post.urlImage}`}
+                src={`${import.meta.env.VITE_API_URL}${post.urlImage}`}
                 className="w-full h-40 object-cover rounded-t-2xl"
               />
             </div>

@@ -196,11 +196,11 @@ const Details = () => {
         <div className="mt-6">
           <h2 className="text-xl font-bold mb-4 text-gray-800">Bạn sẽ học được gì?</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
-            {course.descriptions &&
-              course.descriptions.map((description, index) => (
+            {course.contents &&
+              course.contents.map((content, index) => (
                 <div key={index} className="flex items-center space-x-3">
                   <CheckCircle className="text-orange-500" size={20} />
-                  <span className="text-gray-700">{description}</span>
+                  <span className="text-gray-700">{content}</span>
                 </div>
               ))}
           </div>

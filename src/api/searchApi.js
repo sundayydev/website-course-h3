@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = 'http://localhost:5221/api/search';
+const BASE_URL = import.meta.env.VITE_API_URL + '/api/search';
 
 // Tìm kiếm kết hợp (courses và posts)
 export const searchAll = (keyword, page = 1, pageSize = 10) => {
