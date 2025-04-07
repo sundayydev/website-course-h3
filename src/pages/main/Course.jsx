@@ -144,7 +144,7 @@ const CourseList = () => {
                   </div>
                   <div className="flex items-center gap-1">
                     <FaClock />
-                    <p className="text-center truncate">{course.totalHours} giờ</p>
+                    <p className="text-center truncate">{course.totalHours}</p>
                   </div>
                   <div className="flex items-center gap-1">
                     <FaStar className="text-yellow-500" />

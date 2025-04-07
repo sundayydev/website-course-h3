@@ -127,9 +127,7 @@ const Details = () => {
               // Khóa học miễn phí - đăng ký trực tiếp
               try {
                 await createEnrollment(courseId);
-                console.log('createEnrollment response:', response.data);
                 setIsEnrolled(true);
-                await checkUserEnrollment();
                 if (lessons.length > 0) {
                   navigate(`/detailsPageCourse/${lessons[0].id}`);
                 }
@@ -242,6 +240,7 @@ const Details = () => {
                   <p className="text-gray-600 text-sm">{description}</p>
                   {videoUrl && (
                     <button
+                      disabled={!isEnrolled}
                       className="mt-2 flex items-center space-x-2 text-blue-500"
                       onClick={() => openVideoModal(videoUrl)}
                     >
