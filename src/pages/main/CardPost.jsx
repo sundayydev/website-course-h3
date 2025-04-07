@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { toast } from 'react-toastify';
 import { getAllPost } from '../../api/postApi';
-
 const CardPost = () => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -13,12 +13,10 @@ const CardPost = () => {
         const response = await getAllPost();
         if (Array.isArray(response.data) && response.data.length > 0) {
           setPosts(response.data);
-        } else {
-          setError('Không có bài viết nào.');
-        }
+        } 
       } catch (error) {
-        console.error('Lỗi khi lấy bài viết:', error);
-        setError(`Có lỗi xảy ra khi tải bài viết: ${error.message}`);
+        toast.error('Lỗi khi lấy bài viết');
+        
       } finally {
         setLoading(false);
       }
@@ -54,7 +52,7 @@ const CardPost = () => {
               <div className="flex items-center justify-between text-xs text-gray-500">
                 <div className="flex items-center gap-2">
                   <img
-                    src={post.user?.profileImage || 'https://via.placeholder.com/150'}
+                    src={import.meta.env.VITE_API_URL + post.user?.profileImage || 'https://via.placeholder.com/150'}
                     alt="Avatar"
                     className="w-8 h-8 rounded-full object-cover"
                   />

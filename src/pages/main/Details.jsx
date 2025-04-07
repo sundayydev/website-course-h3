@@ -88,6 +88,7 @@ const Details = () => {
       }
     };
 
+    
     fetchCourse();
     fetchLessons();
     checkUserEnrollment();
@@ -155,6 +156,18 @@ const Details = () => {
   };
 
 
+  const calculateTotalHours = () => {
+    if (!lessons || !Array.isArray(lessons)) return '0 phút';
+    const totalMinutes = lessons.reduce((sum, lesson) => {
+      return sum + (Number(lesson.duration) || 0);
+    }, 0);
+    if (totalMinutes >= 60) {
+      const hours = Math.floor(totalMinutes / 60);
+      const minutes = totalMinutes % 60;
+      return `${hours}h${minutes}p`;
+    } else {
+      return `${totalMinutes} phút`;
+    }
 
   const getEmbedUrl = (url) => {
     const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:.*v=|embed\/|v\/))([^&?]+)/);
@@ -182,10 +195,10 @@ const Details = () => {
         <div className="mt-6">
           <h2 className="text-xl font-bold mb-4 text-gray-800">Bạn sẽ học được gì?</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
-            {course.contents && course.contents.map((content, index) => (
+            {course.descriptions && course.descriptions.map((description, index) => (
               <div key={index} className="flex items-center space-x-3">
                 <CheckCircle className="text-orange-500" size={20} />
-                <span className="text-gray-700">{content}</span>
+                <span className="text-gray-700">{description}</span>
               </div>
             ))}
           </div>
@@ -203,13 +216,12 @@ const Details = () => {
           </div>
           <div className="flex items-center space-x-2">
             <Clock size={18} className="text-blue-500" />
-            <span className="text-sm font-medium">
-              {Math.floor((lessons.length * 15) / 60)} giờ {(lessons.length * 15) % 60} phút
-            </span>
+            <span className="text-sm font-medium">{calculateTotalHours()}</span>
+            
           </div>
         </div>
         <ul className="list-none space-y-2 mt-4 w-full">
-          {lessons.map(({ id, title, content, videoUrl }, index) => (
+          {lessons.map(({ id, title, description, videoUrl }, index) => (
             <div key={id} className="overflow-hidden w-full">
               <div
                 className={`bg-gray-100 p-2 cursor-pointer flex justify-between items-center w-full h-14 ${expanded === index ? 'rounded-t-2xl' : 'rounded-2xl'}`}
@@ -226,7 +238,7 @@ const Details = () => {
               </div>
               {expanded === index && (
                 <div className="bg-white p-3 border-x border-b rounded-b-2xl w-full">
-                  <p className="text-gray-600 text-sm">{content}</p>
+                  <p className="text-gray-600 text-sm">{description}</p>
                   {videoUrl && (
                     <button
                       className="mt-2 flex items-center space-x-2 text-blue-500"
@@ -287,7 +299,7 @@ const Details = () => {
             <Clock className="text-pink-500 mr-2" size={15} />
             Thời lượng:{' '}
             <strong className="text-gray-600 mr-1 ml-1 font-semibold">
-              {Math.floor((lessons.length * 15) / 60)} giờ {(lessons.length * 15) % 60} phút
+              {calculateTotalHours()}
             </strong>
           </li>
           <li className="flex items-center">

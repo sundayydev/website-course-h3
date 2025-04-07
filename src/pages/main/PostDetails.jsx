@@ -40,20 +40,20 @@ const PostDetails = () => {
       {/* Thông tin tác giả */}
       <div className="flex items-center space-x-4 mb-4">
         <img
-          src={`http://localhost:5221/${post.user.urlImage}`}
+          src={import.meta.env.VITE_API_URL + post.user?.profileImage || 'https://avatar.iran.liara.run/public/30'}
           alt={post.user?.fullName || 'Tác giả'}
           className="w-12 h-12 rounded-full"
         />
         <div>
           <p className="font-semibold">{post.user?.fullName || 'Tác giả ẩn danh'}</p>
-          <p className="text-gray-500 text-sm">{isValidDate(post.createdAt) ? new Date(post.createdAt).toLocaleDateString() : 'Không rõ thời gian'}</p>
+          <p className="text-gray-500 text-sm">{post.createdAt ? post.createdAt : 'Không rõ thời gian'}</p>
         </div>
       </div>
 
       {/* Hình ảnh chính của bài viết */}
       {post.urlImage && (
         <img
-          src={url + `${post.urlImage}`}
+          src={import.meta.env.VITE_API_URL + `${post.urlImage}`}
           alt={post.title}
           className="w-full h-full object-cover rounded-lg mb-4"
         />
