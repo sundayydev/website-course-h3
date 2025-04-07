@@ -1,7 +1,3 @@
-Dưới đây là nội dung mẫu cho file `README.md` được tạo dựa trên các tài liệu bạn cung cấp. File này sẽ mô tả dự án "website-course-h3", một ứng dụng web về khóa học lập trình, với thông tin cơ bản về cách cài đặt, chạy, và các công nghệ sử dụng.
-
----
-
 # Website Course H3
 
 **Website Course H3** là một ứng dụng web cung cấp các khóa học lập trình, được xây dựng với React và Vite. Dự án sử dụng Tailwind CSS để thiết kế giao diện, cùng với nhiều thư viện khác như Redux Toolkit, Axios, và Framer Motion để hỗ trợ phát triển tính năng.
