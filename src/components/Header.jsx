@@ -119,7 +119,7 @@ const Header = () => {
 
     setIsSearching(true);
     try {
-      const response = await axios.get('http://localhost:5221/api/search/all', {
+      const response = await axios.get(import.meta.env.VITE_API_URL+'/api/search/all', {
         params: { keyword: searchQuery },
       });
 
@@ -205,7 +205,7 @@ const Header = () => {
   const handleResetPassword = async () => {
     setLoading(true);
     try {
-      await axios.post('http://localhost:5221/api/auth/reset-password', resetPasswordData);
+      await axios.post(import.meta.env.VITE_API_URL+'/api/auth/reset-password', resetPasswordData);
       toast.success('Mật khẩu đã được đặt lại thành công!');
       setTimeout(() => {
         setIsResetPasswordOpen(false);
