@@ -217,10 +217,9 @@ const PaymentManagement = () => {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tất cả trạng thái</SelectItem>
-                <SelectItem value="pending">Đang chờ</SelectItem>
-                <SelectItem value="paid">Hoàn thành</SelectItem>
-                <SelectItem value="failed">Thất bại</SelectItem>
-                <SelectItem value="cancelled">Đã hủy</SelectItem>
+                <SelectItem value="Pending">Đang chờ</SelectItem>
+                <SelectItem value="Paid">Hoàn thành</SelectItem>
+                <SelectItem value="Cancelled">Thất bại</SelectItem>
               </SelectContent>
             </Select>
             <Select value={dateFilter} onValueChange={setDateFilter}>
@@ -285,8 +284,7 @@ const PaymentManagement = () => {
                       <SelectContent>
                         <SelectItem value="Pending">Đang chờ</SelectItem>
                         <SelectItem value="Paid">Hoàn thành</SelectItem>
-                        <SelectItem value="failed">Thất bại</SelectItem>
-                        <SelectItem value="cancelled">Đã hủy</SelectItem>
+                        <SelectItem value="Cancelled">Thất bại</SelectItem>
                       </SelectContent>
                     </Select>
                   </TableCell>
