@@ -122,7 +122,7 @@ const CourseList = () => {
           >
             <div className="flex-grow">
               <img
-                src={`http://localhost:5221/${course.urlImage}`}
+                src={import.meta.env.VITE_API_URL+`/${course.urlImage}`}
                 className="w-full h-40 object-cover rounded-lg"
                 alt={course.title}
               />

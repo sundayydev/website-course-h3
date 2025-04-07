@@ -20,7 +20,7 @@ const Contact = () => {
     setLoading(true);
 
     try {
-      const response = await fetch('http://localhost:5221/api/contact/send-email', {
+      const response = await fetch(import.meta.env.VITE_API_URL+'/api/contact/send-email', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

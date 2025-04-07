@@ -120,7 +120,7 @@ const PaymentModal = () => {
           <div className="md:w-1/2 p-4">
             <div className="flex items-center space-x-3">
               <img
-                src={course.urlImage ? `http://localhost:5221/${course.urlImage}` : 'https://via.placeholder.com/50'}
+                src={course.urlImage ? import.meta.env.VITE_API_URL+`/${course.urlImage}` : 'https://via.placeholder.com/50'}
                 alt={course.title}
                 className="w-12 h-12 rounded-full"
               />
