@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { getPost } from '../../api/postApi';
-
+import { toast } from 'react-toastify';
 const CardPost = () => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -13,12 +13,10 @@ const CardPost = () => {
         const response = await getPost();
         if (Array.isArray(response.data) && response.data.length > 0) {
           setPosts(response.data);
-        } else {
-          setError('Không có bài viết nào.');
-        }
+        } 
       } catch (error) {
-        console.error('Lỗi khi lấy bài viết:', error);
-        setError(`Có lỗi xảy ra khi tải bài viết: ${error.message}`);
+        toast.error('Lỗi khi lấy bài viết');
+        
       } finally {
         setLoading(false);
       }

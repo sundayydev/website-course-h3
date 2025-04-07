@@ -1,6 +1,38 @@
 import api from './axios';
 import { jwtDecode } from 'jwt-decode';
 const API_URL = '/review';
+const ENROLLMENT_URL = '/enrollment';
+
+export const getPublicReviewsByCourseId = async (courseId) => {
+  try {
+    const response = await api.get(`${API_URL}/course/${courseId}`, {
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+    console.log('Public reviews:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi lấy danh sách đánh giá công khai:', error);
+    throw error;
+  }
+};
+
+// Lấy số người đăng ký theo courseId không cần token
+export const getPublicEnrollmentsByCourseId = async (courseId) => {
+  try {
+    const response = await api.get(`${ENROLLMENT_URL}/course/${courseId}`, {
+      headers: {
+        'Content-Type': 'application/json',
+      }
+    });
+    console.log('Public enrollments:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi lấy danh sách đăng ký công khai:', error);
+    throw error;
+  }
+};
 
 export const getReviewsByCourseId = async (courseId) => {
   const token = localStorage.getItem('authToken');
