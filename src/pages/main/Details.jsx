@@ -154,6 +154,13 @@ const Details = () => {
     }
   };
 
+
+
+  const getEmbedUrl = (url) => {
+    const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:.*v=|embed\/|v\/))([^&?]+)/);
+    return match ? `https://www.youtube.com/embed/${match[1]}` : '';
+  };
+
   const closePaymentModal = () => {
     setIsPaymentModalOpen(false); 
   };
@@ -246,7 +253,7 @@ const Details = () => {
           <div className="w-full max-w-md relative">
             <div className="relative pb-[56.25%] h-0">
               <iframe
-                src={lessons[0].videoUrl}
+                src={getEmbedUrl(lessons[0].videoUrl)}
                 className="absolute top-0 left-0 w-full h-full rounded-2xl"
                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                 allowFullScreen
@@ -310,7 +317,7 @@ const Details = () => {
             <div className="p-4">
               <div className="relative pb-[56.25%] h-0">
                 <iframe
-                  src={selectedVideo}
+                  src={getEmbedUrl(selectedVideo)}
                   className="absolute top-0 left-0 w-full h-full rounded-2xl"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
                   allowFullScreen

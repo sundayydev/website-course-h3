@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { getPost } from '../../api/postApi';
+import { getAllPost } from '../../api/postApi';
 
 const CardPost = () => {
   const [posts, setPosts] = useState([]);
@@ -10,7 +10,7 @@ const CardPost = () => {
   useEffect(() => {
     const fetchPosts = async () => {
       try {
-        const response = await getPost();
+        const response = await getAllPost();
         if (Array.isArray(response.data) && response.data.length > 0) {
           setPosts(response.data);
         } else {

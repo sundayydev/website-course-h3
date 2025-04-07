@@ -6,12 +6,13 @@ import {
   CreditCard,
   Users,
   GraduationCap,
-  BookOpen,
+  BookOpenText,
   Settings,
   Shield,
   HelpCircle,
   ChevronDown,
-  DollarSign
+  DollarSign,
+  BookOpen
 } from 'lucide-react';
 import LogoH3 from '@/assets/LogoH3.png';
 import { NavLink, useLocation } from 'react-router-dom';
@@ -27,10 +28,10 @@ const sidebarItems = [
     ],
   },
   {
-    section: 'Quản lý khóa học',
+    section: 'Quản lý khóa học & bài viết',
     items: [
       { icon: <GraduationCap size={16} />, text: 'Khóa học', path: '/admin/courses' },
-      { icon: <BookOpen size={16} />, text: 'Bài giảng', path: '/admin/lessons' },
+      { icon: <BookOpenText size={16} />, text: 'Bài viết', path: '/admin/post-management' },
       { icon: <CreditCard size={16} />, text: 'Quản lý khóa học', path: '/admin/course-management', badge: 'NEW', badgeType: 'beta' },
      { icon: <BookOpen size={16} />, text: 'Bình luận bài viết', path: '/admin/comment' },
     ],
