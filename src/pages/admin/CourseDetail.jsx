@@ -137,22 +137,30 @@ const CourseDetail = () => {
     }
   };
 
-  const convertDurationToMinutes = (duration) => {
-    if (!duration) return 0;
-
-    const matches = duration.match(/PT(?:(\d+)H)?(?:(\d+)M)?(?:(\d+)S)?/);
-    if (!matches) return 0;
-
-    const hours = parseInt(matches[1] || 0);
-    const minutes = parseInt(matches[2] || 0);
-    const seconds = parseInt(matches[3] || 0);
-
-    return Math.round(hours * 60 + minutes + seconds / 60);
+  const formatDuration = (isoDuration) => {
+    if (!isoDuration) return 0;
+  
+    const match = isoDuration.match(/PT(\d+H)?(\d+M)?(\d+S)?/);
+    const hours = match[1] ? parseInt(match[1]) : 0;
+    const minutes = match[2] ? parseInt(match[2]) : 0;
+    const seconds = match[3] ? parseInt(match[3]) : 0;
+  
+    let totalMinutes = hours * 60 + minutes;
+    if (seconds >= 30) totalMinutes += 1;
+  
+    return totalMinutes;
   };
 
+  // Hàm trích xuất ID video từ URL
+  const extractVideoId = (url) => {
+    const regex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+    return url?.match(regex)?.[1] || null;
+  };
+
+  // Hàm chuẩn bị video
   const getEmbedUrl = (url) => {
-    const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:.*v=|embed\/|v\/))([^&?]+)/);
-    return match ? `https://www.youtube.com/embed/${match[1]}` : '';
+    const videoId = extractVideoId(url);
+    return videoId ? `https://www.youtube.com/embed/${videoId}` : '';
   };
 
   const handleVideoUrlChange = async (e) => {
@@ -173,7 +181,10 @@ const CourseDetail = () => {
         const data = await response.json();
         const duration = data.items[0].contentDetails.duration;
         const views = data.items[0].statistics.viewCount;
-        setVideoDuration(duration);
+        setNewLesson((prev) => ({
+          ...prev,
+          duration: formatDuration(duration),
+        }));
         setVideoViews(views);
       } catch (error) {
         console.error('Error fetching video data:', error);

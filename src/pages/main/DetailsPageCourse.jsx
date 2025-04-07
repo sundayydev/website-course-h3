@@ -56,21 +56,25 @@ const DetailsPageCourse = () => {
     return `${hours > 0 ? hours + ':' : ''}${minutes < 10 && hours > 0 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
   };
 
+  // Hàm định dạng thời gian video
   const formatVideoTime = (seconds) => {
     const minutes = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${minutes < 10 ? '0' : ''}${minutes}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
+  // Hàm trích xuất ID video từ URL
   const extractVideoId = (url) => {
     const regex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
     return url?.match(regex)?.[1] || null;
   };
 
+  // Hàm chuẩn bị video
   const onPlayerReady = (event) => {
     playerRef.current = event.target;
   };
 
+  // Hàm xử lý sự kiện trạng thái video
   const onPlayerStateChange = async (event) => {
     if (event.data === 0) {
       await handleLessonComplete();
@@ -78,6 +82,7 @@ const DetailsPageCourse = () => {
     }
   };
 
+  // Mở popup ghi chú
   const handleOpenNotePopup = () => {
     if (playerRef.current) {
       const currentTime = playerRef.current.getCurrentTime();
@@ -86,6 +91,7 @@ const DetailsPageCourse = () => {
     setIsNotePopupOpen(true);
   };
 
+  // Xem ghi chú
   const handleOpenViewNotesPopup = async () => {
     if (!userId || !token || !lessonId) {
       setError('Vui lòng đăng nhập để xem ghi chú.');
@@ -113,6 +119,7 @@ const DetailsPageCourse = () => {
     }
   };
 
+  // Khởi tạo tiến độ
   const initializeProgress = async () => {
     if (!userId || !token || !lessonId) return;
 
@@ -140,6 +147,7 @@ const DetailsPageCourse = () => {
     }
   };
 
+  // Cập nhật tiến độ bài học
   const handleLessonComplete = async () => {
     if (!userId || !token || !lessonId) return;
 
@@ -158,6 +166,7 @@ const DetailsPageCourse = () => {
         notes: progress.notes || '',
       };
 
+      // Cập nhật tiến độ
       const updateResponse = await fetch(`${apiBaseUrl}/api/Progress/${progressId}`, {
         method: 'PUT',
         headers: {
@@ -189,6 +198,7 @@ const DetailsPageCourse = () => {
     }
   };
 
+  // Chuyển đến bài học tiếp theo
   const navigateToNextLesson = () => {
     const lessons = sections[0]?.lessons || [];
     const currentIndex = lessons.findIndex(lesson => lesson.id.toString() === lessonId);
@@ -202,6 +212,7 @@ const DetailsPageCourse = () => {
     navigate(`/detailsPageCourse/${nextLesson.id}`);
   };
 
+  // Lưu ghi chú
   const handleSaveNote = async () => {
     if (!userId || !token || !lessonId || !noteContent) {
       toast.error('Thiếu thông tin để lưu ghi chú.');
@@ -247,6 +258,7 @@ const DetailsPageCourse = () => {
     }
   };
 
+  // Lấy bài học
   useEffect(() => {
     const fetchLesson = async () => {
       if (!lessonId || !userId || !token) {
@@ -304,6 +316,7 @@ const DetailsPageCourse = () => {
     fetchLesson();
   }, [lessonId, userId, token]);
 
+  // Định dạng ngày
   const formatDate = (isoString) => {
     return isoString ? new Date(isoString).toLocaleDateString('vi-VN', {
       day: '2-digit',
