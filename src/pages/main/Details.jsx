@@ -39,6 +39,7 @@ const Details = () => {
       try {
         console.log('CourseId:', courseId); 
         const data = await getCourseById(courseId);
+        checkUserEnrollment();
         if (data) {
           console.log('Course data:', data); 
           setCourse(data);
@@ -124,8 +125,9 @@ const Details = () => {
               // Khóa học miễn phí - đăng ký trực tiếp
               try {
                 await createEnrollment(courseId);
+                console.log('createEnrollment response:', response.data);
                 setIsEnrolled(true);
-                
+                await checkUserEnrollment();
                 if (lessons.length > 0) {
                   navigate(`/detailsPageCourse/${lessons[0].id}`);
                 }
