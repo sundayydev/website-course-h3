@@ -19,7 +19,6 @@ import Review from './Review';
 import { jwtDecode } from 'jwt-decode';
 import PaymentModal from './Payment';
 
-
 const Details = () => {
   const { courseId } = useParams();
   const [course, setCourse] = useState(null);
@@ -37,11 +36,11 @@ const Details = () => {
 
     const fetchCourse = async () => {
       try {
-        console.log('CourseId:', courseId); 
+        console.log('CourseId:', courseId);
         const data = await getCourseById(courseId);
         checkUserEnrollment();
         if (data) {
-          console.log('Course data:', data); 
+          console.log('Course data:', data);
           setCourse(data);
         } else {
           setError('Không có dữ liệu khóa học');
@@ -52,16 +51,16 @@ const Details = () => {
       }
     };
 
-   const fetchLessons = async () => {
-  try {
-    const data = await getLessonsByCourseId(courseId);
-    console.log('Fetched lessons:', data);
-    setLessons(data);
-  } catch (error) {
-    setError('Không thể lấy danh sách bài học của khóa học');
-    console.error('Error in fetchLessons:', error);
-  }
-};
+    const fetchLessons = async () => {
+      try {
+        const data = await getLessonsByCourseId(courseId);
+        console.log('Fetched lessons:', data);
+        setLessons(data);
+      } catch (error) {
+        setError('Không thể lấy danh sách bài học của khóa học');
+        console.error('Error in fetchLessons:', error);
+      }
+    };
 
     const checkUserEnrollment = async () => {
       const token = localStorage.getItem('authToken');
@@ -74,21 +73,23 @@ const Details = () => {
         const response = await getEnrollmentByUserId();
         const enrolledCourses = response.data;
 
-        const isAlreadyEnrolled = enrolledCourses.some(enrollment => 
-          enrollment.courseId === courseId && enrollment.status === "Active"
+        const isAlreadyEnrolled = enrolledCourses.some(
+          (enrollment) => enrollment.courseId === courseId && enrollment.status === 'Active'
         );
         setIsEnrolled(isAlreadyEnrolled);
         console.log(isAlreadyEnrolled);
         console.log(enrolledCourses);
-        console.log(isAlreadyEnrolled ? 'Sinh viên đã đăng ký khóa học này' : 'Sinh viên chưa đăng ký khóa học này');
-
+        console.log(
+          isAlreadyEnrolled
+            ? 'Sinh viên đã đăng ký khóa học này'
+            : 'Sinh viên chưa đăng ký khóa học này'
+        );
       } catch (error) {
         console.error('Lỗi khi kiểm tra đăng ký:', error);
         setIsEnrolled(false);
       }
     };
 
-    
     fetchCourse();
     fetchLessons();
     checkUserEnrollment();
@@ -110,7 +111,7 @@ const Details = () => {
 
   const handleEnrollClick = async () => {
     const token = localStorage.getItem('authToken');
-    
+
     try {
       // Kiểm tra token có hợp lệ không
       if (token) {
@@ -136,9 +137,9 @@ const Details = () => {
                 console.error('Lỗi khi đăng ký khóa học:', error);
                 alert('Có lỗi xảy ra khi đăng ký khóa học. Vui lòng thử lại!');
               }
-            } else { 
-             //setIsPaymentModalOpen(true);
-             navigate(`/payment/${courseId}`)
+            } else {
+              //setIsPaymentModalOpen(true);
+              navigate(`/payment/${courseId}`);
             }
           }
           return;
@@ -155,7 +156,6 @@ const Details = () => {
     }
   };
 
-
   const calculateTotalHours = () => {
     if (!lessons || !Array.isArray(lessons)) return '0 phút';
     const totalMinutes = lessons.reduce((sum, lesson) => {
@@ -168,6 +168,7 @@ const Details = () => {
     } else {
       return `${totalMinutes} phút`;
     }
+  };
 
   const getEmbedUrl = (url) => {
     const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:.*v=|embed\/|v\/))([^&?]+)/);
@@ -175,7 +176,7 @@ const Details = () => {
   };
 
   const closePaymentModal = () => {
-    setIsPaymentModalOpen(false); 
+    setIsPaymentModalOpen(false);
   };
   if (error) {
     return <p className="text-center text-red-500 pt-10">{error}</p>;
@@ -195,12 +196,13 @@ const Details = () => {
         <div className="mt-6">
           <h2 className="text-xl font-bold mb-4 text-gray-800">Bạn sẽ học được gì?</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
-            {course.descriptions && course.descriptions.map((description, index) => (
-              <div key={index} className="flex items-center space-x-3">
-                <CheckCircle className="text-orange-500" size={20} />
-                <span className="text-gray-700">{description}</span>
-              </div>
-            ))}
+            {course.descriptions &&
+              course.descriptions.map((description, index) => (
+                <div key={index} className="flex items-center space-x-3">
+                  <CheckCircle className="text-orange-500" size={20} />
+                  <span className="text-gray-700">{description}</span>
+                </div>
+              ))}
           </div>
         </div>
 
@@ -217,7 +219,6 @@ const Details = () => {
           <div className="flex items-center space-x-2">
             <Clock size={18} className="text-blue-500" />
             <span className="text-sm font-medium">{calculateTotalHours()}</span>
-            
           </div>
         </div>
         <ul className="list-none space-y-2 mt-4 w-full">
@@ -341,9 +342,7 @@ const Details = () => {
         </div>
       )}
       {/* PaymentModal */}
-      {isPaymentModalOpen && (
-        <PaymentModal onClose={closePaymentModal} />
-      )}
+      {isPaymentModalOpen && <PaymentModal onClose={closePaymentModal} />}
     </div>
   );
 };
