@@ -49,12 +49,12 @@ const Lessons = () => {
   const fetchCourseAndLessons = async () => {
     try {
       // Fetch course details
-      const courseResponse = await fetch(`http://localhost:5221/api/courses/${courseId}`);
+      const courseResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/courses/${courseId}`);
       const courseData = await courseResponse.json();
       setCourse(courseData);
 
       // Fetch lessons
-      const lessonsResponse = await fetch(`http://localhost:5221/api/courses/${courseId}/lessons`);
+      const lessonsResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/courses/${courseId}/lessons`);
       const lessonsData = await lessonsResponse.json();
       setLessons(lessonsData);
     } catch (error) {
@@ -69,8 +69,8 @@ const Lessons = () => {
     e.preventDefault();
     try {
       const endpoint = editingLesson
-        ? `http://localhost:5221/api/lessons/${editingLesson.id}`
-        : 'http://localhost:5221/api/lessons';
+        ? `${import.meta.env.VITE_API_URL}/api/lessons/${editingLesson.id}`
+        : `${import.meta.env.VITE_API_URL}/api/lessons`;
       
       const method = editingLesson ? 'PUT' : 'POST';
       
@@ -99,7 +99,7 @@ const Lessons = () => {
   const handleDelete = async (id) => {
     if (window.confirm('Bạn có chắc chắn muốn xóa bài học này?')) {
       try {
-        const response = await fetch(`http://localhost:5221/api/lessons/${id}`, {
+        const response = await fetch(`${import.meta.env.VITE_API_URL}/api/lessons/${id}`, {
           method: 'DELETE',
         });
 

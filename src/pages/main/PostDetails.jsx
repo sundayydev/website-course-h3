@@ -8,7 +8,7 @@ const PostDetails = () => {
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const url = 'http://localhost:5221/';
+
   const isValidDate = (date) => {
     const parsedDate = new Date(date);
     return !isNaN(parsedDate.getTime());

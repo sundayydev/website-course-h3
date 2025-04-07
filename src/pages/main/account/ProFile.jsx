@@ -135,7 +135,7 @@ const ProfilePage = () => {
           <div className="w-full md:w-1/3 text-center mb-6 md:mb-0">
             <div className="relative inline-block">
               <img
-                src={user?.profileImage ? `http://localhost:5221${user.profileImage}` : "https://i.pravatar.cc/300"}
+                src={user?.profileImage ? `${import.meta.env.VITE_API_URL}${user.profileImage}` : "https://i.pravatar.cc/300"}
                 alt="Profile"
                 className="rounded-full w-32 h-32 sm:w-48 sm:h-48 mx-auto mb-4 border-4 border-pink-500 transition-transform duration-300 hover:scale-105"
                 onClick={() => setIsModalOpen(true)}
@@ -200,7 +200,7 @@ const ProfilePage = () => {
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-75 p-4">
           <div className="relative w-full max-w-xs sm:max-w-md">
             <img
-              src={user?.profileImage ? `http://localhost:5221${user.profileImage}` : "https://i.pravatar.cc/600"}
+              src={user?.profileImage ? `${import.meta.env.VITE_API_URL}${user.profileImage}` : "https://i.pravatar.cc/600"}
               alt="Profile Enlarged"
               className="rounded-lg shadow-2xl w-full"
             />

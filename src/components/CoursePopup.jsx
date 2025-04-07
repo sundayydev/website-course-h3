@@ -134,7 +134,7 @@ const CoursePopup = ({ isOpen, onClose }) => {
                 >
                   <div className="flex-shrink-0">
                     <img
-                      src={course.urlImage ? `http://localhost:5221/${course.urlImage}` : 'http://localhost:5221/placeholder.jpg'}
+                      src={course.urlImage ? `${import.meta.env.VITE_API_URL}${course.urlImage}` : import.meta.env.VITE_API_URL + '/placeholder.jpg'}
                       className="h-16 w-16 rounded-md object-cover"
                       alt={course.title}
                     />
