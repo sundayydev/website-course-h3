@@ -1,17 +1,14 @@
 import { jwtDecode } from 'jwt-decode';
 import api from './axios';
 
-// Đặt API_URL thành '/Comment' cho API bình luận
-const API_URL = '/Comment';
+const API_URL = '/comment';
 
-// Lấy token từ localStorage
 const getAuthToken = () => {
   const token = localStorage.getItem('authToken');
   if (!token) throw new Error('Không tìm thấy token');
   return token;
 };
 
-// Lấy userId từ token
 const getUserId = () => {
   const token = getAuthToken();
   try {
@@ -23,7 +20,6 @@ const getUserId = () => {
   }
 };
 
-// Lấy tất cả bình luận (GET /api/Comment)
 export const getComments = async () => {
   const token = getAuthToken();
   try {
@@ -39,7 +35,6 @@ export const getComments = async () => {
   }
 };
 
-// Lấy bình luận theo userId (GET /api/Comment/user/{userId})
 export const getCommentsByUserId = async () => {
   const token = getAuthToken();
   const userId = getUserId();
@@ -56,7 +51,6 @@ export const getCommentsByUserId = async () => {
   }
 };
 
-// Lấy bình luận theo ID (GET /api/Comment/{id})
 export const getCommentById = async (id) => {
   const token = getAuthToken();
   try {
@@ -75,12 +69,9 @@ export const getCommentById = async (id) => {
 export const getCommentsByPostId = async (postId) => {
   const token = getAuthToken();
   try {
-    const response = await api.get(`${API_URL}/Post`, {
+    const response = await api.get(`${API_URL}/post/${postId}`, {
       headers: {
         Authorization: `Bearer ${token}`,
-      },
-      params: {
-        postId: postId, 
       },
     });
     console.log('Dữ liệu trả về:', response.data);
@@ -90,7 +81,7 @@ export const getCommentsByPostId = async (postId) => {
     throw error;
   }
 };
-// Tạo bình luận mới (POST /api/Comment)
+
 export const createComment = async (commentData) => {
   const token = getAuthToken();
   const userId = getUserId();
@@ -98,8 +89,8 @@ export const createComment = async (commentData) => {
     const response = await api.post(
       API_URL,
       {
-        userId: userId, // Gửi userId từ token
-        ...commentData,  // Các trường khác như content, courseId, v.v.
+        userId: userId,
+        ...commentData,
       },
       {
         headers: {
@@ -118,7 +109,6 @@ export const createComment = async (commentData) => {
   }
 };
 
-// Cập nhật bình luận (PUT /api/Comment/{id})
 export const updateComment = async (id, commentData) => {
   const token = getAuthToken();
   try {
@@ -139,7 +129,6 @@ export const updateComment = async (id, commentData) => {
   }
 };
 
-// Xóa bình luận (DELETE /api/Comment/{id})
 export const deleteComment = async (id) => {
   const token = getAuthToken();
   try {

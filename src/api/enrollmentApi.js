@@ -61,7 +61,7 @@ export const createEnrollment = async (courseId) => {
       {
         UserId: userId,
         CourseId: courseId,
-        Status: "Active"
+        Status: "Enrolled"
       },
       {
         headers: {

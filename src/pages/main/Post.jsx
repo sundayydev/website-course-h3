@@ -94,7 +94,7 @@ const Post = () => {
 
                       {/* Ảnh bài viết bên phải */}
                       <img
-                        src={`http://localhost:5221/${post.urlImage}`}
+                        src={import.meta.env.VITE_API_URL+`/${post.urlImage}`}
                         alt="Ảnh bài viết"
                         className="w-[200px] h-[20px] md:w-40 md:h-28 rounded-lg object-cover"
                       />
