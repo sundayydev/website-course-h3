@@ -41,6 +41,7 @@ const DetailsPageCourse = () => {
   const [currentVideoTime, setCurrentVideoTime] = useState(0);
   const [savedNotes, setSavedNotes] = useState('');
 
+
   const parseISODurationToSeconds = (isoDuration) => {
     const match = isoDuration?.match(/PT(\d+H)?(\d+M)?(\d+S)?/);
     if (!match) return 0;

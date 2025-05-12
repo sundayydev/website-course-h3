@@ -117,7 +117,7 @@ const Header = () => {
 
     setIsSearching(true);
     try {
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/search/all`, {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/search/all`, {    
         params: { keyword: searchQuery },
       });
 

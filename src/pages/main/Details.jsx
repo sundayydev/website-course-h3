@@ -152,6 +152,8 @@ const Details = () => {
               }
             } else {
               setIsPaymentModalOpen(true);
+              //setIsPaymentModalOpen(true);
+              navigate(`/payment/${courseId}`);
             }
           }
           return;
