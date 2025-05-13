@@ -1,5 +1,7 @@
 import { jwtDecode } from 'jwt-decode';
 import api from './axios';
+import {getAuthToken} from './authUtils'
+
 const API_URL = '/course';
 
 export const getCourses = async () => {
@@ -140,6 +142,26 @@ export const uploadImage = async (id, urlImage) => {
     return response.data;
   } catch (error) {
     console.error('Lỗi khi tải lên hình ảnh:', error);
+    throw error;
+  }
+};
+
+export const getCourseByInstructorId = async (instructorId) => {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error('Không tìm thấy token');
+  }
+
+  try {
+    const response = await api.get(`${API_URL}/instructor/${instructorId}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      }
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi lấy khóa học theo instructorId:', error);
     throw error;
   }
 };
