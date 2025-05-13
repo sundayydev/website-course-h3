@@ -1,73 +1,116 @@
 import api from './axios';
-import { jwtDecode } from 'jwt-decode';
-
+import {jwtDecode} from 'jwt-decode';
 const API_URL = '/user';
 
-// Hàm lấy thông tin người dùng
-export const getUserInfo = async () => {
+export const getUsers = async () => {
   const token = localStorage.getItem('authToken');
   if (!token) {
     throw new Error('Không tìm thấy token');
   }
-
-  try {
-    const response = await api.get(`${API_URL}/profile`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      }
-    });
-    return response;
-  } catch (error) {
-    console.error('Lỗi khi lấy thông tin người dùng:', error);
-    throw error;
-  }
+  return await api.get(API_URL, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
 };
 
-// Cập nhật thông tin người dùng
-export const updateUserInfo = async (userId, userData) => {
+export const getUserById = async (id) => {
   const token = localStorage.getItem('authToken');
   if (!token) {
     throw new Error('Không tìm thấy token');
   }
+  return await api.get(`${API_URL}/${id}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+};
 
-  try {
-    const response = await api.put(`${API_URL}/profile/${userId}`, userData, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Lỗi khi cập nhật thông tin người dùng:', error);
-    throw error;
+export const createUser = async (userData) => {
+  const token = localStorage.getItem('authToken');
+  if (!token) {
+    throw new Error('Không tìm thấy token');
   }
+  return await api.post(API_URL, userData, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+};
+
+export const updateUser = async (id, userData) => {
+  const token = localStorage.getItem('authToken');
+  if (!token) {
+    throw new Error('Không tìm thấy token');
+  }
+  return await api.put(`${API_URL}/${id}`, userData, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+};
+
+export const deleteUser = async (id) => {
+  const token = localStorage.getItem('authToken');
+  if (!token) {
+    throw new Error('Không tìm thấy token');
+  }
+  return await api.delete(`${API_URL}/${id}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
 };
 
 // Upload ảnh đại diện
 export const uploadProfileImage = async (file) => {
   const token = localStorage.getItem('authToken');
-  if (!token) {
-    throw new Error('Không tìm thấy token');
+  if (!token || typeof token !== 'string' || token.trim() === '') {
+    throw new Error('Token không hợp lệ hoặc không tồn tại');
   }
 
-  const decodedToken = jwtDecode(token);
+  // Loại bỏ "Bearer " nếu có
+  const cleanToken = token.startsWith('Bearer ') ? token.split(' ')[1] : token;
+
+  let decodedToken;
+  try {
+    decodedToken = jwtDecode(cleanToken);
+  } catch (error) {
+    throw new Error('Không thể giải mã token: ' + error.message);
+  }
+
   const userId = decodedToken.id;
+  if (decodedToken.exp * 1000 < Date.now()) {
+    throw new Error('Token đã hết hạn');
+  }
 
   const formData = new FormData();
   formData.append('file', file);
 
   try {
-    const response = await api.post(`${API_URL}/profile/upload-avatar/${userId}`, formData, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'multipart/form-data',
-      },
+    const response = await api.post(`${API_URL}/${userId}/upload-profile-image`, formData, {
+      headers: { Authorization: `Bearer ${cleanToken}` },
     });
-    return response.data;
+    return response;
   } catch (error) {
-    console.error('Lỗi khi upload ảnh:', error);
-    throw error;
+    throw new Error(error.response?.data?.message || 'Lỗi khi tải ảnh');
   }
+};
+
+export const updateUserPassword = async (id, passwordData) => {
+  const token = localStorage.getItem('authToken');
+  if (!token) {
+    throw new Error('Không tìm thấy token');
+  }
+  return await api.put(`${API_URL}/${id}/password`, passwordData, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
 };
