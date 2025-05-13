@@ -1,31 +1,39 @@
 import { jwtDecode } from 'jwt-decode';
 import api from './axios';
 
-const API_URL = '/order';
+const API_URL = '/order'; // Đổi thành /Order để tránh double /api/
 
-// Lấy tất cả đơn hàng (giả định cần thêm endpoint GET /api/order trong backend)
-export const getAllOrders = async ({pageNumber=1, pageSize=10}) => {
+// Lấy tất cả đơn hàng
+export const getAllOrders = async ({ pageNumber = 1, pageSize = 5 }) => {
   const token = localStorage.getItem('authToken');
   if (!token) {
     throw new Error('Không tìm thấy token');
   }
 
-  const queryParams = new URLSearchParams();
-  queryParams.append('pageNumber', pageNumber);
-  queryParams.append('pageSize', pageSize);
   try {
-    const response = await api.get(`${API_URL}?${queryParams.toString()}`, 
-    {
+    const decodedToken = jwtDecode(token);
+    if (decodedToken.exp * 1000 < Date.now()) {
+      throw new Error('Token đã hết hạn');
+    }
+
+    const queryParams = new URLSearchParams();
+    queryParams.append('pageNumber', pageNumber);
+    queryParams.append('pageSize', pageSize);
+
+    console.log(`Gọi API: ${API_URL}?${queryParams.toString()}`); // Thêm log để debug
+    const response = await api.get(`${API_URL}?${queryParams.toString()}`, {
       headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
+        Authorization: `Bearer ${token}`
+      }
     });
-    console.log('All orders:', response.data);
+    console.log('All orders response:', response.data);
     return response.data;
   } catch (error) {
-    console.error('Lỗi khi lấy danh sách đơn hàng:', error.response?.data || error.message);
-    throw error;
+    const errorMessage = error.response?.status === 404
+        ? 'Không tìm thấy endpoint /Order. Vui lòng kiểm tra backend.'
+        : error.response?.data?.message || error.response?.data || error.message;
+    console.error('Lỗi khi lấy danh sách đơn hàng:', errorMessage);
+    throw new Error(errorMessage);
   }
 };
 
@@ -35,18 +43,24 @@ export const getOrdersByUserId = async (userId) => {
   if (!token) {
     throw new Error('Không tìm thấy token');
   }
+
   try {
+    const decodedToken = jwtDecode(token);
+    if (decodedToken.exp * 1000 < Date.now()) {
+      throw new Error('Token đã hết hạn');
+    }
+
     const response = await api.get(`${API_URL}/user/${userId}`, {
       headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
+        Authorization: `Bearer ${token}`
+      }
     });
     console.log(`Orders for user ${userId}:`, response.data);
     return response.data;
   } catch (error) {
-    console.error(`Lỗi khi lấy đơn hàng cho user ${userId}:`, error.response?.data || error.message);
-    throw error;
+    const errorMessage = error.response?.data?.message || error.response?.data || error.message;
+    console.error(`Lỗi khi lấy đơn hàng cho user ${userId}:`, errorMessage);
+    throw new Error(errorMessage);
   }
 };
 
@@ -56,109 +70,119 @@ export const getOrderDetailsById = async (orderId) => {
   if (!token) {
     throw new Error('Không tìm thấy token');
   }
+
   try {
+    const decodedToken = jwtDecode(token);
+    if (decodedToken.exp * 1000 < Date.now()) {
+      throw new Error('Token đã hết hạn');
+    }
+
     const response = await api.get(`${API_URL}/${orderId}/details`, {
       headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
+        Authorization: `Bearer ${token}`
+      }
     });
     console.log(`Order details for ${orderId}:`, response.data);
     return response.data;
   } catch (error) {
-    console.error(`Lỗi khi lấy chi tiết đơn hàng ${orderId}:`, error.response?.data || error.message);
-    throw error;
+    const errorMessage = error.response?.data?.message || error.response?.data || error.message;
+    console.error(`Lỗi khi lấy chi tiết đơn hàng ${orderId}:`, errorMessage);
+    throw new Error(errorMessage);
   }
 };
 
-// Lấy đơn hàng theo orderId (tương ứng GET /api/order/{id})
+// Lấy đơn hàng theo orderId
 export const getOrderById = async (orderId) => {
   const token = localStorage.getItem('authToken');
   if (!token) {
     throw new Error('Không tìm thấy token');
   }
+
   try {
+    const decodedToken = jwtDecode(token);
+    if (decodedToken.exp * 1000 < Date.now()) {
+      throw new Error('Token đã hết hạn');
+    }
+
     const response = await api.get(`${API_URL}/${orderId}`, {
       headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
+        Authorization: `Bearer ${token}`
+      }
     });
     console.log(`Order ${orderId}:`, response.data);
     return response.data;
   } catch (error) {
-    console.error(`Lỗi khi lấy đơn hàng ${orderId}:`, error.response?.data || error.message);
-    throw error;
+    const errorMessage = error.response?.data?.message || error.response?.data || error.message;
+    console.error(`Lỗi khi lấy đơn hàng ${orderId}:`, errorMessage);
+    throw new Error(errorMessage);
   }
 };
 
-// Tạo đơn hàng (tương ứng POST /api/order/create)
+// Tạo đơn hàng
 export const createOrder = async (data) => {
   const token = localStorage.getItem('authToken');
   if (!token) {
     throw new Error('Không tìm thấy token');
   }
 
-  const decodedToken = jwtDecode(token);
-  
-  const newData = {
-    userId: decodedToken.id, 
-    courseId: data.courseId,
-    amount: data.amount,
-    status: 'Pending', 
-  };
-
   try {
-    const response = await api.post(`${API_URL}/create`, newData, {
+    const decodedToken = jwtDecode(token);
+    if (decodedToken.exp * 1000 < Date.now()) {
+      throw new Error('Token đã hết hạn');
+    }
+
+    const newData = {
+      userId: decodedToken.id,
+      amount: data.amount,
+      status: data.amount === 0 ? 'Paid' : 'Pending',
+      orderDetails: [{
+        courseId: data.courseId,
+        price: data.price || data.amount,
+        couponId: data.couponId || null,
+        discountAmount: data.discountAmount || 0
+      }]
+    };
+
+    const response = await api.post(API_URL, newData, {
       headers: {
         Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
+        'Content-Type': 'application/json'
+      }
     });
     console.log('Created order:', response.data);
     return response.data;
   } catch (error) {
-    console.error('Lỗi khi tạo đơn hàng:', error.response?.data || error.message);
-    throw error;
+    const errorMessage = error.response?.data?.message || error.response?.data || error.message;
+    console.error('Lỗi khi tạo đơn hàng:', errorMessage);
+    throw new Error(errorMessage);
   }
 };
 
-// Cập nhật trạng thái đơn hàng (tương ứng PUT /api/order/{id}/status)
+// Cập nhật trạng thái đơn hàng
 export const updateOrderStatus = async (orderId, status) => {
   const token = localStorage.getItem('authToken');
   if (!token) {
     throw new Error('Không tìm thấy token');
   }
+
   try {
-    console.log(`Updating status for order ${orderId} to ${status}`); // Thêm log để kiểm tra
-    const response = await api.put(`${API_URL}/${orderId}/status`, status, {
+    const decodedToken = jwtDecode(token);
+    if (decodedToken.exp * 1000 < Date.now()) {
+      throw new Error('Token đã hết hạn');
+    }
+
+    console.log(`Updating status for order ${orderId} to ${status}`);
+    const response = await api.put(`${API_URL}/${orderId}`, { status }, {
       headers: {
         Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
+        'Content-Type': 'application/json'
+      }
     });
+    console.log(`Updated order ${orderId}:`, response.data);
     return response.data;
   } catch (error) {
-    console.error(`Lỗi khi cập nhật trạng thái đơn hàng ${orderId}:`, error.response?.data || error.message);
-    throw error;
-  }
-};
-export const deleteOrder = async (orderId) => {
-  const token = localStorage.getItem('authToken');
-  if (!token) {
-    throw new Error('Không tìm thấy token');
-  }
-  try {
-    const response = await api.delete(`${API_URL}/${orderId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
-    console.log(`Deleted order ${orderId}:`, response.data);
-    return response.data;
-  } catch (error) {
-    console.error(`Lỗi khi xóa đơn hàng ${orderId}:`, error.response?.data || error.message);
-    throw error;
+    const errorMessage = error.response?.data?.message || error.response?.data || error.message;
+    console.error(`Lỗi khi cập nhật trạng thái đơn hàng ${orderId}:`, errorMessage);
+    throw new Error(errorMessage);
   }
 };

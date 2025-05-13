@@ -1,15 +1,19 @@
 import { useEffect, useState } from 'react';
 import { getDashboardStats } from '@/api/dashboardApi';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { getStudents } from '@/api/studentApi';
+import { getEnrollments } from '@/api/enrollmentApi';
+import { getAllProgress } from '@/api/progressApi';
+import { getPaymentsByCourseId } from '@/api/paymentApi';
+import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import {
   Users,
   BookOpen,
-  GraduationCap,
   Activity,
   TrendingUp,
   DollarSign,
   Clock,
   Award,
+  Book,
 } from 'lucide-react';
 import { toast } from 'react-toastify';
 import {
@@ -20,16 +24,11 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  BarChart,
-  Bar,
   PieChart,
   Pie,
   Cell,
+  Legend,
 } from 'recharts';
-
-import { getCourses } from '@/api/courseApi';
-import { getStudents } from '@/api/studentApi';
-import { getEnrollments } from '@/api/enrollmentApi';
 
 const Dashboard = () => {
   const [stats, setStats] = useState({
@@ -42,241 +41,319 @@ const Dashboard = () => {
     recentEnrollments: [],
     coursePopularity: [],
   });
-  const [loading, setLoading] = useState(true);
-
-  // Dữ liệu mẫu cho biểu đồ
-  const enrollmentData = [
-    { name: 'T1', enrollments: 65 },
-    { name: 'T2', enrollments: 78 },
-    { name: 'T3', enrollments: 90 },
-    { name: 'T4', enrollments: 85 },
-    { name: 'T5', enrollments: 99 },
-    { name: 'T6', enrollments: 105 },
-  ];
-
-  const COLORS = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEEAD'];
-
   const [courses, setCourses] = useState([]);
   const [students, setStudents] = useState([]);
   const [enrollments, setEnrollments] = useState([]);
+  const [progresses, setProgresses] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  // Hàm xử lý dữ liệu đăng ký theo tháng
+  const getEnrollmentDataByMonth = (enrollments) => {
+    const monthlyCounts = {};
+
+    enrollments.forEach((enrollment) => {
+      const date = new Date(enrollment.createdAt);
+      const monthYear = `${date.getMonth() + 1}-${date.getFullYear()}`;
+      monthlyCounts[monthYear] = (monthlyCounts[monthYear] || 0) + 1;
+    });
+
+    return Object.keys(monthlyCounts)
+        .sort((a, b) => {
+          const [monthA, yearA] = a.split('-').map(Number);
+          const [monthB, yearB] = b.split('-').map(Number);
+          if (yearA !== yearB) {
+            return yearA - yearB;
+          }
+          return monthA - monthB;
+        })
+        .map((key) => ({
+          name: `T${key.split('-')[0]}`,
+          enrollments: monthlyCounts[key],
+        }));
+  };
+
+  const COLORS = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEEAD'];
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const coursesResponse = await getCourses();
-        const studentsResponse = await getStudents();
-        const enrollmentsResponse = await getEnrollments();
+        const [studentsResponse, enrollmentsResponse, progressResponse] = await Promise.all([
+          getStudents(),
+          getEnrollments(),
+          getAllProgress(),
+        ]);
 
-        setCourses(coursesResponse);
+        if (!Array.isArray(studentsResponse)) {
+          throw new Error('Dữ liệu học viên không hợp lệ');
+        }
+
+        studentsResponse.forEach((student) => {
+          const guidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+          if (!guidRegex.test(student.id)) {
+            console.warn(`ID học viên không hợp lệ: ${student.id}`);
+          }
+        });
+
+        if (!Array.isArray(enrollmentsResponse.data)) {
+          console.error('Dữ liệu đăng ký không phải mảng:', enrollmentsResponse.data);
+          throw new Error('Dữ liệu đăng ký không hợp lệ');
+        }
+
         setStudents(studentsResponse);
-        setEnrollments(enrollmentsResponse);
+        setEnrollments(enrollmentsResponse.data);
+        setProgresses(progressResponse);
+        setCourses([]); // Giả sử chưa có API lấy khóa học
 
-        console.log('Courses:', coursesResponse);
-        console.log('Students:', studentsResponse);
-        console.log('Enrollments:', enrollmentsResponse);
+        // Tính tổng doanh thu từ thanh toán
+        let totalRevenue = 0;
+        const courseIds = [...new Set(enrollmentsResponse.data.map((e) => e.courseId))];
+        for (const courseId of courseIds) {
+          try {
+            const payments = await getPaymentsByCourseId(courseId);
+            if (Array.isArray(payments)) {
+              totalRevenue += payments.reduce((sum, payment) => sum + (payment.amount || 0), 0);
+            }
+          } catch (error) {
+            console.warn(`Không thể lấy thanh toán cho khóa học ${courseId}:`, error);
+          }
+        }
+
+        setStats((prev) => ({ ...prev, totalRevenue }));
       } catch (error) {
-        console.error('Error fetching data:', error);
+        toast.error('Không thể tải dữ liệu học viên, đăng ký hoặc tiến trình');
+        console.error('Lỗi khi lấy dữ liệu:', error);
       }
     };
 
-    fetchData();
-  }, []);
-
-  useEffect(() => {
     const fetchStats = async () => {
       try {
         const data = await getDashboardStats();
-        setStats(data);
+        setStats((prev) => ({ ...prev, ...data, totalRevenue: prev.totalRevenue }));
       } catch (error) {
         toast.error('Không thể tải thông tin thống kê');
-        console.error('Lỗi:', error);
+        console.error('Lỗi khi lấy thống kê:', error);
       } finally {
         setLoading(false);
       }
     };
 
+    fetchData();
     fetchStats();
   }, []);
 
+  // Tính số lượng học viên đã đăng ký khóa học
+  const enrolledStudentsCount = [...new Set(enrollments.map((e) => e.userId))].length;
+
+  // Tính số lượng học viên đang học (dựa trên trạng thái 'in progress')
+  // Tính số lượng học viên đang học (dựa trên trạng thái 'in progress')
+  const studyingStudentsCount = [...new Set(
+      progresses
+          .filter((p) => p.status.toLowerCase() === 'in progress')
+          .map((p) => p.userId)
+  )].length;
+  // Dữ liệu cho PieChart (phân bố khóa học)
+  const coursePopularityData = enrollments.length > 0
+      ? Object.entries(
+          enrollments.reduce((acc, enrollment) => {
+            const courseId = enrollment.courseId;
+            acc[courseId] = (acc[courseId] || 0) + 1;
+            return acc;
+          }, {})
+      ).map(([courseId, count]) => ({
+        name: `Khóa học ${courseId}`,
+        value: count,
+      }))
+      : [{ name: 'Không có dữ liệu', value: 1 }];
+
+  // Tính phần trăm cho nhãn
+  const renderCustomizedLabel = ({ percent }) => {
+    return `${(percent * 100).toFixed(1)}%`;
+  };
+
+  // Dữ liệu cho LineChart (đăng ký theo tháng)
+  const enrollmentData = getEnrollmentDataByMonth(enrollments);
+
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-pink-500"></div>
-      </div>
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-pink-500"></div>
+        </div>
     );
   }
 
   return (
-    <div className="p-6 space-y-6 w-[calc(1520px-250px)]">
-      <div className="flex justify-between items-center">
-        <h1 className="text-2xl font-bold text-pink-500">Thống kê tổng quan</h1>
-        <div className="text-sm text-gray-500">
-          Cập nhật lần cuối: {new Date().toLocaleString('vi-VN')}
+      <div className="p-6 space-y-6 w-[calc(1520px-250px)]">
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-bold text-pink-500">Thống kê tổng quan</h1>
+          <div className="text-sm text-gray-500">
+            Cập nhật lần cuối: {new Date().toLocaleString('vi-VN')}
+          </div>
+        </div>
+
+        {/* Card Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card className="bg-white shadow-lg hover:shadow-xl transition-shadow">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-lg font-medium text-gray-500">Tổng số học viên</CardTitle>
+              <Users className="h-6 w-6 text-pink-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{students.length}</div>
+              <p className="text-xs text-gray-500">Tổng số học viên đã đăng ký</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white shadow-lg hover:shadow-xl transition-shadow">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-lg font-medium text-gray-500">Học viên đăng ký khóa học</CardTitle>
+              <BookOpen className="h-6 w-6 text-blue-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{enrolledStudentsCount}</div>
+              <p className="text-xs text-gray-500">Số học viên đã đăng ký ít nhất một khóa học</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white shadow-lg hover:shadow-xl transition-shadow">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-lg font-medium text-gray-500">Học viên đang học</CardTitle>
+              <Book className="h-6 w-6 text-green-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{studyingStudentsCount}</div>
+              <p className="text-xs text-gray-500">Số học viên đang học (trạng thái in progress)</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white shadow-lg hover:shadow-xl transition-shadow">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-lg font-medium text-gray-500">Đang online</CardTitle>
+              <Activity className="h-6 w-6 text-orange-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.onlineUsers}</div>
+              <p className="text-xs text-gray-500">Số người dùng đang trực tuyến</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Charts Section */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <Card className="bg-white shadow-lg">
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold">Đăng ký theo tháng</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[300px]">
+                {enrollmentData.length === 0 ? (
+                    <p className="text-center text-gray-500">Không có dữ liệu đăng ký</p>
+                ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={enrollmentData}>
+                        <CartesianGrid strokeDasharray="3 3" />
+                        <XAxis dataKey="name" />
+                        <YAxis />
+                        <Tooltip />
+                        <Line
+                            type="monotone"
+                            dataKey="enrollments"
+                            stroke="#FF6B6B"
+                            strokeWidth={2}
+                            dot={{ fill: '#FF6B6B', r: 4 }}
+                        />
+                      </LineChart>
+                    </ResponsiveContainer>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white shadow-lg">
+            <CardHeader>
+              <CardTitle className="text-lg font-semibold">Phân bố khóa học</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[300px]">
+                {coursePopularityData.length === 1 && coursePopularityData[0].name === 'Không có dữ liệu' ? (
+                    <p className="text-center text-gray-500">Không có dữ liệu khóa học</p>
+                ) : (
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                            data={coursePopularityData}
+                            cx="50%"
+                            cy="50%"
+                            labelLine={true}
+                            label={renderCustomizedLabel}
+                            outerRadius={80}
+                            dataKey="value"
+                            nameKey="name"
+                        >
+                          {coursePopularityData.map((entry, index) => (
+                              <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                          ))}
+                        </Pie>
+                        <Tooltip />
+                        <Legend verticalAlign="bottom" height={36} />
+                      </PieChart>
+                    </ResponsiveContainer>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Additional Stats */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <Card className="bg-white shadow-lg">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-lg font-medium text-gray-500">Doanh thu</CardTitle>
+              <DollarSign className="h-6 w-6 text-green-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">
+                {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(
+                    stats.totalRevenue
+                )}
+              </div>
+              <p className="text-xs text-gray-500">Tổng doanh thu từ các giao dịch</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white shadow-lg">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-lg font-medium text-gray-500">Tỷ lệ hoàn thành</CardTitle>
+              <Award className="h-6 w-6 text-yellow-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">{stats.averageCompletionRate}%</div>
+              <p className="text-xs text-gray-500">Tỷ lệ hoàn thành trung bình</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white shadow-lg">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-lg font-medium text-gray-500">Thời gian học trung bình</CardTitle>
+              <Clock className="h-6 w-6 text-purple-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">2.5h</div>
+              <p className="text-xs text-gray-500">Mỗi ngày</p>
+            </CardContent>
+          </Card>
+
+          <Card className="bg-white shadow-lg">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-lg font-medium text-gray-500">Tăng trưởng</CardTitle>
+              <TrendingUp className="h-6 w-6 text-blue-500" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold">+15%</div>
+              <p className="text-xs text-gray-500">So với tháng trước</p>
+            </CardContent>
+          </Card>
         </div>
       </div>
-
-      {/* Card Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {/* Card Tổng số học viên */}
-        <Card className="bg-white shadow-lg hover:shadow-xl transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-lg font-medium text-gray-500">Tổng số học viên</CardTitle>
-            <Users className="h-6 w-6 text-pink-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{students.length}</div>
-            <p className="text-xs text-gray-500">Tổng số học viên đã đăng ký</p>
-          </CardContent>
-        </Card>
-
-        {/* Card Số lượng đăng ký khóa học */}
-        <Card className="bg-white shadow-lg hover:shadow-xl transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-lg font-medium text-gray-500">Đăng ký khóa học</CardTitle>
-            <BookOpen className="h-6 w-6 text-blue-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{enrollments.length}</div>
-            <p className="text-xs text-gray-500">Tổng số lượt đăng ký khóa học</p>
-          </CardContent>
-        </Card>
-
-        {/* Card Số lượng đang học */}
-        <Card className="bg-white shadow-lg hover:shadow-xl transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-lg font-medium text-gray-500">Đang học</CardTitle>
-            <BookOpen className="h-6 w-6 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{courses.size}</div>
-            <p className="text-xs text-gray-500">Số học viên đang tham gia học tập</p>
-          </CardContent>
-        </Card>
-
-        {/* Card Số lượng người online */}
-        <Card className="bg-white shadow-lg hover:shadow-xl transition-shadow">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-lg font-medium text-gray-500">Đang online</CardTitle>
-            <Activity className="h-6 w-6 text-orange-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.onlineUsers}</div>
-            <p className="text-xs text-gray-500">Số người dùng đang trực tuyến</p>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Charts Section */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Biểu đồ đăng ký theo tháng */}
-        <Card className="bg-white shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold">Đăng ký theo tháng</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={enrollmentData}>
-                  <CartesianGrid strokeDasharray="3 3" />
-                  <XAxis dataKey="name" />
-                  <YAxis />
-                  <Tooltip />
-                  <Line
-                    type="monotone"
-                    dataKey="enrollments"
-                    stroke="#FF6B6B"
-                    strokeWidth={2}
-                    dot={{ fill: '#FF6B6B', r: 4 }}
-                  />
-                </LineChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* Biểu đồ phân bố khóa học */}
-        <Card className="bg-white shadow-lg">
-          <CardHeader>
-            <CardTitle className="text-lg font-semibold">Phân bố khóa học</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={courses}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                  >
-                    {/* {courses.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))} */}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Additional Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <Card className="bg-white shadow-lg">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-lg font-medium text-gray-500">Doanh thu</CardTitle>
-            <DollarSign className="h-6 w-6 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">
-              {new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(
-                stats.totalRevenue
-              )}
-            </div>
-            <p className="text-xs text-gray-500">Tổng doanh thu</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-white shadow-lg">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-lg font-medium text-gray-500">Tỷ lệ hoàn thành</CardTitle>
-            <Award className="h-6 w-6 text-yellow-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">{stats.averageCompletionRate}%</div>
-            <p className="text-xs text-gray-500">Tỷ lệ hoàn thành trung bình</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-white shadow-lg">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-lg font-medium text-gray-500">
-              Thời gian học trung bình
-            </CardTitle>
-            <Clock className="h-6 w-6 text-purple-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">2.5h</div>
-            <p className="text-xs text-gray-500">Mỗi ngày</p>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-white shadow-lg">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-lg font-medium text-gray-500">Tăng trưởng</CardTitle>
-            <TrendingUp className="h-6 w-6 text-blue-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold">+15%</div>
-            <p className="text-xs text-gray-500">So với tháng trước</p>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
   );
 };
 

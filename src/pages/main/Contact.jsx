@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
 import { FaMapMarkerAlt, FaPhoneAlt, FaEnvelope } from 'react-icons/fa';
+import { sendContactEmail } from '../../api/contactApi';
+import { ToastContainer, toast } from 'react-toastify';
+import 'react-toastify/dist/ReactToastify.css';
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -9,7 +12,6 @@ const Contact = () => {
   });
 
   const [loading, setLoading] = useState(false);
-  const [responseMessage, setResponseMessage] = useState('');
 
   const handleChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -17,27 +19,27 @@ const Contact = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+
+    // Client-side validation
+    if (!formData.name || !formData.email || !formData.message) {
+      toast.error('⚠️ Vui lòng điền đầy đủ thông tin!', {
+        position: 'top-right',
+      });
+      return;
+    }
+
     setLoading(true);
 
     try {
-      const response = await fetch(import.meta.env.VITE_API_URL+'/api/contact/send-email', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          senderEmail: formData.email,
-          subject: `Liên hệ từ ${formData.name}`,
-          message: formData.message,
-        }),
+      const result = await sendContactEmail(formData);
+      toast.success(result.message || '✅ Gửi thành công! Chúng tôi sẽ liên hệ lại sớm.', {
+        position: 'top-right',
       });
-
-      if (response.ok) {
-        setResponseMessage('✅ Gửi thành công! Chúng tôi sẽ liên hệ lại sớm.');
-        setFormData({ name: '', email: '', message: '' });
-      } else {
-        setResponseMessage('❌ Lỗi khi gửi, vui lòng thử lại!');
-      }
+      setFormData({ name: '', email: '', message: '' });
     } catch (error) {
-      setResponseMessage('❌ Không thể gửi email. Kiểm tra kết nối mạng.');
+      toast.error(error.message || '❌ Không thể gửi email. Vui lòng thử lại!', {
+        position: 'top-right',
+      });
     } finally {
       setLoading(false);
     }
@@ -45,6 +47,20 @@ const Contact = () => {
 
   return (
     <div className="w-full min-h-screen flex flex-col items-center justify-center py-20 bg-gray-50 dark:bg-gray-900">
+      {/* Toast Container */}
+      <ToastContainer
+        position="top-right"
+        autoClose={3000}
+        hideProgressBar={false}
+        newestOnTop={false}
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+        theme="colored"
+      />
+
       <div className="max-w-4xl w-full px-6">
         <h2 className="text-4xl text-center text-pink-600 dark:text-pink-400 font-bold mb-4">
           Liên hệ với chúng tôi
@@ -127,8 +143,6 @@ const Contact = () => {
               {loading ? 'Đang gửi...' : 'Gửi tin nhắn'}
             </button>
           </form>
-
-          {responseMessage && <p className="text-center mt-4 font-semibold">{responseMessage}</p>}
         </div>
 
         {/* Google Maps */}
@@ -138,7 +152,7 @@ const Contact = () => {
           </h3>
           <iframe
             className="w-full h-64 rounded-lg shadow-lg"
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15674.479932513508!2d106.7588497!3d10.84036615!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31752719273d6265%3A0xf0b3de0c32127b5f!2zV2luLkQgR2FtaW5nICYgQmlsbGlhcmRzIFRo4bunIMSQ4bupYw!5e0!3m2!1svi!2s!4v1740501966458!5m2!1svi!2s"
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15674.479932513508!2d106.7588497!3d10.84036615!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4 -- f13.1!3m3!1m2!1s0x31752719273d6265%3A0xf0b3de0c32127b5f!2zV2luLkQgR2FtaW5nICYgQmlsbGlhcmRzIFRo4bunIMSQ4bupYw!5e0!3m2!1svi!2s!4v1740501966458!5m2!1svi!2s"
             allowFullScreen=""
             loading="lazy"
           ></iframe>
