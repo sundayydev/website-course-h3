@@ -28,11 +28,6 @@ import {
   Cell,
 } from 'recharts';
 
-import { getCourses } from '@/api/courseApi';
-import { getStudents } from '@/api/studentAPi';
-import { getEnrollments } from '@/api/enrollmentApi';
-
-
 const Dashboard = () => {
   const [stats, setStats] = useState({
     totalStudents: 0,
