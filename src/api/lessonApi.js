@@ -43,6 +43,25 @@ export const getLessonsByCourseId = async (courseId) => {
     throw new Error('Không thể lấy danh sách bài học của khóa học');
   }
 };
+
+// Lấy bài học theo chương
+export const getLessonsByChapterId = async (chapterId) => {
+  try {
+    const response = await api.get(`${API_URL}/chapter/${chapterId}`);
+    if (!Array.isArray(response.data)) {
+      throw new Error('Dữ liệu bài học không phải mảng');
+    }
+    return response.data;
+  } catch (error) {
+    console.error('Error fetching lessons by chapter:', {
+      status: error.response?.status,
+      data: error.response?.data,
+      message: error.message,
+    });
+    throw new Error('Không thể lấy danh sách bài học của chương');
+  }
+};
+
 // Tạo bài học mới
 export const createLesson = async (lessonData) => {
   try {
