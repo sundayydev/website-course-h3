@@ -331,9 +331,7 @@ const ProfilePage = () => {
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-75 p-4 z-50">
           <div className="relative max-w-md w-full">
             <img
-
               src={user?.profileImage ? `${import.meta.env.VITE_API_URL}${user.profileImage}` : 'https://i.pravatar.cc/600'}
-
               alt="Profile Enlarged"
               className="rounded-lg shadow-2xl w-full"
               loading="lazy"

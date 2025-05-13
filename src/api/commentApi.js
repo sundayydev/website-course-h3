@@ -1,7 +1,7 @@
 import { jwtDecode } from 'jwt-decode';
 import api from './axios';
 
-const API_URL = '/comment';
+const API_URL = '/Comment'; // Đồng bộ với backend: endpoint là "api/Comment"
 
 const getAuthToken = () => {
   const token = localStorage.getItem('authToken');
@@ -31,7 +31,7 @@ export const getComments = async () => {
     return response.data;
   } catch (error) {
     console.error('Lỗi khi lấy danh sách bình luận:', error);
-    throw error;
+    throw new Error(error.response?.data?.message || 'Không thể lấy danh sách bình luận');
   }
 };
 
@@ -47,7 +47,7 @@ export const getCommentsByUserId = async () => {
     return response.data;
   } catch (error) {
     console.error('Lỗi khi lấy bình luận theo userId:', error);
-    throw error;
+    throw new Error(error.response?.data?.message || 'Không thể lấy bình luận theo userId');
   }
 };
 
@@ -62,7 +62,7 @@ export const getCommentById = async (id) => {
     return response.data;
   } catch (error) {
     console.error(`Lỗi khi lấy bình luận ID ${id}:`, error);
-    throw error;
+    throw new Error(error.response?.data?.message || `Không thể lấy bình luận ID ${id}`);
   }
 };
 
@@ -77,8 +77,8 @@ export const getCommentsByPostId = async (postId) => {
     console.log('Dữ liệu trả về:', response.data);
     return response.data;
   } catch (error) {
-    console.error(`Lỗi khi lấy bình luận theo postId ${postId}:`, error.response?.data || error.message);
-    throw error;
+    console.error(`Lỗi khi lấy bình luận theo postId ${postId}:`, error);
+    throw new Error(error.response?.data?.message || `Không thể lấy bình luận theo postId ${postId}`);
   }
 };
 
@@ -90,7 +90,9 @@ export const createComment = async (commentData) => {
       API_URL,
       {
         userId: userId,
-        ...commentData,
+        postId: commentData.postId,
+        content: commentData.content,
+        parentCommentId: commentData.parentCommentId || null,
       },
       {
         headers: {
@@ -102,10 +104,7 @@ export const createComment = async (commentData) => {
     return response.data;
   } catch (error) {
     console.error('Lỗi khi tạo bình luận:', error);
-    if (error.response?.data) {
-      throw new Error(JSON.stringify(error.response.data));
-    }
-    throw error;
+    throw new Error(error.response?.data?.message || 'Không thể tạo bình luận');
   }
 };
 
@@ -114,7 +113,9 @@ export const updateComment = async (id, commentData) => {
   try {
     const response = await api.put(
       `${API_URL}/${id}`,
-      commentData,
+      {
+        content: commentData.content, // Chỉ gửi content theo UpdateCommentDto
+      },
       {
         headers: {
           Authorization: `Bearer ${token}`,
@@ -125,7 +126,7 @@ export const updateComment = async (id, commentData) => {
     return response.data;
   } catch (error) {
     console.error(`Lỗi khi cập nhật bình luận ID ${id}:`, error);
-    throw error;
+    throw new Error(error.response?.data?.message || `Không thể cập nhật bình luận ID ${id}`);
   }
 };
 
@@ -137,9 +138,9 @@ export const deleteComment = async (id) => {
         Authorization: `Bearer ${token}`,
       },
     });
-    return response.data;
+    return response.data || null; // Backend trả về NoContent, nên có thể trả về null
   } catch (error) {
     console.error(`Lỗi khi xóa bình luận ID ${id}:`, error);
-    throw error;
+    throw new Error(error.response?.data?.message || `Không thể xóa bình luận ID ${id}`);
   }
 };
