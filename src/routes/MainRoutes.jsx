@@ -12,7 +12,6 @@ import DetailsPageCourse from '../pages/main/DetailsPageCourse';
 import NotFound from '../pages/main/NotFoundPage';
 import PaymentSuccess from "../pages/main/PaymentSuccess.jsx";
 import PaymentFailure from "@/pages/main/PaymentFailure.jsx";
-//import ProfilePage from '../pages/main/account/Profile';
 import ProfilePage from '../pages/main/account/ProFile.jsx';
 import AccountSettings from '../pages/main/account/SettingAccount.jsx';
 
