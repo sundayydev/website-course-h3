@@ -22,3 +22,4 @@ export const searchPosts = (keyword, author = '', startDate = null, endDate = nu
         params: { keyword, author, startDate, endDate, page, pageSize },
     });
 };
+

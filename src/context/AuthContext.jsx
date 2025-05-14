@@ -47,7 +47,10 @@ export const AuthProvider = ({ children }) => {
         const userResponse = await getUserProfile();
         if (userResponse.data) {
           setUser({ ...userResponse.data, email: userEmail, role });
-          localStorage.setItem('user', JSON.stringify({ ...userResponse.data, email: userEmail, role }));
+          localStorage.setItem(
+            'user',
+            JSON.stringify({ ...userResponse.data, email: userEmail, role })
+          );
           return true;
         }
       }

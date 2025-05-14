@@ -1,5 +1,5 @@
 /* eslint-disable react/prop-types */
-import  { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Send } from 'lucide-react';
 import { FaStar } from 'react-icons/fa';
 import { getReviewsByCourseId, createReview, updateReview } from '../../api/reviewApi';
@@ -20,12 +20,12 @@ const Review = ({ courseId }) => {
         const response = await getReviewsByCourseId(courseId);
         if (response && Array.isArray(response)) {
           setReviews(response);
-          
+
           // Check if current user has already reviewed
           const authToken = localStorage.getItem('authToken');
           if (authToken) {
             const decodedToken = jwtDecode(authToken);
-            const userReview = response.find(review => review.userId === decodedToken.id);
+            const userReview = response.find((review) => review.userId === decodedToken.id);
             if (userReview) {
               setExistingReview(userReview);
               setRating(userReview.rating);
@@ -75,22 +75,22 @@ const Review = ({ courseId }) => {
       const reviewData = {
         courseId: courseId,
         rating: rating,
-        comment: reviewText
+        comment: reviewText,
       };
 
       let response;
       if (existingReview) {
         // Update existing review
         response = await updateReview(existingReview.id, reviewData);
-        setReviews(prevReviews => prevReviews.map(review => 
-          review.id === existingReview.id ? response : review
-        ));
+        setReviews((prevReviews) =>
+          prevReviews.map((review) => (review.id === existingReview.id ? response : review))
+        );
         toast.success('Đánh giá đã được cập nhật thành công!');
         console.log('Đánh giá đã được cập nhật:', response);
       } else {
         // Create new review
         response = await createReview(reviewData);
-        setReviews(prevReviews => [...prevReviews, response]);
+        setReviews((prevReviews) => [...prevReviews, response]);
         setExistingReview(response);
         toast.success('Đánh giá đã được gửi thành công!');
       }
@@ -148,7 +148,11 @@ const Review = ({ courseId }) => {
               <div key={idx} className="border-b pb-4">
                 <div className="flex items-start space-x-3">
                   <img
-                    src={review.userProfileImage ? `${import.meta.env.VITE_API_URL}${review.userProfileImage}` : 'https://i.pravatar.cc/150'}
+                    src={
+                      review.userProfileImage
+                        ? `${import.meta.env.VITE_API_URL}${review.userProfileImage}`
+                        : 'https://i.pravatar.cc/150'
+                    }
                     alt={review.userFullName}
                     className="w-10 h-10 rounded-full object-cover border-2 border-pink-500"
                     onError={(e) => (e.target.src = 'https://i.pravatar.cc/150')}
@@ -156,13 +160,17 @@ const Review = ({ courseId }) => {
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-1">
                       <div>
-                        <p className="font-semibold text-gray-800">{review.userFullName || 'Ẩn danh'}</p>
+                        <p className="font-semibold text-gray-800">
+                          {review.userFullName || 'Ẩn danh'}
+                        </p>
                         <div className="flex items-center space-x-1">
                           {[1, 2, 3, 4, 5].map((star) => (
                             <FaStar
                               key={star}
                               size={16}
-                              className={review.rating >= star ? 'text-yellow-500' : 'text-gray-300'}
+                              className={
+                                review.rating >= star ? 'text-yellow-500' : 'text-gray-300'
+                              }
                             />
                           ))}
                         </div>

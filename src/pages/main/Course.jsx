@@ -118,11 +118,7 @@ const CourseList = () => {
           >
             <div className="relative">
               <img
-                src={
-                  course.urlImage
-                    ? `${import.meta.env.VITE_API_URL}${course.urlImage}`
-                    : ' '
-                }
+                src={course.urlImage ? `${import.meta.env.VITE_API_URL}${course.urlImage}` : ' '}
                 className="w-full h-40 object-cover"
                 alt={course.title}
                 onError={(e) => (e.target.src = '')}

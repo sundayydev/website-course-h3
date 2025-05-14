@@ -1,10 +1,10 @@
 import React, { useState, useRef } from 'react';
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Card } from "@/components/ui/card";
-import { AlertCircle, Upload, X, Image as ImageIcon } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Card } from '@/components/ui/card';
+import { AlertCircle, Upload, X, Image as ImageIcon } from 'lucide-react';
+import { Alert, AlertDescription } from '@/components/ui/alert';
 
 const ImageUploadField = ({ value, onChange, id }) => {
   const [preview, setPreview] = useState(value || null);
@@ -34,13 +34,13 @@ const ImageUploadField = ({ value, onChange, id }) => {
   const handleFile = (file) => {
     // Check file type
     if (!file.type.match(/image\/(jpeg|jpg|png|gif|webp)/)) {
-      setError("Chỉ chấp nhận file hình ảnh (JPEG, PNG, GIF, WEBP)");
+      setError('Chỉ chấp nhận file hình ảnh (JPEG, PNG, GIF, WEBP)');
       return;
     }
 
     // Check file size (limit to 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      setError("Kích thước file phải nhỏ hơn 5MB");
+      setError('Kích thước file phải nhỏ hơn 5MB');
       return;
     }
 
@@ -61,10 +61,10 @@ const ImageUploadField = ({ value, onChange, id }) => {
   const handleDrag = (e) => {
     e.preventDefault();
     e.stopPropagation();
-    
-    if (e.type === "dragenter" || e.type === "dragover") {
+
+    if (e.type === 'dragenter' || e.type === 'dragover') {
       setDragActive(true);
-    } else if (e.type === "dragleave") {
+    } else if (e.type === 'dragleave') {
       setDragActive(false);
     }
   };
@@ -74,7 +74,7 @@ const ImageUploadField = ({ value, onChange, id }) => {
     e.preventDefault();
     e.stopPropagation();
     setDragActive(false);
-    
+
     if (e.dataTransfer.files && e.dataTransfer.files[0]) {
       handleFile(e.dataTransfer.files[0]);
     }
@@ -89,9 +89,9 @@ const ImageUploadField = ({ value, onChange, id }) => {
   const removeImage = () => {
     setPreview(null);
     setSelectedFile(null);
-    onChange("");
+    onChange('');
     if (fileInputRef.current) {
-      fileInputRef.current.value = "";
+      fileInputRef.current.value = '';
     }
   };
 
@@ -103,7 +103,7 @@ const ImageUploadField = ({ value, onChange, id }) => {
           id="urlImage"
           name="urlImage"
           placeholder="https://example.com/image.jpg"
-          value={typeof value === 'string' ? value : ""} // Chỉ hiển thị nếu là URL string
+          value={typeof value === 'string' ? value : ''} // Chỉ hiển thị nếu là URL string
           onChange={handleUrlChange}
         />
       </div>
@@ -112,9 +112,7 @@ const ImageUploadField = ({ value, onChange, id }) => {
         <Label>Hoặc tải lên file</Label>
         <div
           className={`mt-2 flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-6 transition-all ${
-            dragActive 
-              ? "border-blue-500 bg-blue-50" 
-              : "border-gray-300 hover:border-gray-400"
+            dragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'
           }`}
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
@@ -129,22 +127,14 @@ const ImageUploadField = ({ value, onChange, id }) => {
             accept="image/*"
             onChange={handleFileChange}
           />
-          
+
           <div className="flex flex-col items-center justify-center space-y-3">
             <Upload className="h-10 w-10 text-gray-400" />
             <div className="text-center">
-              <p className="text-base font-medium">
-                Kéo thả hình ảnh vào đây hoặc
-              </p>
-              <p className="text-sm text-gray-500">
-                PNG, JPG, GIF tối đa 5MB
-              </p>
+              <p className="text-base font-medium">Kéo thả hình ảnh vào đây hoặc</p>
+              <p className="text-sm text-gray-500">PNG, JPG, GIF tối đa 5MB</p>
             </div>
-            <Button 
-              type="button"
-              variant="outline" 
-              onClick={onButtonClick}
-            >
+            <Button type="button" variant="outline" onClick={onButtonClick}>
               Chọn file
             </Button>
           </div>
@@ -161,11 +151,7 @@ const ImageUploadField = ({ value, onChange, id }) => {
       {preview && (
         <Card className="relative overflow-hidden">
           <div className="absolute top-2 right-2 z-10">
-            <Button 
-              variant="destructive" 
-              size="icon" 
-              onClick={removeImage}
-            >
+            <Button variant="destructive" size="icon" onClick={removeImage}>
               <X className="h-4 w-4" />
             </Button>
           </div>
@@ -175,16 +161,16 @@ const ImageUploadField = ({ value, onChange, id }) => {
               alt="Preview"
               className="max-h-64 object-contain"
               onError={() => {
-                setError("Không thể tải hình ảnh. Kiểm tra lại URL hoặc thử lại.");
+                setError('Không thể tải hình ảnh. Kiểm tra lại URL hoặc thử lại.');
                 setPreview(null);
                 setSelectedFile(null);
-                onChange("");
+                onChange('');
               }}
             />
           </div>
         </Card>
       )}
-      
+
       {!preview && (
         <div className="flex justify-center p-6 border rounded-lg bg-gray-50">
           <div className="flex flex-col items-center text-gray-400">

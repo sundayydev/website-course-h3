@@ -53,9 +53,9 @@ export const createChapter = async (chapterData) => {
   try {
     const response = await api.post(API_URL, chapterData, {
       headers: {
-        'Authorization': `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
-      }
+      },
     });
     return response.data;
   } catch (error) {
@@ -72,9 +72,9 @@ export const updateChapter = async (id, chapterData) => {
   try {
     const response = await api.put(`${API_URL}/${id}`, chapterData, {
       headers: {
-        'Authorization': `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
-      }
+      },
     });
     return response.data;
   } catch (error) {
@@ -91,9 +91,9 @@ export const deleteChapter = async (id) => {
   try {
     const response = await api.delete(`${API_URL}/${id}`, {
       headers: {
-        'Authorization': `Bearer ${token}`,
+        Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
-      }
+      },
     });
     return response.data;
   } catch (error) {

@@ -9,8 +9,8 @@ export const getEnrollments = async () => {
   try {
     const response = await api.get(API_URL, {
       headers: {
-        Authorization: `Bearer ${token}`
-      }
+        Authorization: `Bearer ${token}`,
+      },
     });
     return response;
   } catch (error) {
@@ -25,8 +25,8 @@ export const getEnrollmentByUserId = async () => {
   try {
     const response = await api.get(`${API_URL}/user/${userId}`, {
       headers: {
-        Authorization: `Bearer ${token}`
-      }
+        Authorization: `Bearer ${token}`,
+      },
     });
     return response;
   } catch (error) {
@@ -55,18 +55,18 @@ export const createEnrollment = async (courseId) => {
     const token = getAuthToken();
     const userId = getUserId();
     const response = await api.post(
-        API_URL,
-        {
-          UserId: userId,
-          CourseId: courseId,
-          Status: "Enrolled"
+      API_URL,
+      {
+        UserId: userId,
+        CourseId: courseId,
+        Status: 'Enrolled',
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
         },
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        }
+      }
     );
     return response;
   } catch (error) {
@@ -81,15 +81,11 @@ export const createEnrollment = async (courseId) => {
 export const updateEnrollment = async (id, data) => {
   const token = getAuthToken();
   try {
-    const response = await api.put(
-        `${API_URL}/${id}`,
-        data,
-        {
-          headers: {
-            Authorization: `Bearer ${token}`
-          }
-        }
-    );
+    const response = await api.put(`${API_URL}/${id}`, data, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+    });
     return response;
   } catch (error) {
     console.error(`Lỗi khi cập nhật đăng ký ${id}:`, error);
@@ -102,8 +98,8 @@ export const deleteEnrollment = async (id) => {
   try {
     const response = await api.delete(`${API_URL}/${id}`, {
       headers: {
-        Authorization: `Bearer ${token}`
-      }
+        Authorization: `Bearer ${token}`,
+      },
     });
     return response;
   } catch (error) {

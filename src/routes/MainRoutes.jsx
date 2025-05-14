@@ -10,8 +10,8 @@ import PostDetails from '../pages/main/PostDetails';
 import Details from '../pages/main/Details';
 import DetailsPageCourse from '../pages/main/DetailsPageCourse';
 import NotFound from '../pages/main/NotFoundPage';
-import PaymentSuccess from "../pages/main/PaymentSuccess.jsx";
-import PaymentFailure from "@/pages/main/PaymentFailure.jsx";
+import PaymentSuccess from '../pages/main/PaymentSuccess.jsx';
+import PaymentFailure from '@/pages/main/PaymentFailure.jsx';
 import ProfilePage from '../pages/main/account/ProFile.jsx';
 import AccountSettings from '../pages/main/account/SettingAccount.jsx';
 
@@ -29,10 +29,10 @@ const MainRoutes = {
     { path: 'details/:courseId', element: <Details /> },
     { path: 'detailsPageCourse/:lessonId', element: <DetailsPageCourse /> },
     { path: '*', element: <NotFound /> },
-    { path: 'payment-success/:id', element: <PaymentSuccess/>},
+    { path: 'payment-success/:id', element: <PaymentSuccess /> },
     { path: 'payment-failure', element: <PaymentFailure /> },
-    {path:  'profile', element: <ProfilePage />},
-    {path:  'setting', element: <AccountSettings />}
+    { path: 'profile', element: <ProfilePage /> },
+    { path: 'setting', element: <AccountSettings /> },
   ],
 };
 

@@ -14,7 +14,7 @@ import Notifications from '../pages/admin/Notifications';
 const AdminRoutes = {
   path: '/admin',
   element: (
-    <ProtectedRoute> 
+    <ProtectedRoute>
       <AdminLayout />
     </ProtectedRoute>
   ),

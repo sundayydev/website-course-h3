@@ -224,7 +224,11 @@ function PostManagement() {
                       <div className="flex items-center">
                         {post && (
                           <img
-                            src={post.urlImage ? import.meta.env.VITE_API_URL + post.urlImage : import.meta.env.VITE_API_URL + '/uploads/placeholder.png'}
+                            src={
+                              post.urlImage
+                                ? import.meta.env.VITE_API_URL + post.urlImage
+                                : import.meta.env.VITE_API_URL + '/uploads/placeholder.png'
+                            }
                             alt={post.title}
                             className="h-12 w-12 object-cover rounded-md mr-3"
                             onError={(e) => (e.target.src = '/placeholder-image.jpg')}

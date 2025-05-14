@@ -8,7 +8,7 @@ const AdminLayout = () => {
       <div className="flex h-screen bg-gray-50">
         {/* Sidebar - fixed width */}
         <AdminSidebar className="w-[250px] border-r bg-white shadow-sm" />
-        
+
         {/* Main content area - takes remaining space */}
         <main className="flex-1 overflow-y-auto scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           <div className="p-0">

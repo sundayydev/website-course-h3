@@ -94,7 +94,7 @@ const Post = () => {
 
                       {/* Ảnh bài viết bên phải */}
                       <img
-                        src={import.meta.env.VITE_API_URL+`/${post.urlImage}`}
+                        src={import.meta.env.VITE_API_URL + `/${post.urlImage}`}
                         alt="Ảnh bài viết"
                         className="w-[200px] h-[20px] md:w-40 md:h-28 rounded-lg object-cover"
                       />
@@ -112,10 +112,9 @@ const Post = () => {
                       {/* Ngày tạo bài viết */}
                       <p className="text-gray-500 text-sm">
                         {isValidDate(post.createdAt)
-                            ? new Date(post.createdAt).toLocaleDateString()
-                            : 'Không rõ thời gian'}
+                          ? new Date(post.createdAt).toLocaleDateString()
+                          : 'Không rõ thời gian'}
                       </p>
-
                     </div>
                   </div>
                 ))
