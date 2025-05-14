@@ -13,7 +13,7 @@ import PostManagement from '../pages/admin/PostManagement';
 const AdminRoutes = {
   path: '/admin',
   element: (
-    <ProtectedRoute> 
+    <ProtectedRoute>
       <AdminLayout />
     </ProtectedRoute>
   ),

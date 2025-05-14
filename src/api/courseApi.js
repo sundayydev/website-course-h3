@@ -1,7 +1,7 @@
 
 import { getAuthToken } from './authUtils';
 import api from './axios';
-import {getAuthToken} from './authUtils'
+import { getAuthToken } from './authUtils';
 
 const API_URL = '/course';
 
@@ -47,7 +47,7 @@ export const createCourse = async (data) => {
     description: data.description,
     price: data.price,
     instructorId: decodedToken.id,
-    contents: data.contents.split('\n').filter(line => line.trim() !== '')
+    contents: data.contents.split('\n').filter((line) => line.trim() !== ''),
   };
   console.log('New Data: ', newData);
   try {
@@ -55,7 +55,7 @@ export const createCourse = async (data) => {
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
-      }
+      },
     });
     return response.data;
   } catch (error) {
@@ -77,14 +77,14 @@ export const updateCourse = async (id, data) => {
     description: data.description,
     price: data.price,
     instructorId: decodedToken.id,
-    contents: data.contents.split('\n').filter((line) => line.trim() !== '')
-  }
+    contents: data.contents.split('\n').filter((line) => line.trim() !== ''),
+  };
   try {
     const response = await api.put(`${API_URL}/${id}`, updatedData, {
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
-      }
+      },
     });
     return response.data;
   } catch (error) {
@@ -103,7 +103,7 @@ export const deleteCourse = async (id) => {
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
-      }
+      },
     });
     return response.data;
   } catch (error) {
@@ -119,15 +119,15 @@ export const uploadImage = async (id, urlImage) => {
   }
 
   const data = {
-    file: urlImage
+    file: urlImage,
   };
 
   try {
     const response = await api.post(`${API_URL}/upload-image/${id}`, data, {
       headers: {
         'Content-Type': 'multipart/form-data',
-        Authorization: `Bearer ${token}`
-      }
+        Authorization: `Bearer ${token}`,
+      },
     });
     return response.data;
   } catch (error) {
@@ -147,7 +147,7 @@ export const getCourseByInstructorId = async (instructorId) => {
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
-      }
+      },
     });
     return response.data;
   } catch (error) {

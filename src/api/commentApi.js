@@ -61,7 +61,9 @@ export const getCommentsByPostId = async (postId) => {
     return response.data;
   } catch (error) {
     console.error(`Lỗi khi lấy bình luận theo postId ${postId}:`, error);
-    throw new Error(error.response?.data?.message || `Không thể lấy bình luận theo postId ${postId}`);
+    throw new Error(
+      error.response?.data?.message || `Không thể lấy bình luận theo postId ${postId}`
+    );
   }
 };
 

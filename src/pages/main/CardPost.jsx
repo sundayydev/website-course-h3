@@ -13,10 +13,9 @@ const CardPost = () => {
         const response = await getAllPost();
         if (Array.isArray(response.data) && response.data.length > 0) {
           setPosts(response.data);
-        } 
+        }
       } catch (error) {
         toast.error('Lỗi khi lấy bài viết');
-        
       } finally {
         setLoading(false);
       }
@@ -52,7 +51,10 @@ const CardPost = () => {
               <div className="flex items-center justify-between text-xs text-gray-500">
                 <div className="flex items-center gap-2">
                   <img
-                    src={import.meta.env.VITE_API_URL + post.user?.profileImage || 'https://via.placeholder.com/150'}
+                    src={
+                      import.meta.env.VITE_API_URL + post.user?.profileImage ||
+                      'https://via.placeholder.com/150'
+                    }
                     alt="Avatar"
                     className="w-8 h-8 rounded-full object-cover"
                   />

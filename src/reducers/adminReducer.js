@@ -5,8 +5,8 @@ const initialState = {
   isAuthenticated: false,
   loading: false,
   error: null,
-  token: null
-}; 
+  token: null,
+};
 
 const adminSlice = createSlice({
   name: 'admin',
@@ -24,14 +24,10 @@ const adminSlice = createSlice({
     getUserFailure: (state, action) => {
       state.loading = false;
       state.error = action.payload;
-    }
-  }
+    },
+  },
 });
 
-export const { 
-  getUserRequest,
-  getUserSuccess, 
-  getUserFailure 
-} = adminSlice.actions;
+export const { getUserRequest, getUserSuccess, getUserFailure } = adminSlice.actions;
 
 export default adminSlice.reducer;

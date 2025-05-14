@@ -41,7 +41,9 @@ const PostDetails = () => {
         <div>
           <p className="font-semibold">{post.user?.fullName || 'Tác giả ẩn danh'}</p>
           <p className="text-gray-500 text-sm">
-            {post.createdAt ? new Date(post.createdAt).toLocaleString('vi-VN') : 'Không rõ thời gian'}
+            {post.createdAt
+              ? new Date(post.createdAt).toLocaleString('vi-VN')
+              : 'Không rõ thời gian'}
           </p>
         </div>
       </div>

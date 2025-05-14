@@ -27,4 +27,3 @@ export const getCategoryById = async (id) => {
     throw error;
   }
 };
-                                                      

@@ -54,7 +54,9 @@ const Lessons = () => {
       setCourse(courseData);
 
       // Fetch lessons
-      const lessonsResponse = await fetch(`${import.meta.env.VITE_API_URL}/api/courses/${courseId}/lessons`);
+      const lessonsResponse = await fetch(
+        `${import.meta.env.VITE_API_URL}/api/courses/${courseId}/lessons`
+      );
       const lessonsData = await lessonsResponse.json();
       setLessons(lessonsData);
     } catch (error) {
@@ -71,9 +73,9 @@ const Lessons = () => {
       const endpoint = editingLesson
         ? `${import.meta.env.VITE_API_URL}/api/lessons/${editingLesson.id}`
         : `${import.meta.env.VITE_API_URL}/api/lessons`;
-      
+
       const method = editingLesson ? 'PUT' : 'POST';
-      
+
       const response = await fetch(endpoint, {
         method: method,
         headers: {
@@ -180,9 +182,7 @@ const Lessons = () => {
           </DialogTrigger>
           <DialogContent className="sm:max-w-[600px]">
             <DialogHeader>
-              <DialogTitle>
-                {editingLesson ? 'Chỉnh sửa bài học' : 'Thêm bài học mới'}
-              </DialogTitle>
+              <DialogTitle>{editingLesson ? 'Chỉnh sửa bài học' : 'Thêm bài học mới'}</DialogTitle>
             </DialogHeader>
             <form onSubmit={handleSubmit} className="space-y-4">
               <div className="space-y-2">
@@ -239,9 +239,7 @@ const Lessons = () => {
             <FileVideo className="h-4 w-4 text-green-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">
-              {lessons.filter((l) => l.videoUrl).length}
-            </div>
+            <div className="text-2xl font-bold">{lessons.filter((l) => l.videoUrl).length}</div>
           </CardContent>
         </Card>
       </div>
@@ -296,9 +294,7 @@ const Lessons = () => {
                         <Badge variant="secondary">Chưa có video</Badge>
                       )}
                     </TableCell>
-                    <TableCell>
-                      {format(new Date(lesson.createdAt), 'dd/MM/yyyy HH:mm')}
-                    </TableCell>
+                    <TableCell>{format(new Date(lesson.createdAt), 'dd/MM/yyyy HH:mm')}</TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <Button
@@ -330,4 +326,4 @@ const Lessons = () => {
   );
 };
 
-export default Lessons; 
+export default Lessons;

@@ -11,14 +11,36 @@ import {
   LogOut,
 } from 'lucide-react';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { NavLink, useLocation } from 'react-router-dom';
+import { getUserId } from '@/api/authUtils';
+import { getUserById } from '@/api/userApi';
 
 const Sidebar = () => {
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [userData, setUserData] = useState(null);
 
   const pathname = useLocation().pathname;
   console.log('pathname', pathname);
+
+  useEffect(() => {
+    async function fetchUserData() {
+      try {
+        const userId = getUserId();
+        if (!userId) {
+          console.warn('Không tìm thấy userId');
+          return;
+        }
+
+        const response = await getUserById(userId);
+        setUserData(response.data);
+      } catch (error) {
+        console.error('Lỗi khi fetch user:', error);
+      }
+    }
+
+    fetchUserData();
+  }, []);
 
   return (
     <div
@@ -42,7 +64,7 @@ const Sidebar = () => {
                 <User size={20} />
               </div>
               <div>
-                <p className="font-medium">TS. Nguyễn Văn A</p>
+                <p className="font-medium">{userData?.fullName}</p>
                 <p className="text-sm text-gray-400">Giảng viên</p>
               </div>
             </div>

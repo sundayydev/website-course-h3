@@ -1,13 +1,5 @@
 import { useState, useEffect } from 'react';
-import {
-  Search,
-  Filter,
-  BookOpen,
-  DollarSign,
-  Calendar,
-  ArrowRight,
-  Plus,
-} from 'lucide-react';
+import { Search, Filter, BookOpen, DollarSign, Calendar, ArrowRight, Plus } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -34,10 +26,8 @@ import { useNavigate } from 'react-router-dom';
 
 // Tạo một component với tên CoursesPage
 export default function CoursesPage() {
-
   // Khai báo các biến trạng thái
   const navigate = useNavigate();
-  
 
   // State cho dữ liệu và bộ lọc
   const [courses, setCourses] = useState([]);
@@ -62,8 +52,6 @@ export default function CoursesPage() {
   // Giả lập việc tải dữ liệu từ API
   useEffect(() => {
     const fetchCourses = async () => {
-      
-
       const userId = getUserId(); // Lấy ID người dùng từ token
 
       const courseData = await getCourseByInstructorId(userId); // Gọi API để lấy danh sách khóa học
@@ -76,7 +64,6 @@ export default function CoursesPage() {
       setCourses(courseData);
       setFilteredCourses(courseData);
       setLoading(false);
-
     };
 
     fetchCourses();
@@ -106,9 +93,9 @@ export default function CoursesPage() {
         result.sort((a, b) => a.price - b.price);
       } else if (priceSort === 'desc') {
         result.sort((a, b) => b.price - a.price);
-      } 
+      }
 
-      setFilteredCourses(result); 
+      setFilteredCourses(result);
     }
   }, [searchTerm, categoryFilter, priceSort, courses]);
 
@@ -121,13 +108,16 @@ export default function CoursesPage() {
     <div className="container mx-auto px-4 py-8 min-h-screen overflow-scroll">
       <div className="mb-8 flex flex-col md:flex-row items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold mb-2">Khám Phá Các Khóa Học</h1> 
+          <h1 className="text-3xl font-bold mb-2">Khám Phá Các Khóa Học</h1>
           <p className="text-gray-500">
             Nâng cao kỹ năng của bạn với các khóa học chất lượng cao từ các chuyên gia hàng đầu
           </p>
         </div>
         <div className="flex items-center justify-between mt-4">
-          <Button variant={'outline'} className='bg-green-600 hover:bg-green-700 text-white shadow-sm'>
+          <Button
+            variant={'outline'}
+            className="bg-green-600 hover:bg-green-700 text-white shadow-sm"
+          >
             <span className="text-white">Thêm Khóa Học Mới</span>
             <Plus size={16} className="ml-2 text-white" />
           </Button>
@@ -214,7 +204,10 @@ export default function CoursesPage() {
             <Card key={course.id} className="overflow-hidden flex flex-col h-full">
               <div className="relative h-[240px] bg-gray-100">
                 <img
-                  src={import.meta.env.VITE_API_URL + (course.urlImage || '/uploads/default-course.png')}
+                  src={
+                    import.meta.env.VITE_API_URL +
+                    (course.urlImage || '/uploads/default-course.png')
+                  }
                   alt={course.title}
                   className="w-full h-full object-cover shadow-sm"
                 />
@@ -254,7 +247,10 @@ export default function CoursesPage() {
               </CardContent>
 
               <CardFooter>
-                <Button className="w-full" onClick={() => navigate(`/instructor/course/${course.id}`)}>
+                <Button
+                  className="w-full"
+                  onClick={() => navigate(`/instructor/course/${course.id}`)}
+                >
                   Xem chi tiết
                   <ArrowRight size={16} className="ml-2" />
                 </Button>

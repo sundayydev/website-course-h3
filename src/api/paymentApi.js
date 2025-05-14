@@ -90,12 +90,16 @@ export const getPaymentsByCourseId = async (courseId) => {
 export const updatePaymentStatus = async (id, status) => {
   try {
     const token = getAuthToken();
-    const response = await axios.patch(`${API_URL}/${id}/status`, { status }, {
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    const response = await axios.patch(
+      `${API_URL}/${id}/status`,
+      { status },
+      {
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
 
     return response.data;
   } catch (error) {

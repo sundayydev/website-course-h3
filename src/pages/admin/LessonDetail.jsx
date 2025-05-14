@@ -67,7 +67,7 @@ const LessonDetail = () => {
     const courseId = lesson.courseId;
     return `/admin/course-detail/${courseId}`;
   };
-  
+
   // Hàm lấy dữ liệu bài học
   const fetchLessonData = async () => {
     try {

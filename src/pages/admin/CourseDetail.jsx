@@ -139,21 +139,22 @@ const CourseDetail = () => {
 
   const formatDuration = (isoDuration) => {
     if (!isoDuration) return 0;
-  
+
     const match = isoDuration.match(/PT(\d+H)?(\d+M)?(\d+S)?/);
     const hours = match[1] ? parseInt(match[1]) : 0;
     const minutes = match[2] ? parseInt(match[2]) : 0;
     const seconds = match[3] ? parseInt(match[3]) : 0;
-  
+
     let totalMinutes = hours * 60 + minutes;
     if (seconds >= 30) totalMinutes += 1;
-  
+
     return totalMinutes;
   };
 
   // Hàm trích xuất ID video từ URL
   const extractVideoId = (url) => {
-    const regex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+    const regex =
+      /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
     return url?.match(regex)?.[1] || null;
   };
 
@@ -401,7 +402,9 @@ const CourseDetail = () => {
 
                 <div className="flex items-center gap-2 bg-pink-50 px-3 py-2 rounded-lg">
                   <Clock className="h-5 w-5 text-pink-500" />
-                  <span className="text-gray-700 font-medium">Thời lượng: {course.duration} phút</span>
+                  <span className="text-gray-700 font-medium">
+                    Thời lượng: {course.duration} phút
+                  </span>
                 </div>
               </div>
             </div>

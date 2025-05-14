@@ -59,45 +59,44 @@ const Courses = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-      if (editingCourse) {
-        try {
-          // Cập nhật khóa học nếu đang trong chế độ chỉnh sửa
-          await updateCourse(editingCourse.id, formData);
+    if (editingCourse) {
+      try {
+        // Cập nhật khóa học nếu đang trong chế độ chỉnh sửa
+        await updateCourse(editingCourse.id, formData);
 
-          console.log('formData: ', formData);
-          // Kiểm tra nếu có ảnh mới để tải lên
-          if (formData.urlImage && formData.urlImage instanceof File && formData.urlImage != "") {
-            await uploadImage(editingCourse.id, formData.urlImage);
-          }
-          toast.success('Cập nhật khóa học thành công');
-          setIsDialogOpen(false);
-          fetchCourses();
-          resetForm();
-        } catch (error) {
-          console.error('Error updating course:', error);
-          toast.error('Có lỗi xảy ra khi cập nhật khóa học');
-          // Xử lý lỗi nếu cần thiết, ví dụ: thông báo cho người dùng
+        console.log('formData: ', formData);
+        // Kiểm tra nếu có ảnh mới để tải lên
+        if (formData.urlImage && formData.urlImage instanceof File && formData.urlImage != '') {
+          await uploadImage(editingCourse.id, formData.urlImage);
         }
-      } else {
-        try {
-          // Tạo khóa học mới nếu không phải chỉnh sửa
-          const response = await createCourse(formData);
-
-          // Kiểm tra nếu có ảnh mới để tải lên
-          if (formData.urlImage && formData.urlImage instanceof File && formData.urlImage != "") {
-            await uploadImage(response.id, formData.urlImage);
-          }
-          toast.success('Thêm khóa học thành công');
-          setIsDialogOpen(false);
-          fetchCourses();
-          resetForm();
-        } catch (error) {
-          console.error('Error creating course:', error);
-          toast.error('Có lỗi xảy ra khi tạo khóa học');
-          // Xử lý lỗi nếu cần thiết, ví dụ: thông báo cho người dùng
-        }
+        toast.success('Cập nhật khóa học thành công');
+        setIsDialogOpen(false);
+        fetchCourses();
+        resetForm();
+      } catch (error) {
+        console.error('Error updating course:', error);
+        toast.error('Có lỗi xảy ra khi cập nhật khóa học');
+        // Xử lý lỗi nếu cần thiết, ví dụ: thông báo cho người dùng
       }
+    } else {
+      try {
+        // Tạo khóa học mới nếu không phải chỉnh sửa
+        const response = await createCourse(formData);
 
+        // Kiểm tra nếu có ảnh mới để tải lên
+        if (formData.urlImage && formData.urlImage instanceof File && formData.urlImage != '') {
+          await uploadImage(response.id, formData.urlImage);
+        }
+        toast.success('Thêm khóa học thành công');
+        setIsDialogOpen(false);
+        fetchCourses();
+        resetForm();
+      } catch (error) {
+        console.error('Error creating course:', error);
+        toast.error('Có lỗi xảy ra khi tạo khóa học');
+        // Xử lý lỗi nếu cần thiết, ví dụ: thông báo cho người dùng
+      }
+    }
   };
 
   const handleDelete = async (id) => {

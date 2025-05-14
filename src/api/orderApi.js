@@ -24,13 +24,14 @@ export const getAllOrders = async ({ pageNumber = 1, pageSize = 5 }) => {
     console.log(`Gọi API: ${API_URL}?${queryParams.toString()}`); // Thêm log để debug
     const response = await api.get(`${API_URL}?${queryParams.toString()}`, {
       headers: {
-        Authorization: `Bearer ${token}`
-      }
+        Authorization: `Bearer ${token}`,
+      },
     });
     console.log('All orders response:', response.data);
     return response.data;
   } catch (error) {
-    const errorMessage = error.response?.status === 404
+    const errorMessage =
+      error.response?.status === 404
         ? 'Không tìm thấy endpoint /Order. Vui lòng kiểm tra backend.'
         : error.response?.data?.message || error.response?.data || error.message;
     console.error('Lỗi khi lấy danh sách đơn hàng:', errorMessage);
@@ -53,8 +54,8 @@ export const getOrdersByUserId = async (userId) => {
 
     const response = await api.get(`${API_URL}/user/${userId}`, {
       headers: {
-        Authorization: `Bearer ${token}`
-      }
+        Authorization: `Bearer ${token}`,
+      },
     });
     console.log(`Orders for user ${userId}:`, response.data);
     return response.data;
@@ -80,8 +81,8 @@ export const getOrderDetailsById = async (orderId) => {
 
     const response = await api.get(`${API_URL}/${orderId}/details`, {
       headers: {
-        Authorization: `Bearer ${token}`
-      }
+        Authorization: `Bearer ${token}`,
+      },
     });
     console.log(`Order details for ${orderId}:`, response.data);
     return response.data;
@@ -107,8 +108,8 @@ export const getOrderById = async (orderId) => {
 
     const response = await api.get(`${API_URL}/${orderId}`, {
       headers: {
-        Authorization: `Bearer ${token}`
-      }
+        Authorization: `Bearer ${token}`,
+      },
     });
     console.log(`Order ${orderId}:`, response.data);
     return response.data;
@@ -136,19 +137,21 @@ export const createOrder = async (data) => {
       userId: decodedToken.id,
       amount: data.amount,
       status: data.amount === 0 ? 'Paid' : 'Pending',
-      orderDetails: [{
-        courseId: data.courseId,
-        price: data.price || data.amount,
-        couponId: data.couponId || null,
-        discountAmount: data.discountAmount || 0
-      }]
+      orderDetails: [
+        {
+          courseId: data.courseId,
+          price: data.price || data.amount,
+          couponId: data.couponId || null,
+          discountAmount: data.discountAmount || 0,
+        },
+      ],
     };
 
     const response = await api.post(API_URL, newData, {
       headers: {
         Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json'
-      }
+        'Content-Type': 'application/json',
+      },
     });
     console.log('Created order:', response.data);
     return response.data;
@@ -173,12 +176,16 @@ export const updateOrderStatus = async (orderId, status) => {
     }
 
     console.log(`Updating status for order ${orderId} to ${status}`);
-    const response = await api.put(`${API_URL}/${orderId}`, { status }, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json'
+    const response = await api.put(
+      `${API_URL}/${orderId}`,
+      { status },
+      {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
       }
-    });
+    );
     console.log(`Updated order ${orderId}:`, response.data);
     return response.data;
   } catch (error) {

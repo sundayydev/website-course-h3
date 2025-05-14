@@ -62,9 +62,8 @@ const CoursePopup = ({ isOpen, onClose }) => {
           console.log('Danh sách khóa học đã đăng ký:', enrolledCourses); // Fix logging enrolled courses instead of promises
 
           // Filter out any null values from failed requests
-          const validCourses = enrolledCourses.filter(course => course != null);
+          const validCourses = enrolledCourses.filter((course) => course != null);
           setCourses(validCourses);
-
         } catch (err) {
           setError('Không thể tải danh sách khóa học!');
           console.error(err);
@@ -134,7 +133,11 @@ const CoursePopup = ({ isOpen, onClose }) => {
                 >
                   <div className="flex-shrink-0">
                     <img
-                      src={course.urlImage ? `${import.meta.env.VITE_API_URL}${course.urlImage}` : import.meta.env.VITE_API_URL + '/placeholder.jpg'}
+                      src={
+                        course.urlImage
+                          ? `${import.meta.env.VITE_API_URL}${course.urlImage}`
+                          : import.meta.env.VITE_API_URL + '/placeholder.jpg'
+                      }
                       className="h-16 w-16 rounded-md object-cover"
                       alt={course.title}
                     />
@@ -143,9 +146,7 @@ const CoursePopup = ({ isOpen, onClose }) => {
                     <h4 className="font-medium text-gray-900 truncate group-hover:text-primary transition-colors">
                       {course.title}
                     </h4>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      {course.status}
-                    </p>
+                    <p className="text-sm text-muted-foreground mt-1">{course.status}</p>
                   </div>
                 </div>
               ))}
