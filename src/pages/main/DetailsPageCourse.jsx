@@ -8,6 +8,7 @@ import { jwtDecode } from 'jwt-decode';
 import YouTube from 'react-youtube';
 import { toast } from "react-toastify";
 import { initializeProgress, updateProgress, getProgressByUserAndLesson } from '@/api/progressApi';
+import LessonQuiz from '../../components/LessonQuiz'; // Import component LessonQuiz
 
 // Hàm lấy userId từ token
 const getUserIdFromToken = () => {
@@ -24,6 +25,8 @@ const getUserIdFromToken = () => {
 
 const DetailsPageCourse = () => {
   const { lessonId } = useParams();
+  console.log('LessonId trước khi truyền vào LessonQuiz:', lessonId);
+  <LessonQuiz lessonId={lessonId} />
   const navigate = useNavigate();
   const playerRef = useRef(null);
   const userId = getUserIdFromToken();
@@ -41,14 +44,6 @@ const DetailsPageCourse = () => {
   const [currentVideoTime, setCurrentVideoTime] = useState(0);
   const [savedNotes, setSavedNotes] = useState('');
 
-  const parseISODurationToSeconds = (isoDuration) => {
-    const match = isoDuration?.match(/PT(\d+H)?(\d+M)?(\d+S)?/);
-    if (!match) return 0;
-    const hours = match[1] ? parseInt(match[1]) * 3600 : 0;
-    const minutes = match[2] ? parseInt(match[2]) * 60 : 0;
-    const seconds = match[3] ? parseInt(match[3]) : 0;
-    return hours + minutes + seconds;
-  };
 
   const formatDuration = (seconds) => {
     const hours = Math.floor(seconds / 3600);
@@ -65,7 +60,7 @@ const DetailsPageCourse = () => {
 
   const extractVideoId = (url) => {
     const urlString = Array.isArray(url) ? url[0] : typeof url === 'string' ? url : '';
-    const regex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+    const regex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
     return urlString.match(regex)?.[1] || null;
   };
 
@@ -353,6 +348,8 @@ const DetailsPageCourse = () => {
                 )}
               </div>
               <p>{currentLesson?.content || 'Không có mô tả.'}</p>
+              {/* Thêm phần trắc nghiệm ngay dưới mô tả */}
+              <LessonQuiz lessonId={lessonId} />
               <button onClick={handleOpenNotePopup} className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
                 Lưu ghi chú
               </button>

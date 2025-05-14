@@ -1,31 +1,14 @@
-import { jwtDecode } from 'jwt-decode';
+
 import api from './axios';
+import { getAuthToken, getUserId } from './authUtils'; 
+const API_URL = '/Comment'; 
 
-const API_URL = '/Comment'; // Đồng bộ với backend: endpoint là "api/Comment"
-
-const getAuthToken = () => {
-  const token = localStorage.getItem('authToken');
-  if (!token) throw new Error('Không tìm thấy token');
-  return token;
-};
-
-const getUserId = () => {
-  const token = getAuthToken();
-  try {
-    const decoded = jwtDecode(token);
-    if (!decoded.id) throw new Error('Token không hợp lệ: Không có id');
-    return decoded.id;
-  } catch (error) {
-    throw new Error('Lỗi giải mã token: ' + error.message);
-  }
-};
 
 export const getComments = async () => {
-  const token = getAuthToken();
   try {
     const response = await api.get(API_URL, {
       headers: {
-        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
       },
     });
     return response.data;
@@ -67,11 +50,11 @@ export const getCommentById = async (id) => {
 };
 
 export const getCommentsByPostId = async (postId) => {
-  const token = getAuthToken();
+
   try {
     const response = await api.get(`${API_URL}/post/${postId}`, {
       headers: {
-        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
       },
     });
     console.log('Dữ liệu trả về:', response.data);

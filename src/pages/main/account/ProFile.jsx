@@ -79,6 +79,7 @@ const ProfilePage = () => {
         fullName: userData.fullName || '',
         email: userData.email || '',
         phone: userData.phone || '',
+        role: userData.role || 'Student',
         birthDate: userData.birthDate ? new Date(userData.birthDate).toISOString().slice(0, 10) : ''
       });
     } catch (err) {
@@ -250,7 +251,8 @@ const ProfilePage = () => {
             <h1 className="text-2xl font-bold text-pink-500 mb-1 mt-2 md:mt-6">
               {user.fullName || 'Không có tên'}
             </h1>
-            <p className="text-gray-600 mb-2">{user.friendCount ? `${user.friendCount} người bạn` : 'Không có thông tin'}</p>
+            <p className="text-gray-600 mb-2">{user.role ? `${user.role}` : 'Không có thông tin'}</p>
+            <p className="text-gray-600 mb-2">{user.flower ? `${user.flower} người bạn` : 'Không có thông tin'}</p>
           </div>
 
           {/* Action Buttons */}

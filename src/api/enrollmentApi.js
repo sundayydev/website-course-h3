@@ -1,20 +1,8 @@
-import { jwtDecode } from 'jwt-decode';
+import { getAuthToken,getUserId } from './authUtils';
 import api from './axios';
 
 const API_URL = '/enrollment';
 
-const getAuthToken = () => {
-  const token = localStorage.getItem('authToken');
-  if (!token) throw new Error('Không tìm thấy token');
-  return token;
-};
-
-const getUserId = () => {
-  const token = getAuthToken();
-  const decoded = jwtDecode(token);
-  if (!decoded.id) throw new Error('Token không hợp lệ');
-  return decoded.id;
-};
 
 export const getEnrollments = async () => {
   const token = getAuthToken();
