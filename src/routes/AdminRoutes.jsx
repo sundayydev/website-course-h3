@@ -9,6 +9,7 @@ import LessonDetail from '../pages/admin/LessonDetail';
 import PaymentManagement from '../pages/admin/PaymentManagement';
 import Comment from '../pages/admin/Comment';
 import PostManagement from '../pages/admin/PostManagement';
+import Notifications from '../pages/admin/Notifications';
 
 const AdminRoutes = {
   path: '/admin',
@@ -28,6 +29,7 @@ const AdminRoutes = {
     { path: 'payment-management', element: <PaymentManagement /> }, // /admin/payment-management
     { path: 'comment', element: <Comment /> }, // /admin/comment
     { path: 'post-management', element: <PostManagement /> }, // /admin/post-management
+    { path: 'Notifications', element: <Notifications /> }, // /admin/userNotification
   ],
 };
 

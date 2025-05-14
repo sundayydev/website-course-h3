@@ -32,7 +32,7 @@ const sidebarItems = [
     ],
   },
   {
-    section: 'Quản lý khóa học & bài viết',
+    section: 'Quản lý khóa học & bài viết & thông báo',
     items: [
       { icon: <GraduationCap size={16} />, text: 'Khóa học', path: '/admin/courses' },
       { icon: <BookOpenText size={16} />, text: 'Bài viết', path: '/admin/post-management' },
@@ -44,6 +44,9 @@ const sidebarItems = [
         badgeType: 'beta',
       },
       { icon: <BookOpen size={16} />, text: 'Bình luận bài viết', path: '/admin/comment' },
+      { icon: <CreditCard size={16} />, text: 'Quản lý khóa học', path: '/admin/course-management', badge: 'NEW', badgeType: 'beta' },
+      { icon: <BookOpen size={16} />, text: 'Bình luận bài viết', path: '/admin/comment' },
+      { icon: <BookOpen size={16} />, text: 'Thông báo hệ thống', path: '/admin/Notifications' },
     ],
   },
   {

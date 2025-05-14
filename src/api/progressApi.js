@@ -1,3 +1,4 @@
+// progressApi.js
 import { jwtDecode } from 'jwt-decode';
 
 const getUserIdFromToken = () => {
@@ -18,7 +19,7 @@ const getAuthToken = () => {
 
 const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:5221';
 
-// Hàm mới: Lấy tất cả tiến trình
+// Lấy tất cả tiến trình
 export const getAllProgress = async () => {
   const token = getAuthToken();
 
@@ -42,6 +43,7 @@ export const getAllProgress = async () => {
   }
 };
 
+// Khởi tạo tiến trình
 export const initializeProgress = async (lessonId, maxRetries = 5) => {
   const userId = getUserIdFromToken();
   const token = getAuthToken();
@@ -138,6 +140,7 @@ export const initializeProgress = async (lessonId, maxRetries = 5) => {
   }
 };
 
+// Cập nhật tiến trình
 export const updateProgress = async (progressId, updateData) => {
   const token = getAuthToken();
 
@@ -183,6 +186,7 @@ export const updateProgress = async (progressId, updateData) => {
   }
 };
 
+// Lấy tiến trình theo user và lesson
 export const getProgressByUserAndLesson = async (userId, lessonId) => {
   const token = getAuthToken();
 

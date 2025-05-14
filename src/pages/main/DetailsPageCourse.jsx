@@ -1,3 +1,4 @@
+// DetailsPageCourse.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Play, ChevronDown, ChevronUp, ArrowLeft, Clock, Calendar } from 'lucide-react';
@@ -89,25 +90,21 @@ const DetailsPageCourse = () => {
   };
 
   const handleOpenViewNotesPopup = () => {
-    if (!savedNotes) {
-      setSavedNotes('Chưa có ghi chú nào.');
-    }
     setIsViewNotesPopupOpen(true);
   };
 
   const handleInitializeProgress = async (lessonId) => {
     try {
       const newProgress = await initializeProgress(lessonId);
-      console.log('Tiến trình sau khi khởi tạo từ handleInitializeProgress:', newProgress);
-      if (!newProgress || !newProgress.Id) {
+      if (!newProgress || !newProgress.id) {
         console.warn('Không thể khởi tạo tiến độ, trả về giá trị mặc định.');
-        return { Id: null, completionPercentage: 0, status: 'not started' };
+        return { id: null, completionPercentage: 0, status: 'not started', notes: '' };
       }
       return newProgress;
     } catch (err) {
       console.error('Lỗi khi khởi tạo tiến độ:', err.message);
       setError('Không thể khởi tạo tiến độ.');
-      return { Id: null, completionPercentage: 0, status: 'not started' };
+      return { id: null, completionPercentage: 0, status: 'not started', notes: '' };
     }
   };
 
@@ -135,16 +132,11 @@ const DetailsPageCourse = () => {
       return;
     }
 
-    console.log('Bắt đầu handleLessonComplete với:', { userId, lessonId });
     try {
       let progress = await getProgressByUserAndLesson(userId, lessonId);
-      console.log('Progress ban đầu:', progress);
-
-      if (!progress || !progress.Id) {
-        console.log('Tiến trình chưa tồn tại hoặc thiếu Id, khởi tạo mới...');
+      if (!progress || !progress.id) {
         progress = await handleInitializeProgress(lessonId);
-        console.log('Progress sau khi khởi tạo:', progress);
-        if (!progress || !progress.Id) {
+        if (!progress || !progress.id) {
           console.warn('Không thể khởi tạo hoặc lấy tiến độ hợp lệ.');
           return;
         }
@@ -153,11 +145,9 @@ const DetailsPageCourse = () => {
       const updateData = {
         status: 'completed',
         completionPercentage: 100,
-        notes: progress.Notes || '',
+        notes: progress.notes || '',
       };
-      console.log('Dữ liệu cập nhật tiến độ:', updateData);
-      const updatedProgress = await updateProgress(progress.Id, updateData);
-      console.log('Progress sau khi cập nhật:', updatedProgress);
+      const updatedProgress = await updateProgress(progress.id, updateData);
       if (updatedProgress && updatedProgress.completionPercentage === 100) {
         await fetchCompletedLessons();
         toast.success('Hoàn thành bài học!');
@@ -170,43 +160,68 @@ const DetailsPageCourse = () => {
 
   const navigateToNextLesson = () => {
     const allLessons = Object.values(lessonsByChapter).flat();
-    console.log('Danh sách tất cả bài học:', allLessons);
-    console.log('lessonId hiện tại:', lessonId);
-
     const currentIndex = allLessons.findIndex(lesson => String(lesson.id) === String(lessonId));
 
     if (currentIndex === -1) {
-      console.error('Không tìm thấy bài học hiện tại trong danh sách:', lessonId);
       toast.error('Không tìm thấy bài học hiện tại trong danh sách.');
       return;
     }
 
     if (currentIndex === allLessons.length - 1) {
-      console.log('Đây là bài học cuối cùng');
       toast.info('Đây là bài học cuối cùng.');
       return;
     }
 
     const nextLesson = allLessons[currentIndex + 1];
-    console.log('Chuyển sang bài học tiếp theo:', nextLesson.id);
     navigate(`/DetailsPageCourse/${nextLesson.id}`);
   };
 
-  const handleSaveNote = () => {
+  const handleSaveNote = async () => {
     if (!noteContent) {
       toast.error('Vui lòng nhập nội dung ghi chú.');
       return;
     }
 
-    const formattedNote = `${formatVideoTime(currentVideoTime)}: ${noteContent}`;
-    const updatedNotes = savedNotes && savedNotes !== 'Chưa có ghi chú nào.' ? `${savedNotes}\n${formattedNote}` : formattedNote;
-    setSavedNotes(updatedNotes);
-    setIsNotePopupOpen(false);
-    setNoteContent('');
-    toast.success('Ghi chú đã được lưu thành công.');
-  };
+    if (!userId) {
+      toast.error('Vui lòng đăng nhập để lưu ghi chú.');
+      return;
+    }
 
-  const allLessons = Object.values(lessonsByChapter).flat();
+    try {
+      let progress = await getProgressByUserAndLesson(userId, lessonId);
+      if (!progress || !progress.id) {
+        progress = await initializeProgress(lessonId);
+        if (!progress || !progress.id) {
+          toast.error('Không thể khởi tạo tiến độ.');
+          return;
+        }
+      }
+
+      const formattedNote = `${formatVideoTime(currentVideoTime)}: ${noteContent}`;
+      const existingNotes = progress.notes || '';
+      const updatedNotes = existingNotes ? `${existingNotes}\n${formattedNote}` : formattedNote;
+
+      const updateData = {
+        status: progress.status || 'not started',
+        completionPercentage: progress.completionPercentage || 0,
+        notes: updatedNotes,
+      };
+
+      const updatedProgress = await updateProgress(progress.id, updateData);
+      if (updatedProgress) {
+        setSavedNotes(updatedNotes);
+        setIsNotePopupOpen(false);
+        setNoteContent('');
+        toast.success('Ghi chú đã được lưu thành công.');
+
+        const refreshedProgress = await getProgressByUserAndLesson(userId, lessonId);
+        setSavedNotes(refreshedProgress.notes || 'Chưa có ghi chú nào.');
+      }
+    } catch (err) {
+      console.error('Lỗi khi lưu ghi chú:', err.message, err.response?.data);
+      toast.error(`Không thể lưu ghi chú: ${err.message}`);
+    }
+  };
 
   useEffect(() => {
     const fetchLesson = async () => {
@@ -216,12 +231,8 @@ const DetailsPageCourse = () => {
         return;
       }
 
-      let lessonsMap = {};
-
       try {
-        console.log('Fetching lesson with lessonId:', lessonId);
         const lessonResponse = await getLessonById(lessonId);
-        console.log('Lesson response:', lessonResponse);
         if (!lessonResponse) {
           setError('Không tìm thấy bài học.');
           setLoading(false);
@@ -230,45 +241,36 @@ const DetailsPageCourse = () => {
         setCurrentLesson(lessonResponse);
 
         const videoId = extractVideoId(lessonResponse.videoUrls);
-        console.log('Extracted videoId:', videoId);
         if (videoId) {
           setCurrentLesson(prev => prev ? { ...prev, duration: 0 } : { ...lessonResponse, duration: 0 });
         } else {
-          console.warn('Không tìm thấy video URL hợp lệ trong bài học:', lessonResponse);
           setCurrentLesson(prev => prev ? { ...prev, duration: 0 } : { ...lessonResponse, duration: 0 });
         }
 
         if (lessonResponse.courseId) {
-          try {
-            const chaptersResponse = await getChaptersByCourseId(lessonResponse.courseId);
-            if (!chaptersResponse || chaptersResponse.length === 0) {
-              console.warn('Không tìm thấy chương nào cho courseId:', lessonResponse.courseId);
-              setChapters([]);
-            } else {
-              setChapters(chaptersResponse);
-            }
+          const chaptersResponse = await getChaptersByCourseId(lessonResponse.courseId);
+          setChapters(chaptersResponse || []);
 
-            for (const chapter of chaptersResponse || []) {
-              try {
-                const lessons = await getLessonsByChapterId(chapter.id);
-                lessonsMap[chapter.id] = lessons || [];
-              } catch (err) {
-                console.error(`Lỗi khi lấy bài học cho chapterId ${chapter.id}:`, err);
-                lessonsMap[chapter.id] = [];
-              }
-            }
-            console.log('Lessons by chapter:', lessonsMap);
-            setLessonsByChapter(lessonsMap);
-
-            await handleInitializeProgress(lessonId);
-            await fetchCompletedLessons();
-          } catch (err) {
-            console.error('Lỗi khi lấy danh sách chương:', err);
-            setChapters([]);
-            setLessonsByChapter({});
+          let lessonsMap = {};
+          for (const chapter of chaptersResponse || []) {
+            const lessons = await getLessonsByChapterId(chapter.id);
+            lessonsMap[chapter.id] = lessons || [];
           }
+          setLessonsByChapter(lessonsMap);
+
+          let progress;
+          try {
+            progress = await getProgressByUserAndLesson(userId, lessonId);
+            if (!progress || !progress.id) {
+              progress = await initializeProgress(lessonId);
+            }
+          } catch (err) {
+            progress = await initializeProgress(lessonId);
+          }
+
+          setSavedNotes(progress.notes || 'Chưa có ghi chú nào.');
+          await fetchCompletedLessons();
         } else {
-          console.warn('Bài học không có courseId:', lessonResponse);
           setChapters([]);
           setLessonsByChapter({});
         }
@@ -280,7 +282,7 @@ const DetailsPageCourse = () => {
       }
     };
     fetchLesson();
-  }, [lessonId, navigate]);
+  }, [lessonId, navigate, userId]);
 
   const formatDate = (isoString) => {
     return isoString ? new Date(isoString).toLocaleDateString('vi-VN', {
@@ -293,6 +295,7 @@ const DetailsPageCourse = () => {
   if (loading) return <p className="text-center text-gray-500">Đang tải dữ liệu...</p>;
   if (error) return <p className="text-center text-red-500">{error}</p>;
 
+  const allLessons = Object.values(lessonsByChapter).flat();
   const totalLessons = allLessons.length || 1;
   const completedLessons = completedLessonIds.length;
   const completionPercentage = Math.min((completedLessons / totalLessons) * 100, 100);
@@ -400,8 +403,8 @@ const DetailsPageCourse = () => {
         </div>
 
         {isNotePopupOpen && (
-            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-              <div className="bg-white p-4 rounded-lg shadow-lg w-96">
+            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50" onClick={() => setIsNotePopupOpen(false)}>
+              <div className="bg-white p-4 rounded-lg shadow-lg w-96" onClick={e => e.stopPropagation()}>
                 <h2 className="text-lg font-bold mb-2">
                   Thêm ghi chú tại <span className="text-orange-500">{formatVideoTime(currentVideoTime)}</span>
                 </h2>
@@ -424,10 +427,10 @@ const DetailsPageCourse = () => {
         )}
 
         {isViewNotesPopupOpen && (
-            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
-              <div className="bg-white p-4 rounded-lg shadow-lg w-96">
+            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50" onClick={() => setIsViewNotesPopupOpen(false)}>
+              <div className="bg-white p-4 rounded-lg shadow-lg w-96" onClick={e => e.stopPropagation()}>
                 <h2 className="text-lg font-bold mb-2">Ghi chú - {currentLesson?.title || 'Không có tiêu đề'}</h2>
-                <p className="text-sm whitespace-pre-wrap">{savedNotes}</p>
+                <p className="text-sm whitespace-pre-wrap">{savedNotes || 'Chưa có ghi chú nào.'}</p>
                 <button
                     onClick={() => setIsViewNotesPopupOpen(false)}
                     className="mt-4 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
