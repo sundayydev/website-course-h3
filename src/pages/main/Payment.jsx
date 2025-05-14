@@ -4,98 +4,102 @@ import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 import { createPayment } from '@/api/paymentApi';
 import { getCourseById } from '@/api/courseApi';
+import axios from 'axios';
+
+const API_URL = process.env.VITE_API_URL || 'http://localhost:5221/api';
 
 const getUserIdFromToken = () => {
   const token = localStorage.getItem('authToken');
-  console.log('Token hiện tại:', token);
   if (!token) return null;
   try {
     const decoded = jwtDecode(token);
     if (decoded.exp * 1000 < Date.now()) {
       localStorage.removeItem('authToken');
-      console.log('Token hết hạn, đã xóa');
       return null;
     }
     return decoded.id;
-  } catch (error) {
-    console.error('Lỗi khi giải mã token:', error);
+  } catch {
     return null;
   }
 };
 
 const PaymentModal = ({ courseId, onClose }) => {
   const [total, setTotal] = useState(0);
+  const [originalTotal, setOriginalTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
   const [course, setCourse] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
+  const [couponCode, setCouponCode] = useState('');
+  const [discountAmount, setDiscountAmount] = useState(0);
+  const [couponId, setCouponId] = useState(null);
   const navigate = useNavigate();
   const userId = getUserIdFromToken();
 
   useEffect(() => {
     if (!userId) {
-      alert('Bạn cần đăng nhập để thực hiện thanh toán!');
+      alert('Bạn cần đăng nhập để thanh toán!');
       navigate('/login');
-      return;
-    }
-
-    if (!courseId) {
-      setErrorMessage('Không tìm thấy ID khóa học!');
       return;
     }
 
     const fetchCourse = async () => {
       try {
-        console.log(`Fetching course with ID: ${courseId}`);
         const data = await getCourseById(courseId);
         setCourse(data);
         setTotal(data.price || 0);
-        console.log('Course fetched successfully:', data);
-      } catch (error) {
-        console.error('Lỗi khi lấy thông tin khóa học:', error.message);
-        setErrorMessage(`Không thể tải thông tin khóa học: ${error.message}`);
+        setOriginalTotal(data.price || 0);
+      } catch (err) {
+        setErrorMessage('Không thể tải thông tin khóa học!');
       }
     };
 
-    fetchCourse();
+    if (courseId) fetchCourse();
   }, [courseId, userId, navigate]);
+
+  const applyCoupon = async () => {
+    if (!couponCode) return setErrorMessage('Vui lòng nhập mã coupon!');
+    try {
+      const response = await axios.get(`${API_URL}/Coupon/code/${couponCode}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` },
+      });
+
+      const coupon = response.data;
+      const now = new Date();
+      if (!coupon.isActive || now < new Date(coupon.startDate) || now > new Date(coupon.endDate))
+        return setErrorMessage('Mã coupon không hợp lệ hoặc đã hết hạn!');
+
+      if (coupon.currentUsage >= coupon.maxUsage)
+        return setErrorMessage('Mã coupon đã được sử dụng hết!');
+
+      const discount = (originalTotal * coupon.discountPercentage) / 100;
+      setDiscountAmount(discount);
+      setTotal(originalTotal - discount);
+      setCouponId(coupon.id);
+      setErrorMessage(null);
+    } catch {
+      setErrorMessage('Mã coupon không hợp lệ!');
+    }
+  };
 
   const handlePayment = async () => {
     setIsLoading(true);
     setErrorMessage(null);
 
-    if (!course || !course.id) {
-      setErrorMessage('Thông tin khóa học chưa được tải!');
-      setIsLoading(false);
-      return;
-    }
-
     const orderData = {
       userId,
       courseId: course.id,
       amount: total,
+      couponId,
+      discountAmount,
     };
 
-    console.log('Order data to be sent:', orderData);
-    console.log('Token tại handlePayment:', localStorage.getItem('authToken'));
-
     try {
-      const response = await createPayment(orderData);
-      console.log('Payment response:', response);
-
-      if (response.message) {
-        console.log(response.message);
-        navigate(`/payment-success/${response.orderId}`);
-      } else if (response.paymentUrl) {
-        console.log('Redirecting to VnPay:', response.paymentUrl);
-        window.location.href = response.paymentUrl;
-      } else {
-        throw new Error('Không nhận được URL thanh toán hoặc thông tin đơn hàng');
-      }
-    } catch (error) {
-      const errorMsg = error.message || 'Lỗi không xác định';
-      console.error('Lỗi thanh toán:', errorMsg);
-      setErrorMessage(`Thanh toán thất bại: ${errorMsg}`);
-      navigate(`/payment-failure?error=${encodeURIComponent(errorMsg)}`);
+      const res = await createPayment(orderData);
+      if (res.message) navigate(`/payment-success/${res.orderId}`);
+      else if (res.paymentUrl) window.location.href = res.paymentUrl;
+      else throw new Error('Không nhận được URL thanh toán');
+    } catch (err) {
+      navigate(`/payment-failure?error=${encodeURIComponent(err.message)}`);
     } finally {
       setIsLoading(false);
     }
@@ -103,63 +107,123 @@ const PaymentModal = ({ courseId, onClose }) => {
 
   if (!userId) return null;
 
-  const handleClose = () => {
-    onClose();
-  };
-
   return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4">
-        <div className="bg-white rounded-lg shadow-lg w-[95%] max-w-sm md:max-w-3xl p-4 md:p-6 flex flex-col md:flex-row relative">
-          <button onClick={handleClose} className="absolute top-2 right-2 cursor-pointer">
-            <FaTimes className="w-5 h-5 text-gray-500 hover:text-gray-700" />
+      <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50 p-4">
+        <div className="bg-white w-full max-w-4xl rounded-xl shadow-lg overflow-hidden relative flex flex-col md:flex-row">
+          {/* Close button */}
+          <button
+              onClick={onClose}
+              className="absolute top-3 right-3 text-gray-500 hover:text-red-500"
+          >
+            <FaTimes className="w-5 h-5" />
           </button>
 
+          {/* Course Info */}
           {course && (
-              <div className="md:w-1/2 p-4">
-                <div className="flex items-center space-x-3">
+              <div className="md:w-1/2 p-6 border-r border-gray-200 flex flex-col space-y-4">
+                <div className="flex items-center space-x-4">
                   <img
-                      src={course.urlImage ? `${process.env.VITE_API_URL}/${course.urlImage}` : 'https://via.placeholder.com/50'}
+                      src={
+                        course.urlImage
+                            ? `${process.env.VITE_API_URL}/${course.urlImage}`
+                            : 'https://via.placeholder.com/80'
+                      }
                       alt={course.title}
-                      className="w-12 h-12 rounded-full"
+                      className="w-16 h-16 rounded-lg object-cover"
                   />
-                  <h2 className="text-lg md:text-xl font-bold">{course.title}</h2>
+                  <div>
+                    <h2 className="text-xl font-bold text-gray-800">{course.title}</h2>
+                    <p className="text-gray-600 text-sm">{course.category || 'Khóa học trực tuyến'}</p>
+                  </div>
                 </div>
-                <p className="text-gray-600 mt-3 text-sm md:text-base">{course.description}</p>
+                <p className="text-gray-700 text-sm">{course.description}</p>
               </div>
           )}
 
-          <div className="md:w-1/2 p-4 bg-gray-100 rounded-lg">
-            <h3 className="text-lg font-semibold text-center md:text-left">Chi tiết thanh toán</h3>
+          {/* Payment */}
+          <div className="md:w-1/2 p-6 bg-gray-50 flex flex-col space-y-4">
+            <h3 className="text-lg font-semibold text-gray-800 text-center md:text-left">
+              Chi tiết thanh toán
+            </h3>
 
-            {errorMessage && <div className="mt-3 p-2 bg-red-100 text-red-700 rounded">{errorMessage}</div>}
+            {errorMessage && (
+                <div className="bg-red-100 text-red-700 text-sm p-2 rounded">{errorMessage}</div>
+            )}
 
-            <div className="mt-3">
-              {course ? (
-                  <>
-                    <p className="text-gray-700 font-semibold text-center md:text-left">{course.title}</p>
-                    <div className="flex justify-between text-sm md:text-base">
-                      <p>Giá khuyến mãi:</p>
-                      <p className="text-lg font-bold text-red-600">{total.toLocaleString()}đ</p>
-                    </div>
-                  </>
-              ) : (
-                  <p>Đang tải thông tin khóa học...</p>
+            {/* Coupon Box */}
+            {discountAmount > 0 ? (
+                <div className="flex justify-between items-center bg-green-100 text-green-700 p-2 rounded">
+                  <span>Đã áp dụng mã: <strong>{couponCode}</strong></span>
+                  <button
+                      onClick={() => {
+                        setCouponCode('');
+                        setDiscountAmount(0);
+                        setTotal(originalTotal);
+                        setCouponId(null);
+                      }}
+                      className="text-red-500 hover:underline text-sm"
+                  >
+                    Hủy
+                  </button>
+                </div>
+            ) : (
+                <div className="flex space-x-2">
+                  <input
+                      type="text"
+                      placeholder="Nhập mã coupon"
+                      value={couponCode}
+                      onChange={(e) => setCouponCode(e.target.value)}
+                      className="flex-1 px-3 py-2 border rounded"
+                  />
+                  <button
+                      onClick={applyCoupon}
+                      className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                  >
+                    Áp dụng
+                  </button>
+                </div>
+            )}
+
+            {/* Giá */}
+            <div className="text-sm space-y-1 mt-2">
+              <div className="flex justify-between">
+                <span>Giá gốc:</span>
+                <span className={discountAmount > 0 ? 'line-through text-gray-400' : ''}>
+                {originalTotal.toLocaleString()}đ
+              </span>
+              </div>
+              {discountAmount > 0 && (
+                  <div className="flex justify-between text-green-600 font-medium">
+                    <span>Giảm giá:</span>
+                    <span>-{discountAmount.toLocaleString()}đ</span>
+                  </div>
               )}
             </div>
-            <div className="mt-4 flex justify-between items-center text-sm md:text-lg">
-              <span className="font-semibold">TỔNG</span>
-              <span className="font-bold text-blue-600">{total.toLocaleString()}đ</span>
+
+            {/* Tổng */}
+            <div className="flex justify-between items-center text-lg font-bold mt-4 border-t pt-4">
+              <span>Tổng cộng:</span>
+              <span className="text-blue-600">{total.toLocaleString()}đ</span>
             </div>
+
+            {/* Button */}
             <button
                 onClick={handlePayment}
-                disabled={isLoading || !course}
-                className={`mt-4 w-full ${isLoading ? 'bg-gray-400' : 'bg-blue-600'} text-white py-2 md:py-3 rounded-lg text-lg hover:bg-blue-700`}
+                disabled={isLoading}
+                className={`mt-2 py-3 rounded-lg text-white font-semibold ${
+                    isLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
+                }`}
             >
-              {isLoading ? 'Đang xử lý...' : total === 0 ? 'Đăng ký miễn phí' : 'Tiếp tục thanh toán'}
+              {isLoading
+                  ? 'Đang xử lý...'
+                  : total === 0
+                      ? 'Đăng ký miễn phí'
+                      : 'Tiếp tục thanh toán'}
             </button>
+
             {total > 0 && (
-                <p className="text-xs text-gray-500 text-center mt-2 flex items-center justify-center">
-                  <FaLock className="w-3 h-3 mr-1 text-red-300" /> Thanh toán an toàn với VnPay
+                <p className="text-xs text-gray-500 text-center flex items-center justify-center gap-1">
+                  <FaLock className="text-red-300" /> Thanh toán an toàn qua VNPAY
                 </p>
             )}
           </div>

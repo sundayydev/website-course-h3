@@ -27,24 +27,28 @@ export const getDecodedToken = () => {
 
 /**
  * Tạo URL thanh toán
- * @param {Object} orderData - Dữ liệu đơn hàng { userId, courseId, amount }
+ * @param {Object} orderData - Dữ liệu đơn hàng { userId, courseId, amount, couponId, discountAmount }
  * @returns {Promise<Object>} - Kết quả chứa paymentUrl hoặc thông báo
  */
 export const createPayment = async (orderData) => {
   try {
     const token = getAuthToken();
-    // Định dạng dữ liệu theo CreateOrderDto của backend
     const formattedOrderData = {
       UserId: orderData.userId,
       Amount: orderData.amount,
       OrderDetails: [
         {
           CourseId: orderData.courseId,
+          Price: orderData.amount + (orderData.discountAmount || 0),
+          CouponId: orderData.couponId || null,
+          DiscountAmount: orderData.discountAmount || 0,
         },
       ],
     };
 
     console.log('Dữ liệu đơn hàng gửi đi:', formattedOrderData);
+    console.log('Token:', token);
+    console.log('API URL:', `${API_URL}/create-payment-url`);
 
     const response = await axios.post(`${API_URL}/create-payment-url`, formattedOrderData, {
       headers: {
@@ -53,13 +57,18 @@ export const createPayment = async (orderData) => {
       },
     });
 
+    console.log('Response:', response.data);
     return response.data;
   } catch (error) {
-    console.error('Lỗi khi tạo URL thanh toán:', error.response?.data || error.message);
+    console.error('Lỗi chi tiết:', {
+      message: error.message,
+      response: error.response?.data,
+      status: error.response?.status,
+      config: error.config,
+    });
     throw new Error(error.response?.data?.message || 'Không thể tạo URL thanh toán');
   }
 };
-
 /**
  * Lấy danh sách thanh toán theo khóa học
  * @param {string} courseId - ID của khóa học
