@@ -1,5 +1,5 @@
 import api from './axios';
-import {jwtDecode} from 'jwt-decode';
+import {getAuthToken } from './authUtils';
 const API_URL = '/user';
 
 export const getUsers = async () => {
@@ -79,7 +79,7 @@ export const uploadProfileImage = async (file) => {
 
   let decodedToken;
   try {
-    decodedToken = jwtDecode(cleanToken);
+    decodedToken = getAuthToken(cleanToken);
   } catch (error) {
     throw new Error('Không thể giải mã token: ' + error.message);
   }

@@ -1,5 +1,6 @@
 import api from './axios';
-import { jwtDecode } from 'jwt-decode';
+import { getAuthToken } from './authUtils';
+
 
 const API_URL = '/review';
 
@@ -74,7 +75,7 @@ export const createReview = async (reviewData) => {
     throw new Error('Không tìm thấy token');
   }
 
-  const decodedToken = jwtDecode(token);
+  const decodedToken = getAuthToken(token);
   const newData = {
     userId: decodedToken.id,
     courseId: reviewData.courseId,
@@ -103,7 +104,7 @@ export const updateReview = async (id, reviewData) => {
     throw new Error('Không tìm thấy token');
   }
 
-  const decodedToken = jwtDecode(token);
+  const decodedToken = getAuthToken(token);
   const updatedData = {
     userId: decodedToken.id,
     courseId: reviewData.courseId,

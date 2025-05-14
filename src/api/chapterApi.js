@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import api from './axios';
 
 const API_URL = '/chapter';

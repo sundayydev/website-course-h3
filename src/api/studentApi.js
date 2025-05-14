@@ -1,6 +1,6 @@
 import api from './axios';
 
-const API_URL = 'http://localhost:5221/api/student'; // Cập nhật port backend
+const API_URL = '/student'; // Cập nhật port backend
 
 // Hàm kiểm tra định dạng Guid
 const isValidGuid = (id) => {

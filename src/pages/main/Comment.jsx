@@ -234,7 +234,7 @@ const CommentPost = ({ postId }) => {
     const regex = /^(\d{2})-(\d{2})-(\d{4})\s(\d{2}):(\d{2}):(\d{2})$/;
     const match = dateStr.match(regex);
     if (match) {
-      const [_, day, month, year, hour, minute, second] = match;
+      const [, day, month, year, hour, minute, second] = match;
       const isoDateStr = `${year}-${month}-${day}T${hour}:${minute}:${second}`;
       const date = new Date(isoDateStr);
       if (!isNaN(date.getTime())) {
@@ -245,7 +245,7 @@ const CommentPost = ({ postId }) => {
     return 'Không có ngày';
   };
 
-  const Level2Comment = ({ reply, isOwner, setEditCommentId, setCommentText, handleDeleteComment, handleSubmitReply, postId, isSubmitting, setComments, level }) => {
+  const Level2Comment = ({ reply, isOwner, setEditCommentId, setCommentText, handleDeleteComment, postId, isSubmitting, setComments, level }) => {
     const [isReplying, setIsReplying] = useState(false);
     const [localReplyText, setLocalReplyText] = useState('');
 
@@ -295,76 +295,81 @@ const CommentPost = ({ postId }) => {
     };
 
     return (
-        <div key={reply.id} className="ml-24 pb-4">
-          <div className="flex items-start space-x-3 mt-2">
-            <img
-                src={reply.userProfileImage ? `${import.meta.env.VITE_API_URL}${reply.userProfileImage}` : 'https://i.pravatar.cc/150'}
-                alt={reply.userFullName || 'Ẩn danh'}
-                className="w-10 h-10 rounded-full object-cover border-2 border-pink-500"
-                onError={(e) => (e.target.src = 'https://i.pravatar.cc/150')}
-            />
-            <div className="flex-1">
-              <div className="flex items-center justify-between mb-1">
-                <p className="font-semibold text-gray-800">{reply.userFullName || 'Ẩn danh'}</p>
-                {isOwner && (
-                    <div className="flex gap-2">
-                      <button
-                          onClick={() => {
-                            setEditCommentId(reply.id);
-                            setCommentText(reply.content);
-                          }}
-                          className="text-blue-500 hover:text-blue-700 text-sm"
-                      >
-                        Sửa
-                      </button>
-                      <button
-                          onClick={() => {
-                            if (window.confirm('Bạn có chắc muốn xóa bình luận này? Tất cả phản hồi cũng sẽ bị xóa.')) {
-                              handleDeleteComment(reply.id);
-                            }
-                          }}
-                          className="text-red-500 hover:text-red-700 text-sm"
-                      >
-                        Xóa
-                      </button>
-                    </div>
-                )}
-              </div>
-              <p className="text-gray-700 whitespace-pre-line mt-1">{reply.content}</p>
-              <p className="text-sm text-gray-500 mt-2">{formatDate(reply.createdAt)}</p>
-              <button
-                  onClick={() => setIsReplying(!isReplying)}
-                  className="mt-2 text-blue-500 hover:text-blue-700 text-sm"
-              >
-                {isReplying ? 'Hủy trả lời' : 'Trả lời'}
-              </button>
+      <div key={reply.id} className="ml-24 pb-4">
+        <div className="flex items-start space-x-3 mt-2">
+          <img
+            src={reply.userProfileImage ? `${import.meta.env.VITE_API_URL}${reply.userProfileImage}` : 'https://i.pravatar.cc/150'}
+            alt={reply.userFullName || 'Ẩn danh'}
+            className="w-10 h-10 rounded-full object-cover border-2 border-pink-500"
+            onError={(e) => (e.target.src = 'https://i.pravatar.cc/150')}
+          />
+          <div className="flex-1">
+            <div className="flex items-center justify-between mb-1">
+              <p className="font-semibold text-gray-800">{reply.userFullName || 'Ẩn danh'}</p>
+              {isOwner && (
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => {
+                      setEditCommentId(reply.id);
+                      setCommentText(reply.content);
+                    }}
+                    className="text-blue-500 hover:text-blue-700 text-sm"
+                  >
+                    Sửa
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (window.confirm('Bạn có chắc muốn xóa bình luận này? Tất cả phản hồi cũng sẽ bị xóa.')) {
+                        handleDeleteComment(reply.id);
+                      }
+                    }}
+                    className="text-red-500 hover:text-red-700 text-sm"
+                  >
+                    Xóa
+                  </button>
+                </div>
+              )}
             </div>
+            <p className="text-gray-700 whitespace-pre-line mt-1">
+              {reply.parentCommentId && reply.parentUserFullName && (
+                <span className="font-semibold text-blue-600">{reply.parentUserFullName} </span>
+              )}
+              {reply.content}
+            </p>
+            <p className="text-sm text-gray-500 mt-2">{formatDate(reply.createdAt)}</p>
+            <button
+              onClick={() => setIsReplying(!isReplying)}
+              className="mt-2 text-blue-500 hover:text-blue-700 text-sm"
+            >
+              {isReplying ? 'Hủy trả lời' : 'Trả lời'}
+            </button>
           </div>
-          {isReplying && (
-              <div className="ml-12 mt-2">
-            <textarea
-                value={localReplyText}
-                onChange={(e) => setLocalReplyText(e.target.value)}
-                placeholder="Viết trả lời của bạn..."
-                className="w-full p-2 border rounded-lg mb-2 focus:outline-none focus:ring-2 focus:ring-pink-500 resize-none"
-                rows="2"
-            />
-                <button
-                    onClick={handleReplySubmit}
-                    className="bg-blue-600 hover:bg-blue-700 text-white py-1 px-3 rounded-lg transition duration-200"
-                    disabled={isSubmitting}
-                >
-                  {isSubmitting ? 'Đang gửi...' : 'Gửi trả lời'}
-                </button>
-                <button
-                    onClick={() => setIsReplying(false)}
-                    className="ml-2 text-gray-500 hover:text-gray-700"
-                >
-                  Hủy
-                </button>
-              </div>
-          )}
         </div>
+        {isReplying && (
+          <div className="ml-12 mt-2">
+            <textarea
+              value={localReplyText}
+              onChange={(e) => setLocalReplyText(e.target.value)}
+              placeholder="Viết trả lời của bạn..."
+              className="w-full p-2 border rounded-lg mb-2 focus:outline-none focus:ring-2 focus:ring-pink-500 resize-none"
+              rows="2"
+            />
+            <button
+              onClick={handleReplySubmit}
+              className="bg-blue-600 hover:bg-blue-700 text-white py-1 px-3 rounded-lg transition duration-200"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Đang gửi...' : 'Gửi trả lời'}
+            </button>
+            <button
+              onClick={() => setIsReplying(false)}
+              className="ml-2 text-gray-500 hover:text-gray-700"
+            >
+              Hủy
+            </button>
+          </div>
+        )}
+      </div>
     );
   };
 
@@ -375,7 +380,7 @@ const CommentPost = ({ postId }) => {
     const displayLevel = Math.min(comment.level || level, 2);
     const totalReplies = countAllReplies(comment);
     const [showReplies, setShowReplies] = useState(comment.level < 2 ? false : true);
-
+  
     const level2Comments = comment.level === 1 ? flattenLevel2Comments(comment.replies || []) : [];
 
     const handleSubmitReply = async () => {
@@ -423,113 +428,118 @@ const CommentPost = ({ postId }) => {
     };
 
     return (
-        <div className={`ml-${displayLevel * 12} pb-4`}>
-          <div className="flex items-start space-x-3 mt-2">
-            <img
-                src={comment.userProfileImage ? `${import.meta.env.VITE_API_URL}${comment.userProfileImage}` : 'https://i.pravatar.cc/150'}
-                alt={comment.userFullName || 'Ẩn danh'}
-                className="w-10 h-10 rounded-full object-cover border-2 border-pink-500"
-                onError={(e) => (e.target.src = 'https://i.pravatar.cc/150')}
-            />
-            <div className="flex-1">
-              <div className="flex items-center justify-between mb-1">
-                <p className="font-semibold text-gray-800">{comment.userFullName || 'Ẩn danh'}</p>
-                {isOwner && !editCommentId && (
-                    <div className="flex gap-2">
-                      <button
-                          onClick={() => {
-                            setEditCommentId(comment.id);
-                            setCommentText(comment.content);
-                          }}
-                          className="text-blue-500 hover:text-blue-700 text-sm"
-                      >
-                        Sửa
-                      </button>
-                      <button
-                          onClick={() => {
-                            if (window.confirm('Bạn có chắc muốn xóa bình luận này? Tất cả phản hồi cũng sẽ bị xóa.')) {
-                              handleDeleteComment(comment.id);
-                            }
-                          }}
-                          className="text-red-500 hover:text-red-700 text-sm"
-                      >
-                        Xóa
-                      </button>
-                    </div>
-                )}
-              </div>
-              <p className="text-gray-700 whitespace-pre-line mt-1">{comment.content}</p>
-              <p className="text-sm text-gray-500 mt-2">{formatDate(comment.createdAt)}</p>
-              <button
-                  onClick={() => setIsReplying(!isReplying)}
-                  className="mt-2 text-blue-500 hover:text-blue-700 text-sm"
-              >
-                {isReplying ? 'Hủy trả lời' : 'Trả lời'}
-              </button>
-              {totalReplies > 0 && comment.level < 2 && (
+      <div className={`ml-${displayLevel * 12} pb-4`}>
+        <div className="flex items-start space-x-3 mt-2">
+          <img
+            src={comment.userProfileImage ? `${import.meta.env.VITE_API_URL}${comment.userProfileImage}` : 'https://i.pravatar.cc/150'}
+            alt={comment.userFullName || 'Ẩn danh'}
+            className="w-10 h-10 rounded-full object-cover border-2 border-pink-500"
+            onError={(e) => (e.target.src = 'https://i.pravatar.cc/150')}
+          />
+          <div className="flex-1">
+            <div className="flex items-center justify-between mb-1">
+              <p className="font-semibold text-gray-800">{comment.userFullName || 'Ẩn danh'}</p>
+              {isOwner && !editCommentId && (
+                <div className="flex gap-2">
                   <button
-                      onClick={() => setShowReplies(!showReplies)}
-                      className="mt-2 ml-4 text-blue-500 hover:text-blue-700 text-sm"
+                    onClick={() => {
+                      setEditCommentId(comment.id);
+                      setCommentText(comment.content);
+                    }}
+                    className="text-blue-500 hover:text-blue-700 text-sm"
                   >
-                    {showReplies ? `Ẩn câu trả lời` : `Xem ${totalReplies} câu trả lời`}
+                    Sửa
                   </button>
+                  <button
+                    onClick={() => {
+                      if (window.confirm('Bạn có chắc muốn xóa bình luận này? Tất cả phản hồi cũng sẽ bị xóa.')) {
+                        handleDeleteComment(comment.id);
+                      }
+                    }}
+                    className="text-red-500 hover:text-red-700 text-sm"
+                  >
+                    Xóa
+                  </button>
+                </div>
               )}
             </div>
+            <p className="text-gray-700 whitespace-pre-line mt-1">
+              {comment.parentCommentId && comment.parentUserFullName && (
+                <span className="font-semibold text-blue-600">{comment.parentUserFullName} </span>
+              )}
+              {comment.content}
+            </p>
+            <p className="text-sm text-gray-500 mt-2">{formatDate(comment.createdAt)}</p>
+            <button
+              onClick={() => setIsReplying(!isReplying)}
+              className="mt-2 text-blue-500 hover:text-blue-700 text-sm"
+            >
+              {isReplying ? 'Hủy trả lời' : 'Trả lời'}
+            </button>
+            {totalReplies > 0 && comment.level < 2 && (
+              <button
+                onClick={() => setShowReplies(!showReplies)}
+                className="mt-2 ml-4 text-blue-500 hover:text-blue-700 text-sm"
+              >
+                {showReplies ? `Ẩn câu trả lời` : `Xem ${totalReplies} câu trả lời`}
+              </button>
+            )}
           </div>
-
-          {isReplying && (
-              <div className="ml-12 mt-2">
-            <textarea
-                value={localReplyText}
-                onChange={(e) => setLocalReplyText(e.target.value)}
-                placeholder="Viết trả lời của bạn..."
-                className="w-full p-2 border rounded-lg mb-2 focus:outline-none focus:ring-2 focus:ring-pink-500 resize-none"
-                rows="2"
-            />
-                <button
-                    onClick={handleSubmitReply}
-                    className="bg-blue-600 hover:bg-blue-700 text-white py-1 px-3 rounded-lg transition duration-200"
-                    disabled={isSubmitting}
-                >
-                  {isSubmitting ? 'Đang gửi...' : 'Gửi trả lời'}
-                </button>
-                <button
-                    onClick={() => setIsReplying(false)}
-                    className="ml-2 text-gray-500 hover:text-gray-700"
-                >
-                  Hủy
-                </button>
-              </div>
-          )}
-
-          {comment.level === 0 && showReplies && comment.replies && comment.replies.length > 0 && (
-              <div className="mt-2 space-y-2">
-                {comment.replies.map(reply => (
-                    <RenderComment key={reply.id} comment={reply} level={reply.level || level + 1} />
-                ))}
-              </div>
-          )}
-
-          {comment.level === 1 && level2Comments.length > 0 && showReplies && (
-              <div className="mt-2 space-y-2">
-                {level2Comments.map(reply => (
-                    <Level2Comment
-                        key={reply.id}
-                        reply={reply}
-                        isOwner={isOwner}
-                        setEditCommentId={setEditCommentId}
-                        setCommentText={setCommentText}
-                        handleDeleteComment={handleDeleteComment}
-                        handleSubmitReply={handleSubmitReply}
-                        postId={postId}
-                        isSubmitting={isSubmitting}
-                        setComments={setComments}
-                        level={reply.level || level + 1}
-                    />
-                ))}
-              </div>
-          )}
         </div>
+  
+        {isReplying && (
+          <div className="ml-12 mt-2">
+            <textarea
+              value={localReplyText}
+              onChange={(e) => setLocalReplyText(e.target.value)}
+              placeholder="Viết trả lời của bạn..."
+              className="w-full p-2 border rounded-lg mb-2 focus:outline-none focus:ring-2 focus:ring-pink-500 resize-none"
+              rows="2"
+            />
+            <button
+              onClick={handleSubmitReply}
+              className="bg-blue-600 hover:bg-blue-700 text-white py-1 px-3 rounded-lg transition duration-200"
+              disabled={isSubmitting}
+            >
+              {isSubmitting ? 'Đang gửi...' : 'Gửi trả lời'}
+            </button>
+            <button
+              onClick={() => setIsReplying(false)}
+              className="ml-2 text-gray-500 hover:text-gray-700"
+            >
+              Hủy
+            </button>
+          </div>
+        )}
+  
+        {comment.level === 0 && showReplies && comment.replies && comment.replies.length > 0 && (
+          <div className="mt-2 space-y-2">
+            {comment.replies.map(reply => (
+              <RenderComment key={reply.id} comment={reply} level={reply.level || level + 1} />
+            ))}
+          </div>
+        )}
+  
+        {comment.level === 1 && level2Comments.length > 0 && showReplies && (
+          <div className="mt-2 space-y-2">
+            {level2Comments.map(reply => (
+              <Level2Comment
+                key={reply.id}
+                reply={reply}
+                isOwner={isOwner}
+                setEditCommentId={setEditCommentId}
+                setCommentText={setCommentText}
+                handleDeleteComment={handleDeleteComment}
+                handleSubmitReply={handleSubmitReply}
+                postId={postId}
+                isSubmitting={isSubmitting}
+                setComments={setComments}
+                level={reply.level || level + 1}
+              />
+            ))}
+          </div>
+        )}
+      </div>
     );
   };
 

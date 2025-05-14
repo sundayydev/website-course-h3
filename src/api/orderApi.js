@@ -1,4 +1,5 @@
-import { jwtDecode } from 'jwt-decode';
+
+import { getAuthToken } from './authUtils';
 import api from './axios';
 
 const API_URL = '/order'; // Đổi thành /Order để tránh double /api/
@@ -11,7 +12,7 @@ export const getAllOrders = async ({ pageNumber = 1, pageSize = 5 }) => {
   }
 
   try {
-    const decodedToken = jwtDecode(token);
+    const decodedToken = getAuthToken(token);
     if (decodedToken.exp * 1000 < Date.now()) {
       throw new Error('Token đã hết hạn');
     }
@@ -45,7 +46,7 @@ export const getOrdersByUserId = async (userId) => {
   }
 
   try {
-    const decodedToken = jwtDecode(token);
+    const decodedToken = getAuthToken(token);
     if (decodedToken.exp * 1000 < Date.now()) {
       throw new Error('Token đã hết hạn');
     }
@@ -72,7 +73,7 @@ export const getOrderDetailsById = async (orderId) => {
   }
 
   try {
-    const decodedToken = jwtDecode(token);
+    const decodedToken = getAuthToken(token);
     if (decodedToken.exp * 1000 < Date.now()) {
       throw new Error('Token đã hết hạn');
     }
@@ -99,7 +100,7 @@ export const getOrderById = async (orderId) => {
   }
 
   try {
-    const decodedToken = jwtDecode(token);
+    const decodedToken = getAuthToken(token);
     if (decodedToken.exp * 1000 < Date.now()) {
       throw new Error('Token đã hết hạn');
     }
@@ -126,7 +127,7 @@ export const createOrder = async (data) => {
   }
 
   try {
-    const decodedToken = jwtDecode(token);
+    const decodedToken =getAuthToken(token);
     if (decodedToken.exp * 1000 < Date.now()) {
       throw new Error('Token đã hết hạn');
     }
@@ -166,7 +167,7 @@ export const updateOrderStatus = async (orderId, status) => {
   }
 
   try {
-    const decodedToken = jwtDecode(token);
+    const decodedToken = getAuthToken(token);
     if (decodedToken.exp * 1000 < Date.now()) {
       throw new Error('Token đã hết hạn');
     }
