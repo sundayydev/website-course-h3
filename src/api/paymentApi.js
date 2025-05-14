@@ -1,5 +1,6 @@
 import axios from 'axios';
-import { jwtDecode } from 'jwt-decode';
+import { getAuthToken } from './authUtils';
+
 
 const API_URL = process.env.VITE_API_URL || 'http://localhost:5221/api/Payment';
 
@@ -8,11 +9,6 @@ const API_URL = process.env.VITE_API_URL || 'http://localhost:5221/api/Payment';
  * @returns {string} - Token xác thực
  * @throws {Error} - Nếu không tìm thấy token
  */
-const getAuthToken = () => {
-  const token = localStorage.getItem('authToken');
-  if (!token) throw new Error('Không tìm thấy token xác thực');
-  return token;
-};
 
 /**
  * Giải mã token để lấy thông tin
@@ -22,7 +18,7 @@ const getAuthToken = () => {
 export const getDecodedToken = () => {
   try {
     const token = getAuthToken();
-    return jwtDecode(token);
+    return getAuthToken(token);
   } catch (error) {
     console.error('Lỗi khi giải mã token:', error);
     throw new Error('Token không hợp lệ');

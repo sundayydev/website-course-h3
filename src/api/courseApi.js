@@ -1,4 +1,5 @@
-import { jwtDecode } from 'jwt-decode';
+
+import { getAuthToken } from './authUtils';
 import api from './axios';
 import {getAuthToken} from './authUtils'
 
@@ -19,21 +20,10 @@ export const getCourses = async () => {
 };
 
 export const getCourseById = async (courseId) => {
-  const token = localStorage.getItem('authToken');
-  if (!token) {
-    throw new Error('Không tìm thấy token');
-  }
-
   try {
-    const decodedToken = jwtDecode(token);
-    if (decodedToken.exp * 1000 < Date.now()) {
-      localStorage.removeItem('authToken');
-      throw new Error('Token đã hết hạn');
-    }
 
     const response = await api.get(`${API_URL}/${courseId}`, {
       headers: {
-        Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
     });
@@ -50,7 +40,7 @@ export const createCourse = async (data) => {
     throw new Error('Không tìm thấy token');
   }
 
-  const decodedToken = jwtDecode(token);
+  const decodedToken = getAuthToken(token);
 
   const newData = {
     title: data.title,
@@ -80,7 +70,7 @@ export const updateCourse = async (id, data) => {
     throw new Error('Không tìm thấy token');
   }
 
-  const decodedToken = jwtDecode(token);
+  const decodedToken = getAuthToken(token);
 
   const updatedData = {
     title: data.title,
