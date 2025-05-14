@@ -1,7 +1,6 @@
 
 import { getAuthToken } from './authUtils';
 import api from './axios';
-import { getAuthToken } from './authUtils';
 
 const API_URL = '/course';
 
