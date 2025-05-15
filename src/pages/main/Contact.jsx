@@ -1,3 +1,5 @@
+/* eslint-disable no-unused-vars */
+
 import React, { useState } from 'react';
 import { FaMapMarkerAlt, FaPhoneAlt, FaEnvelope } from 'react-icons/fa';
 import { sendContactEmail } from '../../api/contactApi';
@@ -20,9 +22,8 @@ const Contact = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Client-side validation
     if (!formData.name || !formData.email || !formData.message) {
-      toast.error('⚠️ Vui lòng điền đầy đủ thông tin!', {
+      toast.error('Vui lòng điền đầy đủ thông tin!', {
         position: 'top-right',
       });
       return;
@@ -32,12 +33,12 @@ const Contact = () => {
 
     try {
       const result = await sendContactEmail(formData);
-      toast.success(result.message || '✅ Gửi thành công! Chúng tôi sẽ liên hệ lại sớm.', {
+      toast.success(result.message || 'Gửi thành công! Chúng tôi sẽ liên hệ lại sớm.', {
         position: 'top-right',
       });
       setFormData({ name: '', email: '', message: '' });
     } catch (error) {
-      toast.error(error.message || '❌ Không thể gửi email. Vui lòng thử lại!', {
+      toast.error(error.message || 'Không thể gửi email. Vui lòng thử lại!', {
         position: 'top-right',
       });
     } finally {
@@ -47,7 +48,6 @@ const Contact = () => {
 
   return (
     <div className="w-full min-h-screen flex flex-col items-center justify-center py-20 bg-gray-50 dark:bg-gray-900">
-      {/* Toast Container */}
       <ToastContainer
         position="top-right"
         autoClose={3000}
@@ -152,7 +152,7 @@ const Contact = () => {
           </h3>
           <iframe
             className="w-full h-64 rounded-lg shadow-lg"
-            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15674.479932513508!2d106.7588497!3d10.84036615!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4 -- f13.1!3m3!1m2!1s0x31752719273d6265%3A0xf0b3de0c32127b5f!2zV2luLkQgR2FtaW5nICYgQmlsbGlhcmRzIFRo4bunIMSQ4bupYw!5e0!3m2!1svi!2s!4v1740501966458!5m2!1svi!2s"
+            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d15674.479932513508!2d106.7588497!3d10.84036615!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x31752719273d6265%3A0xf0b3de0c32127b5f!2zV2luLkQgR2FtaW5nICYgQmlsbGlhcmRzIFRo4bunIMSQ4bupYw!5e0!3m2!1svi!2s!4v1740501966458!5m2!1svi!2s"
             allowFullScreen=""
             loading="lazy"
           ></iframe>

@@ -2,8 +2,9 @@
 import { useState, useEffect, useCallback } from 'react';
 import { FaEnvelope, FaPhone, FaTimes, FaBirthdayCake, FaCamera, FaCalendar, FaPlus, FaPen, FaAngleDown } from 'react-icons/fa';
 import { getUserById, uploadProfileImage, updateUser, updateUserPassword } from '../../../api/userApi';
+import { getFollowersByUser, getFollowingByUser } from '../../../api/followerApi'; // Import follower APIs
 import { toast } from 'react-toastify';
-import { jwtDecode } from 'jwt-decode';
+import { getUserId } from '../../../api/authUtils';
 
 const ProfileImage = ({ src, onClick, onImageChange }) => (
   <div className="relative inline-block">
@@ -46,11 +47,13 @@ const ProfilePage = () => {
   const [passwordForm, setPasswordForm] = useState({ password: '', confirmPassword: '' });
   const [formErrors, setFormErrors] = useState({});
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [followerCount, setFollowerCount] = useState(0); // State for follower count
+  const [followingCount, setFollowingCount] = useState(0); // State for following count
 
   const validateInfoForm = () => {
     const errors = {};
     if (!infoForm.fullName.trim()) errors.fullName = 'Họ và tên không được để trống';
-    if (!infoForm.email.trim() || !/\S+@\S+\.\S+/.test(infoForm.email)) errors.email = 'Email không hợp lệ';
+    if (!infoForm.email.trim () || !/\S+@\S+\.\S+/.test(infoForm.email)) errors.email = 'Email không hợp lệ';
     if (infoForm.phone && !/^\+?\d{9,12}$/.test(infoForm.phone)) errors.phone = 'Số điện thoại không hợp lệ';
     setFormErrors(errors);
     return !Object.keys(errors).length;
@@ -68,12 +71,12 @@ const ProfilePage = () => {
   const fetchUserData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const token = localStorage.getItem('authToken');
-      if (!token) throw new Error('Không tìm thấy token xác thực');
-      
-      const decodedToken = jwtDecode(token);
-      
-      const userData = await getUserById(decodedToken.id).then(res => res.data);
+      const userId = getUserId();
+      const [userData, followersData, followingData] = await Promise.all([
+        getUserById(userId).then(res => res.data),
+        getFollowersByUser(userId).then(res => res.data),
+        getFollowingByUser(userId).then(res => res.data),
+      ]);
       setUser(userData);
       setInfoForm({
         fullName: userData.fullName || '',
@@ -82,6 +85,8 @@ const ProfilePage = () => {
         role: userData.role || 'Student',
         birthDate: userData.birthDate ? new Date(userData.birthDate).toISOString().slice(0, 10) : ''
       });
+      setFollowerCount(followersData.count || followersData.length || 0); // Adjust based on API response
+      setFollowingCount(followingData.count || followingData.length || 0); // Adjust based on API response
     } catch (err) {
       setError(err.response?.data?.message || 'Không thể tải dữ liệu người dùng.');
     } finally {
@@ -99,11 +104,7 @@ const ProfilePage = () => {
 
     setIsLoading(true);
     try {
-      const token = localStorage.getItem('authToken');
-      if (!token) throw new Error('Không tìm thấy token');
-
-      const decodedToken = jwtDecode(token);
-
+      const userId = getUserId();
       const dataToUpdate = {
         fullName: infoForm.fullName,
         email: infoForm.email,
@@ -112,7 +113,7 @@ const ProfilePage = () => {
         role: user?.role || 'Student'
       };
 
-      const updatedUser = await updateUser(decodedToken.id, dataToUpdate).then(res => res.data);
+      const updatedUser = await updateUser(userId, dataToUpdate).then(res => res.data);
       setUser(updatedUser);
       setIsEditInfoModalOpen(false);
       toast.success('Cập nhật thành công!');
@@ -129,11 +130,8 @@ const ProfilePage = () => {
 
     setIsLoading(true);
     try {
-      const token = localStorage.getItem('authToken');
-      if (!token) throw new Error('Không tìm thấy token xác thực');
-
-      const decodedToken = jwtDecode(token);
-      await updateUserPassword(decodedToken.id, {
+      const userId = getUserId();
+      await updateUserPassword(userId, {
         password: passwordForm.password,
         confirmPassword: passwordForm.confirmPassword
       });
@@ -154,9 +152,6 @@ const ProfilePage = () => {
 
     setIsLoading(true);
     try {
-      const token = localStorage.getItem('authToken');
-      if (!token) throw new Error('Không tìm thấy token');
-
       const { data } = await uploadProfileImage(file);
       setUser(prev => ({ ...prev, profileImage: data.profileImage }));
       toast.success('Cập nhật ảnh thành công!');
@@ -213,7 +208,6 @@ const ProfilePage = () => {
   };
 
   const handleAddToStory = () => {
-    // Logic để thêm vào tin (story)
     toast.info('Chức năng thêm vào tin đang được phát triển!');
   };
 
@@ -237,7 +231,6 @@ const ProfilePage = () => {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gray-100">
       <div className="bg-white rounded-xl max-w-4xl w-full p-8">
-       
         {/* Profile Section */}
         <div className="flex flex-col md:flex-row items-center gap-6">
           <div className="flex-shrink-0">
@@ -252,7 +245,8 @@ const ProfilePage = () => {
               {user.fullName || 'Không có tên'}
             </h1>
             <p className="text-gray-600 mb-2">{user.role ? `${user.role}` : 'Không có thông tin'}</p>
-            <p className="text-gray-600 mb-2">{user.flower ? `${user.flower} người bạn` : 'Không có thông tin'}</p>
+            <p className="text-gray-600 mb-2">{`${followerCount} người theo dõi`}</p>
+            <p className="text-gray-600 mb-2">{`${followingCount} đang theo dõi`}</p>
           </div>
 
           {/* Action Buttons */}
@@ -311,20 +305,19 @@ const ProfilePage = () => {
           </div>
         </div>
 
-         
         <hr className="my-6" />
         <div className='ml-5'>
-        <Section title="Thông tin liên hệ">
-          <ul className="space-y-2 text-gray-700">
-            <ContactItem icon={<FaEnvelope />} text={user.email || 'Chưa có email'} />
-            <ContactItem icon={<FaPhone />} text={user.phone || 'Chưa có số điện thoại'} />
-            <ContactItem
-              icon={<FaBirthdayCake />}
-              text={user.birthDate ? new Date(user.birthDate).toLocaleDateString('vi-VN') : 'Chưa có ngày sinh'}
-            />
-            <ContactItem icon={<FaCalendar />} text={formatCreatedAt(user.createdAt) || 'Chưa có ngày tạo'} />
-          </ul>
-        </Section>
+          <Section title="Thông tin liên hệ">
+            <ul className="space-y-2 text-gray-700">
+              <ContactItem icon={<FaEnvelope />} text={user.email || 'Chưa có email'} />
+              <ContactItem icon={<FaPhone />} text={user.phone || 'Chưa có số điện thoại'} />
+              <ContactItem
+                icon={<FaBirthdayCake />}
+                text={user.birthDate ? new Date(user.birthDate).toLocaleDateString('vi-VN') : 'Chưa có ngày sinh'}
+              />
+              <ContactItem icon={<FaCalendar />} text={formatCreatedAt(user.createdAt) || 'Chưa có ngày tạo'} />
+            </ul>
+          </Section>
         </div>
       </div>
 

@@ -464,6 +464,7 @@ const Header = () => {
                                               return "Ngày không hợp lệ";
                                             }
                                             return format(parsedDate, "dd/MM/yyyy HH:mm:ss");
+                                          // eslint-disable-next-line no-unused-vars
                                           } catch (error) {
                                             return "Ngày không hợp lệ";
                                           }

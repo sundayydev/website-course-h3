@@ -8,7 +8,6 @@ const PaymentSuccess = () => {
     const searchParams = new URLSearchParams(location.search);
     const amount = searchParams.get('vnp_Amount');
     const orderInfo = searchParams.get('vnp_OrderInfo');
-    const responseCode = searchParams.get('vnp_ResponseCode');
 
     const handleBackToDetails = () => {
         navigate(`/`);
