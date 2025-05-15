@@ -28,6 +28,17 @@ export const getUserById = async (id) => {
   });
 };
 
+export const getUserByProfile = async (id) => {
+ const token =getAuthToken();
+  return await api.get(`${API_URL}/${id}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+}
+
 export const createUser = async (userData) => {
   const token = localStorage.getItem('authToken');
   if (!token) {

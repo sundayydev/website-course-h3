@@ -1,17 +1,66 @@
 /* eslint-disable react/prop-types */
 import React, { useState, useEffect, useCallback } from 'react';
 import { getCommentsByPostId, createComment, updateComment, deleteComment } from '../../api/commentApi';
-import { jwtDecode } from 'jwt-decode';
 import { toast } from 'react-toastify';
+import { Link } from 'react-router-dom';
+import { getUserId, isAuthenticated } from '../../api/authUtils';
 
+// Utility functions
+const formatDate = (dateStr) => {
+  if (!dateStr) {
+    return 'Không có ngày';
+  }
+
+  const regex = /^(\d{2})-(\d{2})-(\d{4})\s(\d{2}):(\d{2}):(\d{2})$/;
+  const match = dateStr.match(regex);
+  if (match) {
+    const [, day, month, year, hour, minute, second] = match;
+    const isoDateStr = `${year}-${month}-${day}T${hour}:${minute}:${second}`;
+    const date = new Date(isoDateStr);
+    if (!isNaN(date.getTime())) {
+      return date.toLocaleString('vi-VN');
+    }
+  }
+
+  return 'Không có ngày';
+};
+
+const countAllReplies = (comment) => {
+  let count = (comment.replies || []).length;
+  for (const reply of (comment.replies || [])) {
+    count += countAllReplies(reply);
+  }
+  return count;
+};
+
+const flattenLevel2Comments = (comments) => {
+  const flatList = [];
+  const collectLevel2 = (comment) => {
+    if (comment.level >= 2) {
+      flatList.push(comment);
+    }
+    if (comment.replies && comment.replies.length > 0) {
+      comment.replies.forEach(reply => collectLevel2(reply));
+    }
+  };
+  comments.forEach(collectLevel2);
+  return flatList;
+};
+
+const getUserAvatar = (userProfileImage) => {
+  return userProfileImage 
+    ? `${import.meta.env.VITE_API_URL}${userProfileImage}` 
+    : '';
+};
+
+// Comment Component
 const CommentPost = ({ postId }) => {
   const [commentText, setCommentText] = useState('');
   const [comments, setComments] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [editCommentId, setEditCommentId] = useState(null);
-  const authToken = localStorage.getItem('authToken');
-  const currentUserId = authToken ? jwtDecode(authToken).id : null;
+  const currentUserId = isAuthenticated() ? getUserId() : null;
 
   const assignCommentLevels = useCallback((commentsData) => {
     const commentMap = new Map();
@@ -41,10 +90,10 @@ const CommentPost = ({ postId }) => {
     };
 
     commentsData
-        .filter(comment => !comment.parentCommentId)
-        .forEach(comment => {
-          setLevel(comment.id, 0);
-        });
+      .filter(comment => !comment.parentCommentId)
+      .forEach(comment => {
+        setLevel(comment.id, 0);
+      });
 
     return Array.from(commentMap.values());
   }, []);
@@ -53,11 +102,11 @@ const CommentPost = ({ postId }) => {
     const commentsWithLevels = assignCommentLevels(commentsData);
 
     const sortedComments = [...commentsWithLevels].sort(
-        (a, b) => {
-          const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
-          const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
-          return dateA.getTime() - dateB.getTime();
-        }
+      (a, b) => {
+        const dateA = a.createdAt ? new Date(a.createdAt) : new Date(0);
+        const dateB = b.createdAt ? new Date(b.createdAt) : new Date(0);
+        return dateA.getTime() - dateB.getTime();
+      }
     );
     const commentMap = new Map();
     const rootComments = [];
@@ -90,42 +139,44 @@ const CommentPost = ({ postId }) => {
     return rootComments;
   }, [assignCommentLevels]);
 
-  useEffect(() => {
-    const fetchPostComments = async () => {
-      if (!postId) {
-        toast.error('Không có ID bài viết!');
-        setIsLoading(false);
+  // Fetch comments data
+  const fetchPostComments = useCallback(async () => {
+    if (!postId) {
+      toast.error('Không có ID bài viết!');
+      setIsLoading(false);
+      return;
+    }
+
+    try {
+      setIsLoading(true);
+      const postComments = await getCommentsByPostId(postId);
+      console.log('Dữ liệu API:', JSON.stringify(postComments, null, 2));
+      if (!Array.isArray(postComments)) {
+        setComments([]);
         return;
       }
-
-      try {
-        setIsLoading(true);
-        const postComments = await getCommentsByPostId(postId);
-        console.log('Dữ liệu API:', JSON.stringify(postComments, null, 2));
-        if (!Array.isArray(postComments)) {
-          setComments([]);
-          return;
-        }
-        setComments(buildCommentTree(postComments));
-      } catch (error) {
-        toast.error(error.message || 'Không thể tải bình luận. Vui lòng thử lại!');
-        setComments([]);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchPostComments();
+      setComments(buildCommentTree(postComments));
+    } catch (error) {
+      toast.error(error.message || 'Không thể tải bình luận. Vui lòng thử lại!');
+      setComments([]);
+    } finally {
+      setIsLoading(false);
+    }
   }, [postId, buildCommentTree]);
 
+  useEffect(() => {
+    fetchPostComments();
+  }, [fetchPostComments]);
+
+  // Handle comment submission
   const handleSubmitComment = async () => {
     if (!commentText.trim()) {
       toast.error('Bạn cần nhập nội dung bình luận!');
       return;
     }
 
-    if (!authToken || authToken.split('.').length !== 3) {
-      toast.error('Vui lòng đăng nhập để bình luận!');
+    if (!isAuthenticated()) {
+      toast.error('Vui lòng đăng nhập để thực hiện hành động này!');
       return;
     }
 
@@ -143,14 +194,15 @@ const CommentPost = ({ postId }) => {
     }
   };
 
+  // Handle comment edit
   const handleEditComment = async () => {
     if (!commentText.trim()) {
       toast.error('Bạn cần nhập nội dung để chỉnh sửa!');
       return;
     }
 
-    if (!authToken || authToken.split('.').length !== 3) {
-      toast.error('Vui lòng đăng nhập để chỉnh sửa!');
+    if (!isAuthenticated()) {
+      toast.error('Vui lòng đăng nhập để thực hiện hành động này!');
       return;
     }
 
@@ -158,17 +210,9 @@ const CommentPost = ({ postId }) => {
     try {
       const commentData = { content: commentText };
       const response = await updateComment(editCommentId, commentData);
-      setComments(prev =>
-          prev.map(comment => {
-            if (comment.id === editCommentId) return { ...response, replies: comment.replies, level: comment.level };
-            return {
-              ...comment,
-              replies: (comment.replies || []).map(reply =>
-                  reply.id === editCommentId ? { ...response, replies: reply.replies, level: reply.level } : reply
-              ),
-            };
-          })
-      );
+      
+      setComments(updateCommentsWithEditedContent(comments, editCommentId, response));
+      
       toast.success('Bình luận đã được chỉnh sửa thành công!');
       setEditCommentId(null);
       setCommentText('');
@@ -179,23 +223,36 @@ const CommentPost = ({ postId }) => {
     }
   };
 
+  // Helper function to update comments after editing
+  const updateCommentsWithEditedContent = (commentsArray, editId, response) => {
+    return commentsArray.map(comment => {
+      if (comment.id === editId) 
+        return { ...response, replies: comment.replies, level: comment.level };
+      
+      return {
+        ...comment,
+        replies: (comment.replies || []).map(reply =>
+          reply.id === editId ? 
+            { ...response, replies: reply.replies, level: reply.level } : 
+            reply
+        ),
+      };
+    });
+  };
+
+  // Handle comment deletion
   const handleDeleteComment = async (commentId) => {
-    if (!authToken || authToken.split('.').length !== 3) {
-      toast.error('Vui lòng đăng nhập để xóa bình luận!');
+    if (!isAuthenticated()) {
+      toast.error('Vui lòng đăng nhập để thực hiện hành động này!');
       return;
     }
 
     setIsSubmitting(true);
     try {
       await deleteComment(commentId);
-      setComments(prev =>
-          prev
-              .filter(comment => comment.id !== commentId)
-              .map(comment => ({
-                ...comment,
-                replies: (comment.replies || []).filter(reply => reply.id !== commentId),
-              }))
-      );
+      
+      setComments(removeDeletedComment(comments, commentId));
+      
       toast.success('Bình luận và các phản hồi đã được xóa thành công!');
     } catch (error) {
       toast.error(error.message || 'Có lỗi xảy ra khi xóa bình luận!');
@@ -204,93 +261,86 @@ const CommentPost = ({ postId }) => {
     }
   };
 
-  const countAllReplies = (comment) => {
-    let count = (comment.replies || []).length;
-    for (const reply of (comment.replies || [])) {
-      count += countAllReplies(reply);
-    }
-    return count;
+  // Helper function to remove deleted comments
+  const removeDeletedComment = (commentsArray, commentId) => {
+    return commentsArray
+      .filter(comment => comment.id !== commentId)
+      .map(comment => ({
+        ...comment,
+        replies: (comment.replies || []).filter(reply => reply.id !== commentId),
+      }));
   };
 
-  const flattenLevel2Comments = (comments) => {
-    const flatList = [];
-    const collectLevel2 = (comment) => {
-      if (comment.level >= 2) {
-        flatList.push(comment);
-      }
-      if (comment.replies && comment.replies.length > 0) {
-        comment.replies.forEach(reply => collectLevel2(reply));
-      }
-    };
-    comments.forEach(collectLevel2);
-    return flatList;
-  };
-
-  const formatDate = (dateStr) => {
-    if (!dateStr) {
-      return 'Không có ngày';
+  // Function to handle creating a reply to any comment
+  const handleCreateReply = async (parentCommentId, replyContent, currentLevel, updateCommentsCallback) => {
+    if (!replyContent.trim()) {
+      toast.error('Bạn cần nhập nội dung trả lời!');
+      return false;
     }
 
-    const regex = /^(\d{2})-(\d{2})-(\d{4})\s(\d{2}):(\d{2}):(\d{2})$/;
-    const match = dateStr.match(regex);
-    if (match) {
-      const [, day, month, year, hour, minute, second] = match;
-      const isoDateStr = `${year}-${month}-${day}T${hour}:${minute}:${second}`;
-      const date = new Date(isoDateStr);
-      if (!isNaN(date.getTime())) {
-        return date.toLocaleString('vi-VN');
-      }
+    if (!isAuthenticated()) {
+      toast.error('Vui lòng đăng nhập để thực hiện hành động này!');
+      return false;
     }
 
-    return 'Không có ngày';
+    setIsSubmitting(true);
+    try {
+      const replyData = { 
+        postId, 
+        content: replyContent, 
+        parentCommentId 
+      };
+      
+      const response = await createComment(replyData);
+      const newCommentLevel = currentLevel < 2 ? currentLevel + 1 : 2;
+      
+      if (newCommentLevel === 2) {
+        console.log(`Bình luận mới đạt level 2 - ID: ${response.id}, Content: ${response.content}, ParentCommentId: ${parentCommentId}`);
+      }
+      
+      updateCommentsCallback(response, newCommentLevel);
+      
+      toast.success('Trả lời đã được gửi thành công!');
+      return true;
+    } catch (error) {
+      toast.error(error.message || 'Có lỗi xảy ra khi gửi trả lời!');
+      return false;
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const Level2Comment = ({ reply, isOwner, setEditCommentId, setCommentText, handleDeleteComment, postId, isSubmitting, setComments, level }) => {
+  // Level 2 Comment Component
+  const Level2Comment = ({ reply, isOwner, level }) => {
     const [isReplying, setIsReplying] = useState(false);
     const [localReplyText, setLocalReplyText] = useState('');
 
     const handleReplySubmit = async () => {
-      if (!localReplyText.trim()) {
-        toast.error('Bạn cần nhập nội dung trả lời!');
-        return;
-      }
-
-      const authToken = localStorage.getItem('authToken');
-      if (!authToken || authToken.split('.').length !== 3) {
-        toast.error('Vui lòng đăng nhập để trả lời!');
-        return;
-      }
-
-      setIsSubmitting(true);
-      try {
-        const replyData = { postId, content: localReplyText, parentCommentId: reply.id };
-        const response = await createComment(replyData);
-        const newCommentLevel = level < 2 ? level + 1 : 2;
-        if (newCommentLevel === 2) {
-          console.log(`Bình luận mới đạt level 2 - ID: ${response.id}, Content: ${response.content}, ParentCommentId: ${reply.id}`);
-        }
+      const updateComments = (response, newLevel) => {
         setComments(prev =>
-            prev.map(c => {
-              if (c.id === reply.parentCommentId) {
-                return { ...c, replies: [...(c.replies || []), { ...response, level: newCommentLevel, replies: [] }] };
-              }
-              return {
-                ...c,
-                replies: (c.replies || []).map(r =>
-                    r.id === reply.parentCommentId
-                        ? { ...r, replies: [...(r.replies || []), { ...response, level: newCommentLevel, replies: [] }] }
-                        : r
-                ),
+          prev.map(c => {
+            if (c.id === reply.parentCommentId) {
+              return { 
+                ...c, 
+                replies: [...(c.replies || []), { ...response, level: newLevel, replies: [] }] 
               };
-            })
+            }
+            return {
+              ...c,
+              replies: (c.replies || []).map(r =>
+                r.id === reply.parentCommentId
+                  ? { ...r, replies: [...(r.replies || []), { ...response, level: newLevel, replies: [] }] }
+                  : r
+              ),
+            };
+          })
         );
-        toast.success('Trả lời đã được gửi thành công!');
+      };
+
+      const success = await handleCreateReply(reply.id, localReplyText, level, updateComments);
+      if (success) {
         setLocalReplyText('');
         setIsReplying(false);
-      } catch (error) {
-        toast.error(error.message || 'Có lỗi xảy ra khi gửi trả lời!');
-      } finally {
-        setIsSubmitting(false);
       }
     };
 
@@ -298,17 +348,19 @@ const CommentPost = ({ postId }) => {
       <div key={reply.id} className="ml-24 pb-4">
         <div className="flex items-start space-x-3 mt-2">
           <img
-            src={reply.userProfileImage ? `${import.meta.env.VITE_API_URL}${reply.userProfileImage}` : 'https://i.pravatar.cc/150'}
+            src={getUserAvatar(reply.userProfileImage)}
             alt={reply.userFullName || 'Ẩn danh'}
             className="w-10 h-10 rounded-full object-cover border-2 border-pink-500"
-            onError={(e) => (e.target.src = 'https://i.pravatar.cc/150')}
+            onError={(e) => (e.target.src = '')}
           />
           <div className="flex-1">
             <div className="flex items-center justify-between mb-1">
               <p className="font-semibold text-gray-800">{reply.userFullName || 'Ẩn danh'}</p>
               {isOwner && (
                 <div className="flex gap-2">
-                  <button
+                 
+
+ <button
                     onClick={() => {
                       setEditCommentId(reply.id);
                       setCommentText(reply.content);
@@ -373,6 +425,7 @@ const CommentPost = ({ postId }) => {
     );
   };
 
+  // Main Comment Rendering Component
   const RenderComment = ({ comment, level = 0 }) => {
     const isOwner = currentUserId === comment.userId;
     const [isReplying, setIsReplying] = useState(false);
@@ -384,58 +437,52 @@ const CommentPost = ({ postId }) => {
     const level2Comments = comment.level === 1 ? flattenLevel2Comments(comment.replies || []) : [];
 
     const handleSubmitReply = async () => {
-      if (!localReplyText.trim()) {
-        toast.error('Bạn cần nhập nội dung trả lời!');
-        return;
-      }
-
-      if (!authToken || authToken.split('.').length !== 3) {
-        toast.error('Vui lòng đăng nhập để trả lời!');
-        return;
-      }
-
-      setIsSubmitting(true);
-      try {
-        const replyData = { postId, content: localReplyText, parentCommentId: comment.id };
-        const response = await createComment(replyData);
-        const newCommentLevel = comment.level < 2 ? comment.level + 1 : 2;
-        if (newCommentLevel === 2) {
-          console.log(`Bình luận mới đạt level 2 - ID: ${response.id}, Content: ${response.content}, ParentCommentId: ${comment.id}`);
-        }
+      const updateComments = (response, newLevel) => {
         setComments(prev =>
-            prev.map(c => {
-              if (c.id === comment.id) {
-                return { ...c, replies: [...(c.replies || []), { ...response, level: newCommentLevel, replies: [] }] };
-              }
-              return {
-                ...c,
-                replies: (c.replies || []).map(r =>
-                    r.id === comment.id
-                        ? { ...r, replies: [...(r.replies || []), { ...response, level: newCommentLevel, replies: [] }] }
-                        : r
-                ),
+          prev.map(c => {
+            if (c.id === comment.id) {
+              return { 
+                ...c, 
+                replies: [...(c.replies || []), { ...response, level: newLevel, replies: [] }] 
               };
-            })
+            }
+            return {
+              ...c,
+              replies: (c.replies || []).map(r =>
+                r.id === comment.id
+                  ? { ...r, replies: [...(r.replies || []), { ...response, level: newLevel, replies: [] }] }
+                  : r
+              ),
+            };
+          })
         );
-        toast.success('Trả lời đã được gửi thành công!');
+      };
+
+      const success = await handleCreateReply(
+        comment.id, 
+        localReplyText, 
+        comment.level || level, 
+        updateComments
+      );
+      
+      if (success) {
         setLocalReplyText('');
+        setIsReplying(false);
         setShowReplies(true);
-      } catch (error) {
-        toast.error(error.message || 'Có lỗi xảy ra khi gửi trả lời!');
-      } finally {
-        setIsSubmitting(false);
       }
     };
 
     return (
       <div className={`ml-${displayLevel * 12} pb-4`}>
         <div className="flex items-start space-x-3 mt-2">
-          <img
-            src={comment.userProfileImage ? `${import.meta.env.VITE_API_URL}${comment.userProfileImage}` : 'https://i.pravatar.cc/150'}
-            alt={comment.userFullName || 'Ẩn danh'}
-            className="w-10 h-10 rounded-full object-cover border-2 border-pink-500"
-            onError={(e) => (e.target.src = 'https://i.pravatar.cc/150')}
-          />
+          <Link to={`/profile/${comment.userId}`}>
+            <img
+              src={getUserAvatar(comment.userProfileImage)}
+              alt={comment.userFullName || 'Ẩn danh'}
+              className="w-10 h-10 rounded-full object-cover border-2 border-pink-500"
+              onError={(e) => (e.target.src = '')}
+            />
+          </Link>
           <div className="flex-1">
             <div className="flex items-center justify-between mb-1">
               <p className="font-semibold text-gray-800">{comment.userFullName || 'Ẩn danh'}</p>
@@ -526,14 +573,7 @@ const CommentPost = ({ postId }) => {
               <Level2Comment
                 key={reply.id}
                 reply={reply}
-                isOwner={isOwner}
-                setEditCommentId={setEditCommentId}
-                setCommentText={setCommentText}
-                handleDeleteComment={handleDeleteComment}
-                handleSubmitReply={handleSubmitReply}
-                postId={postId}
-                isSubmitting={isSubmitting}
-                setComments={setComments}
+                isOwner={currentUserId === reply.userId}
                 level={reply.level || level + 1}
               />
             ))}
@@ -543,47 +583,48 @@ const CommentPost = ({ postId }) => {
     );
   };
 
+  // Main Render
   return (
-      <div className="mt-8 p-4 bg-white rounded-xl shadow-md">
-        <h3 className="text-xl font-bold text-pink-500 mb-4">Bình luận bài viết</h3>
+    <div className="mt-8 p-4 bg-white rounded-xl shadow-md">
+      <h3 className="text-xl font-bold text-pink-500 mb-4">Bình luận bài viết</h3>
 
-        {isLoading ? (
-            <p className="text-center text-gray-500">Đang tải bình luận...</p>
-        ) : (
-            <>
+      {isLoading ? (
+        <p className="text-center text-gray-500">Đang tải bình luận...</p>
+      ) : (
+        <>
           <textarea
-              value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
-              placeholder="Viết bình luận của bạn..."
-              className="w-full p-3 border rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-pink-500 resize-none"
-              rows="4"
+            value={commentText}
+            onChange={(e) => setCommentText(e.target.value)}
+            placeholder="Viết bình luận của bạn..."
+            className="w-full p-3 border rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-pink-500 resize-none"
+            rows="4"
           />
-              <button
-                  onClick={editCommentId ? handleEditComment : handleSubmitComment}
-                  className={`${editCommentId ? 'bg-pink-600 hover:bg-pink-700' : 'bg-blue-600 hover:bg-blue-700'} text-white py-2 px-4 rounded-lg transition duration-200`}
-                  disabled={isSubmitting}
-              >
-                {isSubmitting ? 'Đang xử lý...' : editCommentId ? 'Lưu chỉnh sửa' : 'Gửi bình luận'}
-              </button>
+          <button
+            onClick={editCommentId ? handleEditComment : handleSubmitComment}
+            className={`${editCommentId ? 'bg-pink-600 hover:bg-pink-700' : 'bg-blue-600 hover:bg-blue-700'} text-white py-2 px-4 rounded-lg transition duration-200`}
+            disabled={isSubmitting}
+          >
+            {isSubmitting ? 'Đang xử lý...' : editCommentId ? 'Lưu chỉnh sửa' : 'Gửi bình luận'}
+          </button>
 
-              {comments.length > 0 ? (
-                  <div className="mt-6">
-                    <h4 className="font-semibold text-lg text-gray-700 mb-4">Bình luận của người dùng:</h4>
-                    <div className="space-y-4">
-                      {comments.map((comment, index) => (
-                          <React.Fragment key={comment.id}>
-                            {index > 0 && <hr className="border-gray-200" />}
-                            <RenderComment comment={comment} level={comment.level || 0} />
-                          </React.Fragment>
-                      ))}
-                    </div>
-                  </div>
-              ) : (
-                  <p className="text-center text-gray-500 mt-4">Chưa có bình luận nào.</p>
-              )}
-            </>
-        )}
-      </div>
+          {comments.length > 0 ? (
+            <div className="mt-6">
+              <h4 className="font-semibold text-lg text-gray-700 mb-4">Bình luận của người dùng:</h4>
+              <div className="space-y-4">
+                {comments.map((comment, index) => (
+                  <React.Fragment key={comment.id}>
+                    {index > 0 && <hr className="border-gray-200" />}
+                    <RenderComment comment={comment} level={comment.level || 0} />
+                  </React.Fragment>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <p className="text-center text-gray-500 mt-4">Chưa có bình luận nào.</p>
+          )}
+        </>
+      )}
+    </div>
   );
 };
 
