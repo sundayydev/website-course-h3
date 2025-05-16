@@ -6,31 +6,13 @@ import { getReviewsByCourseId, createReview, updateReview, deleteReview } from '
 import { toast } from 'react-toastify';
 import { getUserId, isAuthenticated } from '../../api/authUtils';
 import { Link } from 'react-router-dom';
-
-// Utility functions
-const formatDate = (dateStr) => {
-  if (!dateStr) {
-    return 'Không có ngày';
-  }
-
-  const regex = /^(\d{2})-(\d{2})-(\d{4})\s(\d{2}):(\d{2}):(\d{2})$/;
-  const match = dateStr.match(regex);
-  if (match) {
-    const [, day, month, year, hour, minute, second] = match;
-    const isoDateStr = `${year}-${month}-${day}T${hour}:${minute}:${second}`;
-    const date = new Date(isoDateStr);
-    if (!isNaN(date.getTime())) {
-      return date.toLocaleString('vi-VN');
-    }
-  }
-
-  return new Date(dateStr).toLocaleString('vi-VN');
-};
+import defaultAvatar from '../../assets/imgs/default-avatar.jpg';
+import { formatDate } from '../../utils/formatDate';
 
 const getUserAvatar = (userProfileImage) => {
-  return userProfileImage 
-    ? `${import.meta.env.VITE_API_URL}${userProfileImage}` 
-    : 'https://i.pravatar.cc/150';
+  return userProfileImage
+    ? `${import.meta.env.VITE_API_URL}${userProfileImage}`
+    : defaultAvatar;
 };
 
 // Review Component
@@ -152,15 +134,15 @@ const Review = ({ courseId }) => {
 
     return (
       <div className="flex items-start space-x-3 mt-2">
-         <Link to={`/profile/${review.userId}`}>
-            <img
-              src={getUserAvatar(review.userProfileImage)}
-              alt={review.userFullName || 'Ẩn danh'}
-              className="w-10 h-10 rounded-full object-cover border-2 border-pink-500"
-              onError={(e) => (e.target.src = '')}
-            />
-          </Link>
-        
+        <Link to={`/profile/${review.userId}`}>
+          <img
+            src={getUserAvatar(review.userProfileImage)}
+            alt={review.userFullName || 'Ẩn danh'}
+            className="w-10 h-10 rounded-full object-cover border-2 border-pink-500"
+            onError={(e) => (e.target.src = defaultAvatar)}
+          />
+        </Link>
+
         <div className="flex-1">
           <div className="flex items-center justify-between mb-1">
             <div>
@@ -231,9 +213,8 @@ const Review = ({ courseId }) => {
           />
           <button
             onClick={handleSubmitReview}
-            className={`flex items-center ${
-              editReviewId ? 'bg-pink-600 hover:bg-pink-700' : 'bg-blue-600 hover:bg-blue-700'
-            } text-white py-2 px-4 rounded-lg transition duration-200`}
+            className={`flex items-center ${editReviewId ? 'bg-pink-600 hover:bg-pink-700' : 'bg-blue-600 hover:bg-blue-700'
+              } text-white py-2 px-4 rounded-lg transition duration-200`}
             disabled={isSubmitting}
           >
             {isSubmitting ? 'Đang xử lý...' : editReviewId ? 'Lưu chỉnh sửa' : 'Gửi đánh giá'}

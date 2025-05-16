@@ -4,27 +4,11 @@ import { getCommentsByPostId, createComment, updateComment, deleteComment } from
 import { toast } from 'react-toastify';
 import { Link } from 'react-router-dom';
 import { getUserId, isAuthenticated } from '../../api/authUtils';
-
-// Utility functions
-const formatDate = (dateStr) => {
-  if (!dateStr) {
-    return 'Không có ngày';
-  }
-
-  const regex = /^(\d{2})-(\d{2})-(\d{4})\s(\d{2}):(\d{2}):(\d{2})$/;
-  const match = dateStr.match(regex);
-  if (match) {
-    const [, day, month, year, hour, minute, second] = match;
-    const isoDateStr = `${year}-${month}-${day}T${hour}:${minute}:${second}`;
-    const date = new Date(isoDateStr);
-    if (!isNaN(date.getTime())) {
-      return date.toLocaleString('vi-VN');
-    }
-  }
-
-  return 'Không có ngày';
-};
-
+import defaultAvatar from '../../assets/imgs/default-avatar.jpg';
+import { formatDate } from '../../utils/formatDate';
+import alertify from 'alertifyjs';
+//import 'alertifyjs/build/css/alertify.css';
+import '../../lib/alertify.css';
 const countAllReplies = (comment) => {
   let count = (comment.replies || []).length;
   for (const reply of (comment.replies || [])) {
@@ -48,9 +32,9 @@ const flattenLevel2Comments = (comments) => {
 };
 
 const getUserAvatar = (userProfileImage) => {
-  return userProfileImage 
-    ? `${import.meta.env.VITE_API_URL}${userProfileImage}` 
-    : '';
+  return userProfileImage
+    ? `${import.meta.env.VITE_API_URL}${userProfileImage}`
+    : defaultAvatar;
 };
 
 // Comment Component
@@ -58,6 +42,7 @@ const CommentPost = ({ postId }) => {
   const [commentText, setCommentText] = useState('');
   const [comments, setComments] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [editCommentId, setEditCommentId] = useState(null);
   const currentUserId = isAuthenticated() ? getUserId() : null;
@@ -210,9 +195,9 @@ const CommentPost = ({ postId }) => {
     try {
       const commentData = { content: commentText };
       const response = await updateComment(editCommentId, commentData);
-      
+
       setComments(updateCommentsWithEditedContent(comments, editCommentId, response));
-      
+
       toast.success('Bình luận đã được chỉnh sửa thành công!');
       setEditCommentId(null);
       setCommentText('');
@@ -226,14 +211,14 @@ const CommentPost = ({ postId }) => {
   // Helper function to update comments after editing
   const updateCommentsWithEditedContent = (commentsArray, editId, response) => {
     return commentsArray.map(comment => {
-      if (comment.id === editId) 
+      if (comment.id === editId)
         return { ...response, replies: comment.replies, level: comment.level };
-      
+
       return {
         ...comment,
         replies: (comment.replies || []).map(reply =>
-          reply.id === editId ? 
-            { ...response, replies: reply.replies, level: reply.level } : 
+          reply.id === editId ?
+            { ...response, replies: reply.replies, level: reply.level } :
             reply
         ),
       };
@@ -241,26 +226,35 @@ const CommentPost = ({ postId }) => {
   };
 
   // Handle comment deletion
-  const handleDeleteComment = async (commentId) => {
+  const handleDeleteComment = (commentId) => {
     if (!isAuthenticated()) {
       toast.error('Vui lòng đăng nhập để thực hiện hành động này!');
       return;
     }
 
-    setIsSubmitting(true);
-    try {
-      await deleteComment(commentId);
-      
-      setComments(removeDeletedComment(comments, commentId));
-      
-      toast.success('Bình luận và các phản hồi đã được xóa thành công!');
-    } catch (error) {
-      toast.error(error.message || 'Có lỗi xảy ra khi xóa bình luận!');
-    } finally {
-      setIsSubmitting(false);
-    }
+    // Hiển thị hộp thoại xác nhận với AlertifyJS
+    alertify.confirm(
+      'Xóa bình luận',
+      'Bạn có chắc muốn xóa bình luận này? Tất cả phản hồi cũng sẽ bị xóa.',
+      async () => {
+        // Người dùng nhấp "OK" (Xóa)
+        setIsDeleting(true);
+        try {
+          await deleteComment(commentId);
+          setComments(removeDeletedComment(comments, commentId));
+          toast.success('Bình luận và các phản hồi đã được xóa thành công!');
+        } catch (error) {
+          toast.error(error.message || 'Có lỗi xảy ra khi xóa bình luận!');
+        } finally {
+          setIsDeleting(false);
+        }
+      },
+      () => {
+        // Người dùng nhấp "Cancel" (Hủy)
+        toast.info('Đã hủy xóa bình luận.');
+      }
+    );
   };
-
   // Helper function to remove deleted comments
   const removeDeletedComment = (commentsArray, commentId) => {
     return commentsArray
@@ -285,21 +279,21 @@ const CommentPost = ({ postId }) => {
 
     setIsSubmitting(true);
     try {
-      const replyData = { 
-        postId, 
-        content: replyContent, 
-        parentCommentId 
+      const replyData = {
+        postId,
+        content: replyContent,
+        parentCommentId
       };
-      
+
       const response = await createComment(replyData);
       const newCommentLevel = currentLevel < 2 ? currentLevel + 1 : 2;
-      
+
       if (newCommentLevel === 2) {
         console.log(`Bình luận mới đạt level 2 - ID: ${response.id}, Content: ${response.content}, ParentCommentId: ${parentCommentId}`);
       }
-      
+
       updateCommentsCallback(response, newCommentLevel);
-      
+
       toast.success('Trả lời đã được gửi thành công!');
       return true;
     } catch (error) {
@@ -320,9 +314,9 @@ const CommentPost = ({ postId }) => {
         setComments(prev =>
           prev.map(c => {
             if (c.id === reply.parentCommentId) {
-              return { 
-                ...c, 
-                replies: [...(c.replies || []), { ...response, level: newLevel, replies: [] }] 
+              return {
+                ...c,
+                replies: [...(c.replies || []), { ...response, level: newLevel, replies: [] }]
               };
             }
             return {
@@ -351,16 +345,14 @@ const CommentPost = ({ postId }) => {
             src={getUserAvatar(reply.userProfileImage)}
             alt={reply.userFullName || 'Ẩn danh'}
             className="w-10 h-10 rounded-full object-cover border-2 border-pink-500"
-            onError={(e) => (e.target.src = '')}
+
           />
           <div className="flex-1">
             <div className="flex items-center justify-between mb-1">
               <p className="font-semibold text-gray-800">{reply.userFullName || 'Ẩn danh'}</p>
               {isOwner && (
                 <div className="flex gap-2">
-                 
-
- <button
+                  <button
                     onClick={() => {
                       setEditCommentId(reply.id);
                       setCommentText(reply.content);
@@ -370,12 +362,10 @@ const CommentPost = ({ postId }) => {
                     Sửa
                   </button>
                   <button
-                    onClick={() => {
-                      if (window.confirm('Bạn có chắc muốn xóa bình luận này? Tất cả phản hồi cũng sẽ bị xóa.')) {
-                        handleDeleteComment(reply.id);
-                      }
-                    }}
+                    onClick={() => handleDeleteComment(reply.id)}
                     className="text-red-500 hover:text-red-700 text-sm"
+                    aria-label="Xóa bình luận"
+                    disabled={isDeleting}
                   >
                     Xóa
                   </button>
@@ -433,7 +423,7 @@ const CommentPost = ({ postId }) => {
     const displayLevel = Math.min(comment.level || level, 2);
     const totalReplies = countAllReplies(comment);
     const [showReplies, setShowReplies] = useState(comment.level < 2 ? false : true);
-  
+
     const level2Comments = comment.level === 1 ? flattenLevel2Comments(comment.replies || []) : [];
 
     const handleSubmitReply = async () => {
@@ -441,9 +431,9 @@ const CommentPost = ({ postId }) => {
         setComments(prev =>
           prev.map(c => {
             if (c.id === comment.id) {
-              return { 
-                ...c, 
-                replies: [...(c.replies || []), { ...response, level: newLevel, replies: [] }] 
+              return {
+                ...c,
+                replies: [...(c.replies || []), { ...response, level: newLevel, replies: [] }]
               };
             }
             return {
@@ -459,12 +449,12 @@ const CommentPost = ({ postId }) => {
       };
 
       const success = await handleCreateReply(
-        comment.id, 
-        localReplyText, 
-        comment.level || level, 
+        comment.id,
+        localReplyText,
+        comment.level || level,
         updateComments
       );
-      
+
       if (success) {
         setLocalReplyText('');
         setIsReplying(false);
@@ -480,7 +470,7 @@ const CommentPost = ({ postId }) => {
               src={getUserAvatar(comment.userProfileImage)}
               alt={comment.userFullName || 'Ẩn danh'}
               className="w-10 h-10 rounded-full object-cover border-2 border-pink-500"
-              onError={(e) => (e.target.src = '')}
+              onError={(e) => (e.target.src = defaultAvatar)}
             />
           </Link>
           <div className="flex-1">
@@ -498,12 +488,10 @@ const CommentPost = ({ postId }) => {
                     Sửa
                   </button>
                   <button
-                    onClick={() => {
-                      if (window.confirm('Bạn có chắc muốn xóa bình luận này? Tất cả phản hồi cũng sẽ bị xóa.')) {
-                        handleDeleteComment(comment.id);
-                      }
-                    }}
+                    onClick={() => handleDeleteComment(comment.id)}
                     className="text-red-500 hover:text-red-700 text-sm"
+                    aria-label="Xóa bình luận"
+                    disabled={isDeleting}
                   >
                     Xóa
                   </button>
@@ -533,7 +521,7 @@ const CommentPost = ({ postId }) => {
             )}
           </div>
         </div>
-  
+
         {isReplying && (
           <div className="ml-12 mt-2">
             <textarea
@@ -558,7 +546,7 @@ const CommentPost = ({ postId }) => {
             </button>
           </div>
         )}
-  
+
         {comment.level === 0 && showReplies && comment.replies && comment.replies.length > 0 && (
           <div className="mt-2 space-y-2">
             {comment.replies.map(reply => (
@@ -566,7 +554,7 @@ const CommentPost = ({ postId }) => {
             ))}
           </div>
         )}
-  
+
         {comment.level === 1 && level2Comments.length > 0 && showReplies && (
           <div className="mt-2 space-y-2">
             {level2Comments.map(reply => (
