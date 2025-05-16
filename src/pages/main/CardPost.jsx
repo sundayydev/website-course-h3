@@ -1,9 +1,11 @@
 /* eslint-disable no-unused-vars */
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { getAllPost } from '../../api/postApi';
+import defaultAvatar from '../../assets/imgs/default-avatar.jpg';
+import { formatDate } from '../../utils/formatDate';
+
 const CardPost = () => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -46,23 +48,18 @@ const CardPost = () => {
               />
             </div>
             <div className="bg-gray-50 text-black p-4">
-              {/* Tiêu đề bài viết */}
               <h3 className="text-lg font-semibold mb-2">{post.title}</h3>
-
-              {/* Thời gian đăng & Tên tác giả */}
               <div className="flex items-center justify-between text-xs text-gray-500">
                 <div className="flex items-center gap-2">
                   <img
-                    src={
-                      import.meta.env.VITE_API_URL + post.user?.profileImage ||
-                      'https://via.placeholder.com/150'
-                    }
+                    src={`${import.meta.env.VITE_API_URL}${post.user.profileImage}`}
                     alt="Avatar"
                     className="w-8 h-8 rounded-full object-cover"
+                    onError={(e) => (e.target.src = defaultAvatar)}
                   />
                   <p className="font-semibold text-sm">{post.user?.fullName || 'Ẩn danh'}</p>
                 </div>
-                <p>{new Date(post.createdAt).toLocaleDateString()}</p>
+                <p>{formatDate(post.createdAt)}</p>
               </div>
             </div>
           </div>

@@ -3,6 +3,8 @@ import React, { useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { getPostById } from '../../api/postApi';
 import CommentPost from './Comment';
+import { formatDate } from '../../utils/formatDate';
+import defaultAvatar from '../../assets/imgs/default-avatar.jpg';
 
 const PostDetails = () => {
   const { id } = useParams();
@@ -37,13 +39,12 @@ const PostDetails = () => {
           src={import.meta.env.VITE_API_URL + post.user?.profileImage || ' '}
           alt={post.user?.fullName || 'Tác giả'}
           className="w-12 h-12 rounded-full"
+          onError={(e) => (e.target.src = defaultAvatar)}
         />
         <div>
           <p className="font-semibold">{post.user?.fullName || 'Tác giả ẩn danh'}</p>
           <p className="text-gray-500 text-sm">
-            {post.createdAt
-              ? new Date(post.createdAt).toLocaleString('vi-VN')
-              : 'Không rõ thời gian'}
+            {formatDate(post.createdAt)}
           </p>
         </div>
       </div>
