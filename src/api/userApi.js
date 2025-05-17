@@ -1,5 +1,5 @@
 import api from './axios';
-import {getAuthToken } from './authUtils';
+import { getAuthToken } from './authUtils';
 const API_URL = '/user';
 
 export const getUsers = async () => {
@@ -27,6 +27,17 @@ export const getUserById = async (id) => {
     },
   });
 };
+
+export const getUserByProfile = async (id) => {
+  const token = getAuthToken();
+  return await api.get(`${API_URL}/${id}`, {
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+  });
+
+}
 
 export const createUser = async (userData) => {
   const token = localStorage.getItem('authToken');
@@ -68,33 +79,18 @@ export const deleteUser = async (id) => {
 };
 
 // Upload ảnh đại diện
-export const uploadProfileImage = async (file) => {
-  const token = localStorage.getItem('authToken');
-  if (!token || typeof token !== 'string' || token.trim() === '') {
-    throw new Error('Token không hợp lệ hoặc không tồn tại');
-  }
-
-  // Loại bỏ "Bearer " nếu có
-  const cleanToken = token.startsWith('Bearer ') ? token.split(' ')[1] : token;
-
-  let decodedToken;
-  try {
-    decodedToken = getAuthToken(cleanToken);
-  } catch (error) {
-    throw new Error('Không thể giải mã token: ' + error.message);
-  }
-
-  const userId = decodedToken.id;
-  if (decodedToken.exp * 1000 < Date.now()) {
-    throw new Error('Token đã hết hạn');
-  }
+export const uploadProfileImage = async (file, userId) => {
+  const token = getAuthToken();
 
   const formData = new FormData();
   formData.append('file', file);
 
   try {
     const response = await api.post(`${API_URL}/${userId}/upload-profile-image`, formData, {
-      headers: { Authorization: `Bearer ${cleanToken}` },
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'multipart/form-data',
+      },
     });
     return response;
   } catch (error) {

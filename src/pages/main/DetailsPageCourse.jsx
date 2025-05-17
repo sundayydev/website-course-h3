@@ -1,4 +1,3 @@
-// DetailsPageCourse.jsx
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { Play, ChevronDown, ChevronUp, ArrowLeft, Clock, Calendar } from 'lucide-react';
@@ -7,22 +6,12 @@ import { getLessonsByChapterId, getLessonById } from '@/api/lessonApi';
 import { getChaptersByCourseId } from '@/api/chapterApi';
 import { jwtDecode } from 'jwt-decode';
 import YouTube from 'react-youtube';
-import { toast } from "react-toastify";
+import { toast } from 'react-toastify';
 import { initializeProgress, updateProgress, getProgressByUserAndLesson } from '@/api/progressApi';
-import LessonQuiz from '../../components/LessonQuiz'; // Import component LessonQuiz
+import LessonQuiz from '../../components/LessonQuiz';
+import { getUserId } from '@/api/authUtils';
 
-// Hàm lấy userId từ token
-const getUserIdFromToken = () => {
-  const token = localStorage.getItem('authToken');
-  if (!token) return null;
-  try {
-    const decoded = jwtDecode(token);
-    return decoded.id;
-  } catch (error) {
-    console.error('Lỗi khi giải mã token:', error);
-    return null;
-  }
-};
+
 
 const DetailsPageCourse = () => {
   const { lessonId } = useParams();
@@ -30,7 +19,7 @@ const DetailsPageCourse = () => {
   <LessonQuiz lessonId={lessonId} />
   const navigate = useNavigate();
   const playerRef = useRef(null);
-  const userId = getUserIdFromToken();
+  const userId = getUserId();
 
   const [currentLesson, setCurrentLesson] = useState(null);
   const [chapters, setChapters] = useState([]);

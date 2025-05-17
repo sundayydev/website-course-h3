@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
@@ -11,9 +12,10 @@ const About = () => {
         'https://asd.mediacdn.vn/adt/tuyendungvccorp/lap-trinh-vien-la-gi_1b33bae8-ab72-4134-bb77-8d9df3b29def.jpg',
     },
     {
+      id: '9a1c466a-669d-4dbb-a943-1a6439121ea3',
       name: 'Lê Hữu Duy Hoàng',
       role: 'Lead Designer',
-      image: 'https://laptrinhcuocsong.com/images/lap-trinh-vien.png',
+      image: `${import.meta.env.VITE_API_URL}/uploads/dfc467de-2039-41de-bf13-48030ee0ef46_ltrinh.png`,
     },
     {
       name: 'Lê Hoài Huân',
@@ -73,6 +75,7 @@ const About = () => {
             <div
               key={index}
               className="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-lg flex flex-col items-center w-full max-w-xs"
+              onClick={() => member.id && navigate(`/profile/${member.id}`)}
             >
               <img
                 className="w-32 h-32 rounded-full object-cover mb-4"

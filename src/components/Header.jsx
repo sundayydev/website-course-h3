@@ -124,15 +124,15 @@ const Header = () => {
       if (registerRef.current && !registerRef.current.contains(event.target))
         setIsRegisterOpen(false);
       if (
-          forgotPasswordRef.current &&
-          !forgotPasswordRef.current.contains(event.target)
+        forgotPasswordRef.current &&
+        !forgotPasswordRef.current.contains(event.target)
       )
         setIsForgotPasswordOpen(false);
       if (searchRef.current && !searchRef.current.contains(event.target))
         setIsSearchDropdownOpen(false);
       if (
-          notificationRef.current &&
-          !notificationRef.current.contains(event.target)
+        notificationRef.current &&
+        !notificationRef.current.contains(event.target)
       )
         setIsNotificationsOpen(false);
     };
@@ -161,7 +161,7 @@ const Header = () => {
 
     setIsSearching(true);
     try {
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/search/all`, {    
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/search/all`, {
         params: { keyword: searchQuery },
       });
 
@@ -202,6 +202,7 @@ const Header = () => {
       toast.error('Vui lòng nhập đầy đủ email và mật khẩu!');
       return;
     }
+
     try {
       const response = await login(loginData);
       const { token, email, role } = response.data;
@@ -218,7 +219,8 @@ const Header = () => {
       }
     } catch (error) {
       console.error('Login Error:', error.response?.data);
-      toast.error(error.response?.data?.message || 'Đăng nhập thất bại!');
+      const errorMessage = error.response?.data?.message || 'Đăng nhập thất bại!';
+      toast.error(errorMessage);
     }
   };
 
@@ -316,24 +318,24 @@ const Header = () => {
       }
       await markNotificationAsRead(notificationId, userId);
       setNotifications(
-          notifications.map((n) =>
-              n.id === notificationId
-                  ? {
-                    ...n,
-                    userNotifications: n.userNotifications.map((un) =>
-                        un.userId === userId ? { ...un, isRead: true } : un
-                    ),
-                  }
-                  : n
-          )
+        notifications.map((n) =>
+          n.id === notificationId
+            ? {
+              ...n,
+              userNotifications: n.userNotifications.map((un) =>
+                un.userId === userId ? { ...un, isRead: true } : un
+              ),
+            }
+            : n
+        )
       );
       toast.success('Đã đánh dấu thông báo là đã đọc!');
     } catch (error) {
       console.error('Lỗi khi đánh dấu thông báo:', error.response?.data || error);
       toast.error(
-          error.response?.data?.message ||
-          error.message ||
-          'Không thể đánh dấu thông báo!'
+        error.response?.data?.message ||
+        error.message ||
+        'Không thể đánh dấu thông báo!'
       );
     }
   };
@@ -418,8 +420,8 @@ const Header = () => {
           </div>
         )}
       </div>
-      
-      
+
+
       {/* User Actions */}
       <div className="flex items-center justify-between space-x-4">
         <div>
@@ -428,171 +430,171 @@ const Header = () => {
           </button>
         </div>
         {isLoggedIn && (
-            <div className="relative" ref={notificationRef}>
-              <button
-                  className="p-2 relative"
-                  onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
-              >
-                <Bell className="h-6 w-6 text-gray-600 hover:text-pink-500" />
-                {notifications.some((n) => n.userNotifications.some((un) => !un.isRead && un.userId === user.id)) && (
-                    <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></span>
-                )}
-              </button>
-              {isNotificationsOpen && (
-                  <div className="absolute right-0 mt-2 w-80 bg-white shadow-lg rounded-lg z-50 max-h-96 overflow-y-auto">
-                    {notifications.length === 0 ? (
-                        <p className="p-4 text-gray-500 text-center">Không có thông báo</p>
-                    ) : (
-                        notifications.map((notification) => {
-                          const userNotification = notification.userNotifications.find(un => un.userId === user.id);
-                          if (!userNotification) return null; // Bỏ qua nếu không có userNotification phù hợp
-                          return (
-                              <div
-                                  key={notification.id}
-                                  className={`p-3 border-b flex justify-between items-center ${
-                                      !userNotification.isRead ? 'bg-gray-50' : ''
-                                  }`}
-                              >
-                                <div>
-                                  <p className="text-sm font-semibold">{notification.content}</p>
-                                  <p className="text-xs text-gray-500">
-                                    {notification.createdAt
-                                        ? (() => {
-                                          try {
-                                            const parsedDate = parse(notification.createdAt, "dd-MM-yyyy HH:mm:ss", new Date());
-                                            if (isNaN(parsedDate.getTime())) {
-                                              return "Ngày không hợp lệ";
-                                            }
-                                            return format(parsedDate, "dd/MM/yyyy HH:mm:ss");
-                                          } catch (error) {
-                                            return "Ngày không hợp lệ";
-                                          }
-                                        })()
-                                        : "Ngày không hợp lệ"}
-                                  </p>
-                                  <p className="text-xs text-gray-500">
-                                    {userNotification.isRead ? 'Đã đọc' : 'Chưa đọc'}
-                                  </p>
-                                  {!userNotification.isRead && (
-                                      <button
-                                          className="text-blue-500 hover:text-blue-700 text-xs"
-                                          onClick={() => handleMarkAsRead(notification.id)}
-                                      >
-                                        Đánh dấu đã đọc
-                                      </button>
-                                  )}
-                                </div>
-                                <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => handleDeleteNotification(notification.id)}
-                                    className="text-red-500 hover:text-red-700"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                          );
-                        })
-                    )}
-                  </div>
+          <div className="relative" ref={notificationRef}>
+            <button
+              className="p-2 relative"
+              onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+            >
+              <Bell className="h-6 w-6 text-gray-600 hover:text-pink-500" />
+              {notifications.some((n) => n.userNotifications.some((un) => !un.isRead && un.userId === user.id)) && (
+                <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></span>
               )}
-            </div>
+            </button>
+            {isNotificationsOpen && (
+              <div className="absolute right-0 mt-2 w-80 bg-white shadow-lg rounded-lg z-50 max-h-96 overflow-y-auto">
+                {notifications.length === 0 ? (
+                  <p className="p-4 text-gray-500 text-center">Không có thông báo</p>
+                ) : (
+                  notifications.map((notification) => {
+                    const userNotification = notification.userNotifications.find(un => un.userId === user.id);
+                    if (!userNotification) return null; // Bỏ qua nếu không có userNotification phù hợp
+                    return (
+                      <div
+                        key={notification.id}
+                        className={`p-3 border-b flex justify-between items-center ${!userNotification.isRead ? 'bg-gray-50' : ''
+                          }`}
+                      >
+                        <div>
+                          <p className="text-sm font-semibold">{notification.content}</p>
+                          <p className="text-xs text-gray-500">
+                            {notification.createdAt
+                              ? (() => {
+                                try {
+                                  const parsedDate = parse(notification.createdAt, "dd-MM-yyyy HH:mm:ss", new Date());
+                                  if (isNaN(parsedDate.getTime())) {
+                                    return "Ngày không hợp lệ";
+                                  }
+                                  return format(parsedDate, "dd/MM/yyyy HH:mm:ss");
+                                  // eslint-disable-next-line no-unused-vars
+                                } catch (error) {
+                                  return "Ngày không hợp lệ";
+                                }
+                              })()
+                              : "Ngày không hợp lệ"}
+                          </p>
+                          <p className="text-xs text-gray-500">
+                            {userNotification.isRead ? 'Đã đọc' : 'Chưa đọc'}
+                          </p>
+                          {!userNotification.isRead && (
+                            <button
+                              className="text-blue-500 hover:text-blue-700 text-xs"
+                              onClick={() => handleMarkAsRead(notification.id)}
+                            >
+                              Đánh dấu đã đọc
+                            </button>
+                          )}
+                        </div>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          onClick={() => handleDeleteNotification(notification.id)}
+                          className="text-red-500 hover:text-red-700"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+            )}
+          </div>
         )}
         <div className="flex items-center space-x-4">
           {!isLoggedIn && (
-              <>
-                <Button
-                    variant="outline"
-                    className="text-black font-semibold rounded-full hidden md:block"
-                    onClick={() => setIsRegisterOpen(true)}
-                >
-                  Đăng ký
-                </Button>
-                <Button
-                    className="bg-gradient-to-r from-pink-500 to-pink-600 text-white px-4 py-2 rounded-full font-semibold"
-                    onClick={() => setIsLoginOpen(true)}
-                >
-                  Đăng nhập
-                </Button>
-              </>
+            <>
+              <Button
+                variant="outline"
+                className="text-black font-semibold rounded-full hidden md:block"
+                onClick={() => setIsRegisterOpen(true)}
+              >
+                Đăng ký
+              </Button>
+              <Button
+                className="bg-gradient-to-r from-pink-500 to-pink-600 text-white px-4 py-2 rounded-full font-semibold"
+                onClick={() => setIsLoginOpen(true)}
+              >
+                Đăng nhập
+              </Button>
+            </>
           )}
           {isLoggedIn && (
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-500 text-white font-bold shadow-xl hover:bg-blue-800">
-                    {isUserLoading ? '?' : user?.fullName?.charAt(0).toUpperCase() || 'U'}
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent className="w-80 p-2 shadow-lg rounded-2xl m-4">
-                  {isUserLoading ? (
-                      <div className="p-3 text-center text-gray-500">Đang tải...</div>
-                  ) : (
-                      <>
-                        <div className="flex items-center gap-3 p-3">
-                          <Avatar className="w-10 h-10">
-                            <AvatarImage src={user?.profileImage || LogoH3} alt="User Avatar" />
-                            <AvatarFallback className="bg-blue-500 text-white font-bold">
-                              {user?.fullName?.charAt(0).toUpperCase() || 'U'}
-                            </AvatarFallback>
-                          </Avatar>
-                          <div>
-                            <p className="font-semibold">{user?.fullName || 'Người dùng'}</p>
-                            <p className="text-gray-500 text-sm break-words">{user?.email || 'email'}</p>
-                          </div>
-                        </div>
-                        <hr />
-                        <DropdownMenuItem
-                            className="p-3 hover:bg-gray-100 rounded-lg cursor-pointer"
-                            onClick={() => navigate('/profile')}
-                        >
-                          Trang cá nhân
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                            className="p-3 hover:bg-gray-100 rounded-lg cursor-pointer"
-                            onClick={() => navigate('/write-blog')}
-                        >
-                          Viết blog
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                            className="p-3 hover:bg-gray-100 rounded-lg cursor-pointer"
-                            onClick={() => navigate('/my-posts')}
-                        >
-                          Bài viết của tôi
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                            className="p-3 hover:bg-gray-100 rounded-lg cursor-pointer"
-                            onClick={() => navigate('/saved-posts')}
-                        >
-                          Bài viết đã lưu
-                        </DropdownMenuItem>
-                        <hr />
-                        <DropdownMenuItem
-                            className="p-3 hover:bg-gray-100 rounded-lg cursor-pointer"
-                            onClick={() => navigate('/settings')}
-                        >
-                          Cài đặt
-                        </DropdownMenuItem>
-                        <DropdownMenuItem
-                            className="p-3 hover:bg-gray-100 rounded-lg cursor-pointer text-red-500"
-                            onClick={handleLogout}
-                        >
-                          Đăng xuất
-                        </DropdownMenuItem>
-                      </>
-                  )}
-                </DropdownMenuContent>
-              </DropdownMenu>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-500 text-white font-bold shadow-xl hover:bg-blue-800">
+                  {isUserLoading ? '?' : user?.fullName?.charAt(0).toUpperCase() || 'U'}
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent className="w-80 p-2 shadow-lg rounded-2xl m-4">
+                {isUserLoading ? (
+                  <div className="p-3 text-center text-gray-500">Đang tải...</div>
+                ) : (
+                  <>
+                    <div className="flex items-center gap-3 p-3">
+                      <Avatar className="w-10 h-10">
+                        <AvatarImage src={user?.profileImage || LogoH3} alt="User Avatar" />
+                        <AvatarFallback className="bg-blue-500 text-white font-bold">
+                          {user?.fullName?.charAt(0).toUpperCase() || 'U'}
+                        </AvatarFallback>
+                      </Avatar>
+                      <div>
+                        <p className="font-semibold">{user?.fullName || 'Người dùng'}</p>
+                        <p className="text-gray-500 text-sm break-words">{user?.email || 'email'}</p>
+                      </div>
+                    </div>
+                    <hr />
+                    <DropdownMenuItem
+                      className="p-3 hover:bg-gray-100 rounded-lg cursor-pointer"
+                      onClick={() => navigate('/profile')}
+                    >
+                      Trang cá nhân
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="p-3 hover:bg-gray-100 rounded-lg cursor-pointer"
+                      onClick={() => navigate('/write-blog')}
+                    >
+                      Viết blog
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="p-3 hover:bg-gray-100 rounded-lg cursor-pointer"
+                      onClick={() => navigate('/my-posts')}
+                    >
+                      Bài viết của tôi
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="p-3 hover:bg-gray-100 rounded-lg cursor-pointer"
+                      onClick={() => navigate('/saved-posts')}
+                    >
+                      Bài viết đã lưu
+                    </DropdownMenuItem>
+                    <hr />
+                    <DropdownMenuItem
+                      className="p-3 hover:bg-gray-100 rounded-lg cursor-pointer"
+                      onClick={() => navigate('/settings')}
+                    >
+                      Cài đặt
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="p-3 hover:bg-gray-100 rounded-lg cursor-pointer text-red-500"
+                      onClick={handleLogout}
+                    >
+                      Đăng xuất
+                    </DropdownMenuItem>
+                  </>
+                )}
+              </DropdownMenuContent>
+            </DropdownMenu>
           )}
         </div>
       </div>
-      
-      
-      
+
+
+
       {/* Popup khóa học */}
       <CoursePopup isOpen={isPopupOpen} onClose={togglePopup} />
-      
-      
-      
+
+
+
       {/* Popup Login */}
       {isLoginOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">

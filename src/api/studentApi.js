@@ -1,6 +1,7 @@
 import api from './axios';
+import { getAuthToken } from './authUtils';
 
-const API_URL = '/student'; // Cập nhật port backend
+const API_URL = '/student';
 
 // Hàm kiểm tra định dạng Guid
 const isValidGuid = (id) => {
@@ -10,18 +11,9 @@ const isValidGuid = (id) => {
 
 // Lấy danh sách học viên
 export const getStudents = async () => {
-  const token = localStorage.getItem('authToken');
-  if (!token) {
-    throw new Error('Không tìm thấy token');
-  }
-
   try {
-    const response = await api.get(`${API_URL}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
+    getAuthToken(); // Kiểm tra token
+    const response = await api.get(API_URL);
     return response.data;
   } catch (error) {
     console.error('Lỗi khi lấy danh sách học viên:', error);
@@ -31,31 +23,22 @@ export const getStudents = async () => {
 
 // Thêm học viên mới
 export const addStudent = async (studentData) => {
-  const token = localStorage.getItem('authToken');
-  if (!token) {
-    throw new Error('Không tìm thấy token');
-  }
-
-  if (!studentData || !studentData.fullName || !studentData.email) {
-    throw new Error('Dữ liệu học viên không hợp lệ');
-  }
-
-  const data = {
-    fullName: studentData.fullName,
-    email: studentData.email,
-    password: studentData.password,
-    birthDate: studentData.birthDate,
-  };
-
-  console.log('Dữ liệu gửi đi:', data);
-
   try {
-    const response = await api.post(`${API_URL}`, data, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
+    getAuthToken(); // Kiểm tra token
+    if (!studentData || !studentData.fullName || !studentData.email) {
+      throw new Error('Dữ liệu học viên không hợp lệ');
+    }
+
+    const data = {
+      fullName: studentData.fullName,
+      email: studentData.email,
+      password: studentData.password,
+      birthDate: studentData.birthDate,
+    };
+
+    console.log('Dữ liệu gửi đi:', data);
+
+    const response = await api.post(API_URL, data);
     return response.data;
   } catch (error) {
     console.error('Lỗi khi thêm học viên:', error);
@@ -65,32 +48,23 @@ export const addStudent = async (studentData) => {
 
 // Cập nhật thông tin học viên
 export const updateStudent = async (studentId, studentData) => {
-  const token = localStorage.getItem('authToken');
-  if (!token) {
-    throw new Error('Không tìm thấy token');
-  }
-
-  if (!isValidGuid(studentId)) {
-    throw new Error('ID học viên không đúng định dạng Guid');
-  }
-
-  if (!studentData || !studentData.fullName || !studentData.email) {
-    throw new Error('Dữ liệu học viên không hợp lệ');
-  }
-
-  const data = {
-    fullName: studentData.fullName,
-    email: studentData.email,
-    birthDate: studentData.birthDate,
-  };
-
   try {
-    const response = await api.put(`${API_URL}/${studentId}`, data, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
-      },
-    });
+    getAuthToken(); // Kiểm tra token
+    if (!isValidGuid(studentId)) {
+      throw new Error('ID học viên không đúng định dạng Guid');
+    }
+
+    if (!studentData || !studentData.fullName || !studentData.email) {
+      throw new Error('Dữ liệu học viên không hợp lệ');
+    }
+
+    const data = {
+      fullName: studentData.fullName,
+      email: studentData.email,
+      birthDate: studentData.birthDate,
+    };
+
+    const response = await api.put(`${API_URL}/${studentId}`, data);
     return response.data;
   } catch (error) {
     console.error('Lỗi khi cập nhật thông tin học viên:', error);
@@ -100,31 +74,22 @@ export const updateStudent = async (studentId, studentData) => {
 
 // Tải lên avatar
 export const uploadAvatar = async (studentId, avatar) => {
-  const token = localStorage.getItem('authToken');
-  if (!token) {
-    throw new Error('Không tìm thấy token');
-  }
-
-  if (!isValidGuid(studentId)) {
-    throw new Error('ID học viên không đúng định dạng Guid');
-  }
-
-  if (!(avatar instanceof File)) {
-    throw new Error('Avatar phải là một tệp hợp lệ');
-  }
-
-  const formData = new FormData();
-  formData.append('file', avatar);
-
-  console.log('Dữ liệu gửi đi:', formData);
-
   try {
-    const response = await api.post(`${API_URL}/upload-avatar/${studentId}`, formData, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-        'Content-Type': 'multipart/form-data',
-      },
-    });
+    getAuthToken(); // Kiểm tra token
+    if (!isValidGuid(studentId)) {
+      throw new Error('ID học viên không đúng định dạng Guid');
+    }
+
+    if (!(avatar instanceof File)) {
+      throw new Error('Avatar phải là một tệp hợp lệ');
+    }
+
+    const formData = new FormData();
+    formData.append('file', avatar);
+
+    console.log('Dữ liệu gửi đi:', formData);
+
+    const response = await api.post(`${API_URL}/upload-avatar/${studentId}`, formData);
     return response.data;
   } catch (error) {
     console.error('Lỗi khi tải lên avatar:', error);
@@ -134,21 +99,13 @@ export const uploadAvatar = async (studentId, avatar) => {
 
 // Xóa học viên
 export const deleteStudent = async (studentId) => {
-  const token = localStorage.getItem('authToken');
-  if (!token) {
-    throw new Error('Không tìm thấy token');
-  }
-
-  if (!isValidGuid(studentId)) {
-    throw new Error('ID học viên không đúng định dạng Guid');
-  }
-
   try {
-    const response = await api.delete(`${API_URL}/${studentId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    getAuthToken(); // Kiểm tra token
+    if (!isValidGuid(studentId)) {
+      throw new Error('ID học viên không đúng định dạng Guid');
+    }
+
+    const response = await api.delete(`${API_URL}/${studentId}`);
     return response.data;
   } catch (error) {
     console.error('Lỗi khi xóa học viên:', error);
@@ -158,64 +115,16 @@ export const deleteStudent = async (studentId) => {
 
 // Lấy thông tin học viên theo ID
 export const getStudentById = async (studentId) => {
-  const token = localStorage.getItem('authToken');
-  if (!token) {
-    throw new Error('Không tìm thấy token');
-  }
-
-  if (!isValidGuid(studentId)) {
-    throw new Error('ID học viên không đúng định dạng Guid');
-  }
-
   try {
-    const response = await api.get(`${API_URL}/${studentId}`, {
-      headers: {
-        Authorization: `Bearer ${token}`,
-      },
-    });
+    getAuthToken(); // Kiểm tra token
+    if (!isValidGuid(studentId)) {
+      throw new Error('ID học viên không đúng định dạng Guid');
+    }
+
+    const response = await api.get(`${API_URL}/${studentId}`);
     return response.data;
   } catch (error) {
     console.error('Lỗi khi lấy thông tin học viên:', error);
     throw error;
   }
 };
-
-// // Lấy danh sách học viên theo trạng thái (Chú thích vì endpoint không tồn tại)
-// export const getStudentsByStatus = async (status) => {
-//   const token = localStorage.getItem('authToken');
-//   if (!token) {
-//     throw new Error('Không tìm thấy token');
-//   }
-
-//   try {
-//     const response = await api.get(`${API_URL}/status/${status}`, {
-//       headers: {
-//         Authorization: `Bearer ${token}`,
-//       },
-//     });
-//     return response.data;
-//   } catch (error) {
-//     console.error('Lỗi khi lấy danh sách học viên theo trạng thái:', error);
-//     throw error;
-//   }
-// };
-
-// // Lấy danh sách học viên theo khóa học (Chú thích vì endpoint không tồn tại)
-// export const getStudentsByCourse = async (courseId) => {
-//   const token = localStorage.getItem('authToken');
-//   if (!token) {
-//     throw new Error('Không tìm thấy token');
-//   }
-
-//   try {
-//     const response = await api.get(`${API_URL}/course/${courseId}`, {
-//       headers: {
-//         Authorization: `Bearer ${token}`,
-//       },
-//     });
-//     return response.data;
-//   } catch (error) {
-//     console.error('Lỗi khi lấy danh sách học viên theo khóa học:', error);
-//     throw error;
-//   }
-// };

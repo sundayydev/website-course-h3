@@ -1,14 +1,21 @@
 /* eslint-disable react/prop-types */
 import { useState, useEffect, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FaEnvelope, FaPhone, FaTimes, FaBirthdayCake, FaCamera, FaCalendar, FaPlus, FaPen, FaAngleDown } from 'react-icons/fa';
 import { getUserById, uploadProfileImage, updateUser, updateUserPassword } from '../../../api/userApi';
+import { getFollowersByUser, getFollowingByUser } from '../../../api/followerApi';
+import defaultAvatar from '../../../assets/imgs/default-avatar.jpg';
 import { toast } from 'react-toastify';
-import { jwtDecode } from 'jwt-decode';
+import { getUserId } from '../../../api/authUtils';
+import { formatDate } from '../../../utils/formatDate';
+import DatePicker from 'react-datepicker';
+import 'react-datepicker/dist/react-datepicker.css';
+import { vi } from 'date-fns/locale';
 
 const ProfileImage = ({ src, onClick, onImageChange }) => (
   <div className="relative inline-block">
     <img
-      src={src || 'https://i.pravatar.cc/300'}
+      src={src || defaultAvatar}
       alt="Profile"
       className="w-32 h-32 sm:w-48 sm:h-48 rounded-full mx-auto mb-4 border-4 border-pink-500 hover:scale-105 transition-transform"
       onClick={onClick}
@@ -46,6 +53,13 @@ const ProfilePage = () => {
   const [passwordForm, setPasswordForm] = useState({ password: '', confirmPassword: '' });
   const [formErrors, setFormErrors] = useState({});
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [followerCount, setFollowerCount] = useState(0);
+  const [followingCount, setFollowingCount] = useState(0);
+  const [followers, setFollowers] = useState([]);
+  const [following, setFollowing] = useState([]);
+  const [isFollowersModalOpen, setIsFollowersModalOpen] = useState(false);
+  const [isFollowingModalOpen, setIsFollowingModalOpen] = useState(false);
+  const navigate = useNavigate();
 
   const validateInfoForm = () => {
     const errors = {};
@@ -68,13 +82,16 @@ const ProfilePage = () => {
   const fetchUserData = useCallback(async () => {
     setIsLoading(true);
     try {
-      const token = localStorage.getItem('authToken');
-      if (!token) throw new Error('Không tìm thấy token xác thực');
-      
-      const decodedToken = jwtDecode(token);
-      
-      const userData = await getUserById(decodedToken.id).then(res => res.data);
+      const userId = getUserId();
+      const [userData, followersData, followingData] = await Promise.all([
+        getUserById(userId).then(res => res.data),
+        getFollowersByUser(userId).then(res => res.data),
+        getFollowingByUser(userId).then(res => res.data),
+      ]);
       setUser(userData);
+      console.log("userData:", userData);
+      console.log('followersData:', followersData);
+      console.log('followingData:', followingData);
       setInfoForm({
         fullName: userData.fullName || '',
         email: userData.email || '',
@@ -82,7 +99,12 @@ const ProfilePage = () => {
         role: userData.role || 'Student',
         birthDate: userData.birthDate ? new Date(userData.birthDate).toISOString().slice(0, 10) : ''
       });
+      setFollowers(followersData || []);
+      setFollowing(followingData || []);
+      setFollowerCount(followersData?.length || 0);
+      setFollowingCount(followingData?.length || 0);
     } catch (err) {
+      console.error('Error fetching user data:', err);
       setError(err.response?.data?.message || 'Không thể tải dữ liệu người dùng.');
     } finally {
       setIsLoading(false);
@@ -99,11 +121,7 @@ const ProfilePage = () => {
 
     setIsLoading(true);
     try {
-      const token = localStorage.getItem('authToken');
-      if (!token) throw new Error('Không tìm thấy token');
-
-      const decodedToken = jwtDecode(token);
-
+      const userId = getUserId();
       const dataToUpdate = {
         fullName: infoForm.fullName,
         email: infoForm.email,
@@ -112,7 +130,7 @@ const ProfilePage = () => {
         role: user?.role || 'Student'
       };
 
-      const updatedUser = await updateUser(decodedToken.id, dataToUpdate).then(res => res.data);
+      const updatedUser = await updateUser(userId, dataToUpdate).then(res => res.data);
       setUser(updatedUser);
       setIsEditInfoModalOpen(false);
       toast.success('Cập nhật thành công!');
@@ -129,11 +147,8 @@ const ProfilePage = () => {
 
     setIsLoading(true);
     try {
-      const token = localStorage.getItem('authToken');
-      if (!token) throw new Error('Không tìm thấy token xác thực');
-
-      const decodedToken = jwtDecode(token);
-      await updateUserPassword(decodedToken.id, {
+      const userId = getUserId();
+      await updateUserPassword(userId, {
         password: passwordForm.password,
         confirmPassword: passwordForm.confirmPassword
       });
@@ -154,10 +169,10 @@ const ProfilePage = () => {
 
     setIsLoading(true);
     try {
-      const token = localStorage.getItem('authToken');
-      if (!token) throw new Error('Không tìm thấy token');
-
-      const { data } = await uploadProfileImage(file);
+      const userId = getUserId();
+      console.log("userId:", userId);
+      const { data } = await uploadProfileImage(file, userId);
+      console.log("data:", data);
       setUser(prev => ({ ...prev, profileImage: data.profileImage }));
       toast.success('Cập nhật ảnh thành công!');
     } catch (err) {
@@ -194,17 +209,6 @@ const ProfilePage = () => {
     setPasswordForm({ password: '', confirmPassword: '' });
   };
 
-  const formatCreatedAt = (createdAt) => {
-    if (!createdAt) return 'Chưa có ngày tạo';
-    try {
-      const [date, time] = createdAt.split(' ');
-      const [day, month, year] = date.split('-');
-      return new Date(`${year}-${month}-${day}T${time}`).toLocaleDateString('vi-VN');
-    } catch {
-      return 'Chưa có ngày tạo';
-    }
-  };
-
   const handleInputChange = (e, formType) => {
     const { name, value } = e.target;
     const setForm = formType === 'info' ? setInfoForm : setPasswordForm;
@@ -213,7 +217,6 @@ const ProfilePage = () => {
   };
 
   const handleAddToStory = () => {
-    // Logic để thêm vào tin (story)
     toast.info('Chức năng thêm vào tin đang được phát triển!');
   };
 
@@ -237,9 +240,7 @@ const ProfilePage = () => {
   return (
     <div className="min-h-screen flex items-center justify-center p-4 bg-gray-100">
       <div className="bg-white rounded-xl max-w-4xl w-full p-8">
-       
-        {/* Profile Section */}
-        <div className="flex flex-col md:flex-row items-center gap-6">
+        <div className="flex flex-col md:flex-row items-start gap-6">
           <div className="flex-shrink-0">
             <ProfileImage
               src={user.profileImage ? `${import.meta.env.VITE_API_URL}${user.profileImage}` : null}
@@ -247,93 +248,132 @@ const ProfilePage = () => {
               onImageChange={handleImageChange}
             />
           </div>
-          <div className="flex-1 text-center md:text-left">
-            <h1 className="text-2xl font-bold text-pink-500 mb-1 mt-2 md:mt-6">
-              {user.fullName || 'Không có tên'}
-            </h1>
-            <p className="text-gray-600 mb-2">{user.role ? `${user.role}` : 'Không có thông tin'}</p>
-            <p className="text-gray-600 mb-2">{user.flower ? `${user.flower} người bạn` : 'Không có thông tin'}</p>
-          </div>
 
-          {/* Action Buttons */}
-          <div className="flex gap-2">
-            <button
-              className="bg-blue-600 text-white px-3 py-1.5 rounded-md hover:bg-blue-700 transition-colors flex items-center gap-1.5"
-              onClick={handleAddToStory}
-              aria-label="Add to story"
-            >
-              <FaPlus /> Thêm vào tin
-            </button>
-            <button
-              className="bg-gray-200 text-black px-3 py-1.5 rounded-md hover:bg-gray-300 transition-colors flex items-center gap-1.5"
-              onClick={() => setIsEditInfoModalOpen(true)}
-              aria-label="Edit profile"
-            >
-              <FaPen /> Chỉnh sửa trang cá nhân
-            </button>
-            <div className="relative">
+          <div className="flex-1 mt-10 ml-10">
+            <div className="flex items-center gap-4 mb-2">
+              <h1 className="text-2xl font-bold text-pink-500">
+                {user.fullName || 'Không có tên'}
+              </h1>
+
+            </div>
+            <span>
+              <p className="text-gray-600 font-semibold">
+                {user.role ? (
+                  user.role === 'Admin' ? 'Quản trị viên' :
+                    user.role === 'Instructor' ? 'Giảng viên' :
+                      user.role === 'Student' ? 'Học viên' :
+                        'Không có thông tin'
+                ) : 'Không có thông tin'}
+              </p>
+            </span>
+            {/* Thông tin bài viết, khóa học, người theo dõi, đang theo dõi */}
+            <div className="flex items-center gap-4 mb-4 mt-3">
+              <button
+                onClick={() => setIsFollowersModalOpen(true)}
+                className="text-gray-600 hover:text-pink-500"
+              >
+                {`0 bài viết`}
+              </button>
+              <button
+                onClick={() => setIsFollowersModalOpen(true)}
+                className="text-gray-600 hover:text-pink-500"
+              >
+                {`0 khóa học`}
+              </button>
+
+              <button
+                onClick={() => setIsFollowersModalOpen(true)}
+                className="text-gray-600 hover:text-pink-500"
+              >
+                <span className="font-bold text-pink-500">{followerCount}</span> người theo dõi
+              </button>
+              <button
+                onClick={() => setIsFollowingModalOpen(true)}
+                className="text-gray-600 hover:text-pink-500"
+              >
+                <span className="font-bold text-pink-500">{followingCount}</span> đang theo dõi
+              </button>
+
+            </div>
+
+            {/* Các nút Thêm vào tin, Chỉnh sửa, và Dropdown */}
+            <div className="flex items-center gap-2">
+              <button
+                className="bg-blue-600 text-white px-3 py-1.5 rounded-md hover:bg-blue-700 transition-colors flex items-center gap-1.5"
+                onClick={handleAddToStory}
+                aria-label="Thêm vào tin"
+              >
+                <FaPlus /> Thêm vào tin
+              </button>
               <button
                 className="bg-gray-200 text-black px-3 py-1.5 rounded-md hover:bg-gray-300 transition-colors flex items-center gap-1.5"
-                onClick={handleDropdownToggle}
-                aria-label="More options"
+                onClick={() => setIsEditInfoModalOpen(true)}
+                aria-label="Chỉnh sửa trang cá nhân"
               >
-                <FaAngleDown />
+                <FaPen /> Chỉnh sửa trang cá nhân
               </button>
-              {isDropdownOpen && (
-                <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10">
-                  <ul className="py-1">
-                    <li>
-                      <button
-                        className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100"
-                        onClick={() => {
-                          setIsEditPasswordModalOpen(true);
-                          setIsDropdownOpen(false);
-                        }}
-                      >
-                        Đổi mật khẩu
-                      </button>
-                    </li>
-                    <li>
-                      <button
-                        className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100"
-                        onClick={() => {
-                          toast.info('Chức năng này đang được phát triển!');
-                          setIsDropdownOpen(false);
-                        }}
-                      >
-                        Cài đặt khác
-                      </button>
-                    </li>
-                  </ul>
-                </div>
-              )}
+              <div className="relative">
+                <button
+                  className="bg-gray-200 text-black px-3 py-1.5 rounded-md hover:bg-gray-300 transition-colors flex items-center gap-1.5"
+                  onClick={handleDropdownToggle}
+                  aria-label="Tùy chọn khác"
+                >
+                  <FaAngleDown />
+                </button>
+                {isDropdownOpen && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10">
+                    <ul className="py-1">
+                      <li>
+                        <button
+                          className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100"
+                          onClick={() => {
+                            setIsEditPasswordModalOpen(true);
+                            setIsDropdownOpen(false);
+                          }}
+                        >
+                          Đổi mật khẩu
+                        </button>
+                      </li>
+                      <li>
+                        <button
+                          className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100"
+                          onClick={() => {
+                            toast.info('Chức năng này đang được phát triển!');
+                            setIsDropdownOpen(false);
+                          }}
+                        >
+                          Cài đặt khác
+                        </button>
+                      </li>
+                    </ul>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
-
-         
         <hr className="my-6" />
         <div className='ml-5'>
-        <Section title="Thông tin liên hệ">
-          <ul className="space-y-2 text-gray-700">
-            <ContactItem icon={<FaEnvelope />} text={user.email || 'Chưa có email'} />
-            <ContactItem icon={<FaPhone />} text={user.phone || 'Chưa có số điện thoại'} />
-            <ContactItem
-              icon={<FaBirthdayCake />}
-              text={user.birthDate ? new Date(user.birthDate).toLocaleDateString('vi-VN') : 'Chưa có ngày sinh'}
-            />
-            <ContactItem icon={<FaCalendar />} text={formatCreatedAt(user.createdAt) || 'Chưa có ngày tạo'} />
-          </ul>
-        </Section>
+          <Section title="Thông tin liên hệ">
+            <ul className="space-y-2 text-gray-700">
+              <ContactItem icon={<FaEnvelope />} text={user.email || 'Chưa có email'} />
+              <ContactItem icon={<FaPhone />} text={user.phone || 'Chưa có số điện thoại'} />
+              <ContactItem
+                icon={<FaBirthdayCake />}
+                text={user.birthDate ? formatDate(user.birthDate, 'dd/MM/yyyy') : 'Chưa có ngày sinh'}
+              />
+              <ContactItem icon={<FaCalendar />} text={formatDate(user.createdAt, 'dd/MM/yyyy') || 'Chưa có ngày tạo'} />
+            </ul>
+          </Section>
         </div>
       </div>
 
-      {/* Profile Image Modal */}
+
       {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-75 p-4 z-50">
           <div className="relative max-w-md w-full">
             <img
-              src={user?.profileImage ? `${import.meta.env.VITE_API_URL}${user.profileImage}` : 'https://i.pravatar.cc/600'}
+              src={user?.profileImage ? `${import.meta.env.VITE_API_URL}${user.profileImage}` : defaultAvatar}
               alt="Profile Enlarged"
               className="rounded-lg shadow-2xl w-full"
               loading="lazy"
@@ -348,7 +388,92 @@ const ProfilePage = () => {
         </div>
       )}
 
-      {/* Edit Info Modal */}
+      {isFollowersModalOpen && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-75 p-4 z-50">
+          <div className="bg-white rounded-xl w-full max-w-md p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-pink-500">Người theo dõi</h2>
+              <button
+                className="text-gray-500 hover:text-gray-700"
+                onClick={() => setIsFollowersModalOpen(false)}
+              >
+                <FaTimes />
+              </button>
+            </div>
+            <div className="max-h-96 overflow-y-auto">
+              {followers.length > 0 ? (
+                followers.map((follower, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center gap-4 p-3 hover:bg-gray-50 cursor-pointer"
+                    onClick={() => {
+                      console.log('Navigating to follower profile:', follower.followerId);
+                      navigate(`/profile/${follower.followerId}`);
+                      setIsFollowersModalOpen(false);
+                    }}
+                  >
+                    <img
+                      src={follower.followerProfileImage ? `${import.meta.env.VITE_API_URL}${follower.followerProfileImage}` : defaultAvatar}
+                      alt={follower.followerFullName || 'Không có tên'}
+                      className="w-10 h-10 rounded-full"
+                    />
+                    <div>
+                      <p className="font-semibold">{follower.followerFullName || 'Không có tên'}</p>
+                      <p className="text-sm text-gray-500">{follower.followerEmail || 'Chưa có email'}</p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-center text-gray-500">Chưa có người theo dõi</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isFollowingModalOpen && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-75 p-4 z-50">
+          <div className="bg-white rounded-xl w-full max-w-md p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-pink-500">Đang theo dõi</h2>
+              <button
+                className="text-gray-500 hover:text-gray-700"
+                onClick={() => setIsFollowingModalOpen(false)}
+              >
+                <FaTimes />
+              </button>
+            </div>
+            <div className="max-h-96 overflow-y-auto">
+              {following.length > 0 ? (
+                following.map((followedUser, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center gap-4 p-3 hover:bg-gray-50 cursor-pointer"
+                    onClick={() => {
+                      console.log('Navigating to following profile:', followedUser.followingId);
+                      navigate(`/profile/${followedUser.followingId}`);
+                      setIsFollowingModalOpen(false);
+                    }}
+                  >
+                    <img
+                      src={followedUser.followingProfileImage ? `${import.meta.env.VITE_API_URL}${followedUser.followingProfileImage}` : defaultAvatar}
+                      alt={followedUser.followingFullName || 'Không có tên'}
+                      className="w-10 h-10 rounded-full"
+                    />
+                    <div>
+                      <p className="font-semibold">{followedUser.followingFullName || 'Không có tên'}</p>
+                      <p className="text-sm text-gray-500">{followedUser.followingEmail || 'Chưa có email'}</p>
+                    </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-center text-gray-500">Chưa theo dõi ai</p>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {isEditInfoModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-75 p-4 z-50">
           <div className="bg-white rounded-xl w-full max-w-3xl p-6 mr-4">
@@ -392,12 +517,16 @@ const ProfilePage = () => {
                 </div>
                 <div>
                   <label className="block text-gray-700 mb-2">Ngày sinh</label>
-                  <input
-                    type="date"
-                    name="birthDate"
-                    value={infoForm.birthDate}
-                    onChange={(e) => handleInputChange(e, 'info')}
+                  <DatePicker
+                    selected={infoForm.birthDate ? new Date(infoForm.birthDate) : null}
+                    onChange={(date) => setInfoForm(prev => ({
+                      ...prev,
+                      birthDate: date ? date.toISOString().slice(0, 10) : ''
+                    }))}
+                    dateFormat="dd/MM/yyyy"
+                    locale={vi}
                     className="w-full border rounded-lg p-2"
+                    placeholderText="Chọn ngày sinh"
                   />
                 </div>
               </div>
@@ -422,7 +551,6 @@ const ProfilePage = () => {
         </div>
       )}
 
-      {/* Edit Password Modal */}
       {isEditPasswordModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-75 p-4 z-50">
           <div className="bg-white rounded-xl w-full max-w-md p-6">
