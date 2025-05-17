@@ -21,8 +21,8 @@ export default function CourseStats({ enrollments = 0, revenue = 0, rating = 0, 
           <CardTitle className="text-sm font-medium text-muted-foreground">Doanh thu</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">${revenue?.toLocaleString()}</div>
-          <p className="text-xs text-muted-foreground mt-1">+8% from last month</p>
+          <div className="text-2xl font-bold">{revenue?.toLocaleString()} VNĐ</div>
+          <p className="text-xs text-muted-foreground mt-1">Doanh thu từ khóa học</p>
         </CardContent>
       </Card>
 
@@ -35,7 +35,7 @@ export default function CourseStats({ enrollments = 0, revenue = 0, rating = 0, 
             {rating}
             <Star className="h-4 w-4 ml-1 fill-yellow-400 text-yellow-400" />
           </div>
-          <p className="text-xs text-muted-foreground mt-1">Based on {reviewCount} reviews</p>
+          <p className="text-xs text-muted-foreground mt-1">Dựa trên {reviewCount} đánh giá</p>
         </CardContent>
       </Card>
 

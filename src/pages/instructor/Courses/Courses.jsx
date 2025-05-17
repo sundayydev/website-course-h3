@@ -205,8 +205,7 @@ export default function CoursesPage() {
               <div className="relative h-[240px] bg-gray-100">
                 <img
                   src={
-                    import.meta.env.VITE_API_URL +
-                    (course.urlImage || '/uploads/default-course.png')
+                    (course.urlImage || import.meta.env.VITE_API_URL + '/uploads/default-course.png')
                   }
                   alt={course.title}
                   className="w-full h-full object-cover shadow-sm"

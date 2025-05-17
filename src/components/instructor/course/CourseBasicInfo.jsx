@@ -11,7 +11,6 @@ import {
 } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
 
-
 // eslint-disable-next-line react/prop-types
 export default function CourseBasicInfo({ course, category, courseId, totalLessons = 0 }) {
 
@@ -71,7 +70,7 @@ function CourseDetails({course, category, totalLessons}) {
         <div>
           <p className="text-sm text-muted-foreground">Ngày tạo</p>
           <p className="font-medium">
-            {course?.createdAt ? format(new Date(course.createdAt), 'dd/MM/yyyy') : 'N/A'}
+            {course?.createdAt ? course.createdAt.split(" ")[0] : 'N/A'}
           </p>
 
         </div>
