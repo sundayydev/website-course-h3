@@ -96,7 +96,7 @@ const ImageUploadField = ({ value, onChange, id }) => {
   };
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 w-full">
       <div className="grid w-full gap-2">
         <Label htmlFor="urlImage">URL Hình ảnh</Label>
         <Input
@@ -111,9 +111,8 @@ const ImageUploadField = ({ value, onChange, id }) => {
       <div className="my-3">
         <Label>Hoặc tải lên file</Label>
         <div
-          className={`mt-2 flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-6 transition-all ${
-            dragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'
-          }`}
+          className={`mt-2 flex flex-col items-center justify-center border-2 border-dashed rounded-lg p-6 transition-all ${dragActive ? 'border-blue-500 bg-blue-50' : 'border-gray-300 hover:border-gray-400'
+            }`}
           onDragEnter={handleDrag}
           onDragLeave={handleDrag}
           onDragOver={handleDrag}

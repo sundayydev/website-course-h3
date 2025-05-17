@@ -33,7 +33,7 @@ const flattenLevel2Comments = (comments) => {
 
 const getUserAvatar = (userProfileImage) => {
   return userProfileImage
-    ? `${import.meta.env.VITE_API_URL}${userProfileImage}`
+    ? userProfileImage
     : defaultAvatar;
 };
 

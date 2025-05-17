@@ -135,8 +135,8 @@ const CoursePopup = ({ isOpen, onClose }) => {
                     <img
                       src={
                         course.urlImage
-                          ? `${import.meta.env.VITE_API_URL}${course.urlImage}`
-                          : import.meta.env.VITE_API_URL + '/placeholder.jpg'
+                          ? `${course.urlImage}`
+                          : ''
                       }
                       className="h-16 w-16 rounded-md object-cover"
                       alt={course.title}

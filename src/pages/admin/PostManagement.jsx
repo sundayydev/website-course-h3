@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { FaSearch, FaEdit, FaTrash, FaPlus } from 'react-icons/fa';
 import { FileVideo } from 'lucide-react';
-import { getAllPost, createPost, updatePost, uploadImage, deletePost } from '@/api/postApi';
+import { getAllPost, createPost, updatePost, uploadPostImage, deletePost } from '../../api/postApi';
 import { jwtDecode } from 'jwt-decode';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -173,7 +173,7 @@ function PostManagement() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 w-[calc(1520px-250px)]">
+    <div className="container mx-auto px-4 py-8 w-full">
       <h1 className="text-2xl font-bold mb-6 text-left text-pink-500">Quản lý bài viết</h1>
 
       <div className="flex flex-col md:flex-row justify-between items-center mb-6">
@@ -226,8 +226,8 @@ function PostManagement() {
                           <img
                             src={
                               post.urlImage
-                                ? import.meta.env.VITE_API_URL + post.urlImage
-                                : import.meta.env.VITE_API_URL + '/uploads/placeholder.png'
+                                ? post.urlImage
+                                : ""
                             }
                             alt={post.title}
                             className="h-12 w-12 object-cover rounded-md mr-3"
@@ -364,8 +364,8 @@ function PostManagement() {
                     <img
                       src={
                         currentPost.urlImage
-                          ? import.meta.env.VITE_API_URL + currentPost.urlImage
-                          : import.meta.env.VITE_API_URL + '/uploads/placeholder.png'
+                          ? currentPost.urlImage
+                          : ""
                       }
                       alt="Preview"
                       className="w-full h-full object-cover"
