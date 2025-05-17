@@ -145,7 +145,7 @@ const Notifications = () => {
     }
 
     return (
-        <div className="p-6 space-y-6 w-[calc(1520px-250px)]">
+        <div className="p-6 space-y-6 w-full">
             {/* Phần tiêu đề */}
             <div className="flex justify-between items-center">
                 <div className="space-y-1">

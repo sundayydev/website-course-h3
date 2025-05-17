@@ -1,5 +1,5 @@
 import api from './axios';
-import { getAuthToken } from './authUtils';
+import { getAuthToken, isAuthenticated, getUserId } from './authUtils';
 const API_URL = '/user';
 
 export const getUsers = async () => {
@@ -78,26 +78,28 @@ export const deleteUser = async (id) => {
   });
 };
 
-// Upload ảnh đại diện
-export const uploadProfileImage = async (file, userId) => {
-  const token = getAuthToken();
+export const uploadProfileImage = async (userId, file) => {
+  const token = localStorage.getItem('authToken');
+  if (!token) {
+    throw new Error('Không tìm thấy token');
+  }
 
   const formData = new FormData();
-  formData.append('file', file);
+  formData.append('file', file); // Append the file to FormData
 
   try {
     const response = await api.post(`${API_URL}/${userId}/upload-profile-image`, formData, {
       headers: {
+        'Content-Type': 'multipart/form-data', // Optional, as FormData sets this automatically
         Authorization: `Bearer ${token}`,
-        'Content-Type': 'multipart/form-data',
       },
     });
-    return response;
+    return response.data;
   } catch (error) {
-    throw new Error(error.response?.data?.message || 'Lỗi khi tải ảnh');
+    console.error('Lỗi khi tải lên hình ảnh:', error);
+    throw error;
   }
 };
-
 export const updateUserPassword = async (id, passwordData) => {
   const token = localStorage.getItem('authToken');
   if (!token) {

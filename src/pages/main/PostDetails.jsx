@@ -36,7 +36,7 @@ const PostDetails = () => {
       <h1 className="text-3xl font-bold mb-4">{post.title}</h1>
       <div className="flex items-center space-x-4 mb-4">
         <img
-          src={import.meta.env.VITE_API_URL + post.user?.profileImage || ' '}
+          src={post.user?.profileImage || ' '}
           alt={post.user?.fullName || 'Tác giả'}
           className="w-12 h-12 rounded-full"
           onError={(e) => (e.target.src = defaultAvatar)}
@@ -50,7 +50,7 @@ const PostDetails = () => {
       </div>
       {post.urlImage && (
         <img
-          src={import.meta.env.VITE_API_URL + `${post.urlImage}`}
+          src={`${post.urlImage}`}
           alt={post.title}
           className="w-full h-full object-cover rounded-lg mb-4"
         />

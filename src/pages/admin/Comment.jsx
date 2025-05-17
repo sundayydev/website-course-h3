@@ -141,7 +141,7 @@ const Comment = () => {
   }
 
   return (
-    <div className="p-6 space-y-6 w-[calc(1520px-250px)]">
+    <div className="p-6 space-y-6 w-full">
       {/* Header Section */}
       <div className="flex justify-between items-center">
         <div className="space-y-1">

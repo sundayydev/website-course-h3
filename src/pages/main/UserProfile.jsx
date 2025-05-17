@@ -129,7 +129,7 @@ const UserProfile = () => {
         <div className="flex flex-col md:flex-row items-start gap-6">
           <div className="flex-shrink-0">
             <ProfileImage
-              src={user.profileImage ? `${import.meta.env.VITE_API_URL}${user.profileImage}` : null}
+              src={user.profileImage ? `${user.profileImage}` : null}
               onClick={() => setIsModalOpen(true)}
             />
           </div>
@@ -267,7 +267,7 @@ const UserProfile = () => {
           <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-75 p-4 z-50">
             <div className="relative max-w-md w-full">
               <img
-                src={user?.profileImage ? `${import.meta.env.VITE_API_URL}${user.profileImage}` : defaultAvatar}
+                src={user?.profileImage ? `${user.profileImage}` : defaultAvatar}
                 alt="Profile Enlarged"
                 className="rounded-lg shadow-2xl w-full"
                 loading="lazy"
@@ -308,7 +308,7 @@ const UserProfile = () => {
                       }}
                     >
                       <img
-                        src={follower.followerProfileImage ? `${import.meta.env.VITE_API_URL}${follower.followerProfileImage}` : defaultAvatar}
+                        src={follower.followerProfileImage ? `${follower.followerProfileImage}` : defaultAvatar}
                         alt={follower.followerFullName || 'Không có tên'}
                         className="w-10 h-10 rounded-full"
                       />
@@ -353,7 +353,7 @@ const UserProfile = () => {
                       }}
                     >
                       <img
-                        src={followedUser.followingProfileImage ? `${import.meta.env.VITE_API_URL}${followedUser.followingProfileImage}` : defaultAvatar}
+                        src={followedUser.followingProfileImage ? `${followedUser.followingProfileImage}` : defaultAvatar}
                         alt={followedUser.followingFullName || 'Không có tên'}
                         className="w-10 h-10 rounded-full"
                       />

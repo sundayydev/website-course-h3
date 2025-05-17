@@ -178,7 +178,7 @@ const PaymentManagement = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 w-[calc(1500px-250px)]">
+    <div className="container mx-auto px-4 py-8 w-full">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Quản lý đơn hàng</h1>
         <div className="flex gap-2">

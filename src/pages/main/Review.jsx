@@ -11,7 +11,7 @@ import { formatDate } from '../../utils/formatDate';
 
 const getUserAvatar = (userProfileImage) => {
   return userProfileImage
-    ? `${import.meta.env.VITE_API_URL}${userProfileImage}`
+    ? userProfileImage
     : defaultAvatar;
 };
 

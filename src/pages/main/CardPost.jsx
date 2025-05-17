@@ -31,19 +31,19 @@ const CardPost = () => {
   if (loading) return <p>Đang tải bài viết...</p>;
 
   return (
-    <div className="p-4">
+    <div className="p-4 mx-auto">
       <h1 className="text-3xl font-bold text-left mb-8">Bài viết nổi bật</h1>
-      <div className="flex flex-wrap justify-start gap-4">
+      <div className="flex flex-wrap justify-start gap-10">
         {posts.map((post, index) => (
           <div
             key={index}
-            className="rounded-2xl shadow-lg overflow-hidden bg-white w-full md:w-1/3 lg:w-[275px] 
+            className="rounded-2xl shadow-lg overflow-hidden bg-white w-full md:w-1/3 lg:w-[325px] 
               transform transition-transform duration-300 hover:scale-105 flex flex-col cursor-pointer"
             onClick={() => navigate(`/detailspost/${post.id}`)}
           >
             <div className="flex-grow">
               <img
-                src={`${import.meta.env.VITE_API_URL}${post.urlImage}`}
+                src={`${post.urlImage}`}
                 className="w-full h-40 object-cover rounded-t-2xl"
               />
             </div>
@@ -52,7 +52,7 @@ const CardPost = () => {
               <div className="flex items-center justify-between text-xs text-gray-500">
                 <div className="flex items-center gap-2">
                   <img
-                    src={`${import.meta.env.VITE_API_URL}${post.user.profileImage}`}
+                    src={`${post.user.profileImage}`}
                     alt="Avatar"
                     className="w-8 h-8 rounded-full object-cover"
                     onError={(e) => (e.target.src = defaultAvatar)}

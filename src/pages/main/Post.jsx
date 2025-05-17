@@ -71,7 +71,7 @@ const Post = () => {
                   >
                     <div className="flex items-center gap-3">
                       <img
-                        src={post.user?.profileImage ? `${import.meta.env.VITE_API_URL}/${post.user.profileImage}` : defaultAvatar}
+                        src={post.user.profileImage ? `${post.user.profileImage}` : defaultAvatar}
                         alt="Avatar"
                         className="w-10 h-10 rounded-full object-cover"
                         onError={(e) => (e.target.src = defaultAvatar)}
@@ -84,7 +84,7 @@ const Post = () => {
                         <p className="text-sm text-gray-600 line-clamp-2">{post.content}</p>
                       </div>
                       <img
-                        src={post.urlImage ? `${import.meta.env.VITE_API_URL}/${post.urlImage}` : defaultAvatar}
+                        src={post.urlImage ? `${post.urlImage}` : defaultAvatar}
                         alt="Ảnh bài viết"
                         className="w-[200px] h-[120px] md:w-40 md:h-28 rounded-lg object-cover"
                       />

@@ -166,14 +166,20 @@ const ProfilePage = () => {
   const handleImageChange = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-
+    if (!['image/jpeg', 'image/png', 'image/gif'].includes(file.type)) {
+      toast.error('Chỉ hỗ trợ định dạng JPEG, PNG, hoặc GIF!');
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) { // 5MB limit
+      toast.error('Kích thước tệp không được vượt quá 5MB!');
+      return;
+    }
+    // Proceed with upload
     setIsLoading(true);
     try {
       const userId = getUserId();
-      console.log("userId:", userId);
-      const { data } = await uploadProfileImage(file, userId);
-      console.log("data:", data);
-      setUser(prev => ({ ...prev, profileImage: data.profileImage }));
+      const { data } = await uploadProfileImage(userId, file);
+      setUser(prev => ({ ...prev, profileImage: data.ImageUrl }));
       toast.success('Cập nhật ảnh thành công!');
     } catch (err) {
       toast.error(err.message || 'Lỗi khi cập nhật ảnh!');
@@ -243,7 +249,7 @@ const ProfilePage = () => {
         <div className="flex flex-col md:flex-row items-start gap-6">
           <div className="flex-shrink-0">
             <ProfileImage
-              src={user.profileImage ? `${import.meta.env.VITE_API_URL}${user.profileImage}` : null}
+              src={user.profileImage ? `${user.profileImage}` : null}
               onClick={() => setIsModalOpen(true)}
               onImageChange={handleImageChange}
             />
@@ -373,7 +379,7 @@ const ProfilePage = () => {
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-75 p-4 z-50">
           <div className="relative max-w-md w-full">
             <img
-              src={user?.profileImage ? `${import.meta.env.VITE_API_URL}${user.profileImage}` : defaultAvatar}
+              src={user?.profileImage ? `${user.profileImage}` : defaultAvatar}
               alt="Profile Enlarged"
               className="rounded-lg shadow-2xl w-full"
               loading="lazy"

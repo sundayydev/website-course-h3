@@ -42,20 +42,25 @@ export const deletePost = (id) => {
   });
 };
 
-export const uploadImage = (id, file) => {
+export const uploadPostImage = async (postId, file) => {
   const token = localStorage.getItem('authToken');
   if (!token) {
     throw new Error('Không tìm thấy token');
   }
 
-  // Tạo FormData object để gửi file
   const formData = new FormData();
-  formData.append('file', file); // 'file' là key mà server mong đợi
+  formData.append('file', file);
 
-  return api.post(`${API_URL}/upload-image/${id}`, formData, {
-    headers: {
-      Authorization: `Bearer ${token}`,
-      'Content-Type': 'multipart/form-data', // Không cần set thủ công vì FormData tự xử lý
-    },
-  });
+  try {
+    const response = await api.post(`${API_URL}/${postId}/upload-image`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi tải lên hình ảnh:', error);
+    throw error;
+  }
 };
