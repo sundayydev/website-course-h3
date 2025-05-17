@@ -69,6 +69,7 @@ import CourseBasicInfo from '@/components/instructor/course/CourseBasicInfo';
 import { getCourseById } from '@/api/courseApi';
 import { getUserById } from '@/api/userApi';
 import { getCategoryById } from '@/api/categoryApi';
+import { getReviewsByCourseId } from '@/api/reviewApi'
 
 export default function CourseDetail() {
   // Mock data based on the provided models
@@ -186,33 +187,60 @@ export default function CourseDetail() {
   const [totalLessons, setTotalLessons] = useState(
     chapters.reduce((total, chapter) => total + chapter.lessons.length, 0));
 
+
+  const coursesCount = 0;
+  const enrolledStudents = 0;
   
   useEffect(() => {
-    const fetchCourseDetails = async () => {
+    const fetchData = async () => {
+      // First fetch course data
       const data = await getCourseById(courseId);
       setCourse(data);
+      
+      // Then fetch instructor and category details only if course data exists
+      if (data) {
+        const instructorData = await getUserById(data.instructorId);
+        setInstructor(instructorData.data);
+        
+        const categoryData = await getCategoryById(data.categoryId);
+        setCategory(categoryData);
+
+        const reviewsData = await getReviewsByCourseId(data.id)
+        setReviews(reviewsData);
+      }
     };
-
-    const fetchInstructorDetails = async () => {
-      const instructorData = await getUserById(course.instructorId);
-      setInstructor(instructorData);
-    };
-
-    const fetchCategoryDetails = async () => {
-      const categoryData = await getCategoryById(course.categoryId);
-      setCategory(categoryData);
-    }
-
-    fetchCategoryDetails();
-    fetchInstructorDetails();
-    fetchCourseDetails();
-  }, [courseId, course.instructorId, course.categoryId]);
+    
+    fetchData();
+  }, [courseId]);
 
   const formatDuration = (minutes) => {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
     return `${hours}h ${mins}m`;
   };
+
+  const calculateAverageRating = (reviews) => {
+    // Kiểm tra nếu mảng reviews rỗng hoặc không tồn tại
+    if (!reviews || reviews.length === 0) {
+      return 0;
+    }
+    
+    // Tính tổng tất cả các rating
+    const totalRating = reviews.reduce((sum, review) => {
+      // Kiểm tra nếu review có rating và rating là số hợp lệ
+      const rating = parseFloat(review.rating);
+      return !isNaN(rating) ? sum + rating : sum;
+    }, 0);
+    
+    // Tính trung bình và làm tròn đến 1 chữ số thập phân
+    const averageRating = totalRating / reviews.length;
+    return Math.round(averageRating * 10) / 10;
+  };
+
+  const userReview = async (userId) => {
+    const data = await getUserById(userId);
+    return data.fullName
+  }
 
   if (!course) {
     return (
@@ -258,14 +286,14 @@ export default function CourseDetail() {
             </SelectContent>
           </Select>
 
-          <Button variant="outline" size="icon" onClick={() => router.push(`/courses/${courseId}`)}>
+          <Button variant="outline" size="icon" onClick={() => navigate(`/details/${courseId}`)}>
             <Eye className="h-4 w-4" />
           </Button>
 
           <Button
             variant="outline"
             size="icon"
-            onClick={() => router.push(`/admin/courses/${courseId}/edit`)}
+            onClick={() => navigate(`/instructor/courses/${courseId}/edit`)}
           >
             <Edit className="h-4 w-4" />
           </Button>
@@ -275,20 +303,20 @@ export default function CourseDetail() {
       </div>
 
       {/* Course Stats */}
-      <CourseStats reviewCount={0} />
+      <CourseStats rating={calculateAverageRating(reviews)} reviewCount={reviews.length}/>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main content - 2/3 width on large screens */}
         <div className="lg:col-span-2 space-y-8">
           {/* Course Basic Info */}
-          <CourseBasicInfo courseId={courseId} course={course}/>
+          <CourseBasicInfo courseId={courseId} course={course} category={category}/>
 
           {/* Content Tabs */}
           <Tabs defaultValue="curriculum">
             <TabsList className="grid w-full grid-cols-4">
               <TabsTrigger value="curriculum">Curriculum</TabsTrigger>
               <TabsTrigger value="enrollments">Enrollments</TabsTrigger>
-              <TabsTrigger value="reviews">Reviews</TabsTrigger>
+              <TabsTrigger value="reviews">Đánh giá</TabsTrigger>
               <TabsTrigger value="analytics">Analytics</TabsTrigger>
             </TabsList>
 
@@ -302,7 +330,7 @@ export default function CourseDetail() {
                   </div>
                   <Button
                     size="sm"
-                    onClick={() => router.push(`/admin/courses/${courseId}/curriculum/edit`)}
+                    onClick={() => navigate(`/instructor/courses/${courseId}/curriculum/edit`)}
                   >
                     Edit Curriculum
                   </Button>
@@ -372,7 +400,7 @@ export default function CourseDetail() {
                         No curriculum content has been added yet.
                       </p>
                       <Button
-                        onClick={() => router.push(`/admin/courses/${courseId}/curriculum/create`)}
+                        onClick={() => navigate(`/instructor/courses/${courseId}/curriculum/create`)}
                       >
                         Create Curriculum
                       </Button>
@@ -451,7 +479,7 @@ export default function CourseDetail() {
                             <Button
                               variant="ghost"
                               size="sm"
-                              onClick={() => router.push(`/admin/students/${enrollment.id}`)}
+                              onClick={() => navigate(`/admin/students/${enrollment.id}`)}
                             >
                               View Details
                             </Button>
@@ -476,8 +504,8 @@ export default function CourseDetail() {
             <TabsContent value="reviews" className="mt-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Course Reviews</CardTitle>
-                  <CardDescription>Manage student reviews and ratings</CardDescription>
+                  <CardTitle>Đánh giá khóa học</CardTitle>
+                  <CardDescription>Quản lý đánh giá và xếp hạng của học viên</CardDescription>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-6">
@@ -485,7 +513,7 @@ export default function CourseDetail() {
                       <div key={review.id} className="p-4 border rounded-lg">
                         <div className="flex items-center justify-between mb-2">
                           <div className="flex items-center gap-2">
-                            <div className="font-medium">{review.studentName}</div>
+                            <div className="font-medium">{review.userFullName}</div>
                             <div className="flex items-center">
                               {[...Array(5)].map((_, i) => (
                                 <Star
@@ -496,7 +524,7 @@ export default function CourseDetail() {
                             </div>
                           </div>
                           <div className="flex items-center gap-2">
-                            <Badge
+                            {/* <Badge
                               variant={
                                 review.status === 'approved'
                                   ? 'default'
@@ -506,9 +534,9 @@ export default function CourseDetail() {
                               }
                             >
                               {review.status}
-                            </Badge>
+                            </Badge> */}
                             <div className="text-xs text-muted-foreground">
-                              {format(new Date(review.date), 'MMM d, yyyy')}
+                              {review.createdAt}
                             </div>
                           </div>
                         </div>
@@ -528,7 +556,7 @@ export default function CourseDetail() {
                           )}
                           <Button variant="ghost" size="sm" className="text-red-600">
                             <XCircle className="mr-1 h-4 w-4" />
-                            Remove
+                            Xóa đánh giá
                           </Button>
                         </div>
                       </div>
@@ -591,7 +619,7 @@ export default function CourseDetail() {
             {/* Instructor Info */}
             <Card>
               <CardHeader>
-                <CardTitle>Instructor</CardTitle>
+                <CardTitle>Người tạo</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 {instructor ? (
@@ -600,7 +628,7 @@ export default function CourseDetail() {
                       {instructor.avatarUrl ? (
                         <img
                           src={instructor.avatarUrl}
-                          alt={instructor.name}
+                          alt={instructor.fullName}
                           className="rounded-full w-[64px] h-[64px] object-cover"
                         />
                       ) : (
@@ -609,7 +637,7 @@ export default function CourseDetail() {
                         </div>
                       )}
                       <div>
-                        <h3 className="font-medium">{instructor.name}</h3>
+                        <h3 className="font-medium">{instructor.fullName}</h3>
                         <p className="text-sm text-muted-foreground">{instructor.email}</p>
                       </div>
                     </div>
@@ -617,11 +645,11 @@ export default function CourseDetail() {
                     <div className="grid grid-cols-2 gap-4 text-sm">
                       <div>
                         <p className="text-muted-foreground">Total Courses</p>
-                        <p className="font-medium">{instructor.coursesCount}</p>
+                        <p className="font-medium">{coursesCount}</p>
                       </div>
                       <div>
                         <p className="text-muted-foreground">Total Students</p>
-                        <p className="font-medium">{instructor.enrolledStudents}</p>
+                        <p className="font-medium">{enrolledStudents}</p>
                       </div>
                     </div>
 
@@ -632,7 +660,7 @@ export default function CourseDetail() {
                     <Button
                       variant="outline"
                       className="w-full"
-                      onClick={() => router.push(`/admin/instructors/${instructor.id}`)}
+                      onClick={() => navigate(`/instructors/profile/${instructor.id}`)}
                     >
                       View Full Profile
                     </Button>
