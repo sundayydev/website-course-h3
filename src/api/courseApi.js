@@ -1,5 +1,5 @@
 
-import { getAuthToken } from './authUtils';
+import { getAuthToken, getUserId } from './authUtils';
 import api from './axios';
 
 const API_URL = '/course';
@@ -34,25 +34,22 @@ export const getCourseById = async (courseId) => {
 };
 
 export const createCourse = async (data) => {
-  const token = localStorage.getItem('authToken');
-  if (!token) {
-    throw new Error('Không tìm thấy token');
-  }
 
-  const decodedToken = getAuthToken(token);
 
   const newData = {
     title: data.title,
     description: data.description,
     price: data.price,
-    instructorId: decodedToken.id,
-    contents: data.contents.split('\n').filter((line) => line.trim() !== ''),
+    instructorId: getUserId(),
+    contents: data.contents,
+    categoryId: data.categoryId,
+    urlImage: data.urlImage
   };
   console.log('New Data: ', newData);
   try {
     const response = await api.post(`${API_URL}`, newData, {
       headers: {
-        Authorization: `Bearer ${token}`,
+        Authorization: `Bearer ${getAuthToken()}`,
         'Content-Type': 'application/json',
       },
     });
@@ -76,7 +73,7 @@ export const updateCourse = async (id, data) => {
     description: data.description,
     price: data.price,
     instructorId: decodedToken.id,
-    contents: data.contents.split('\n').filter((line) => line.trim() !== ''),
+    contents: data.contents,
   };
   try {
     const response = await api.put(`${API_URL}/${id}`, updatedData, {
@@ -111,18 +108,13 @@ export const deleteCourse = async (id) => {
   }
 };
 
-export const uploadImage = async (id, urlImage) => {
-  const token = localStorage.getItem('authToken');
-  if (!token) {
-    throw new Error('Không tìm thấy token');
-  }
-
-  const data = {
-    file: urlImage,
-  };
-
+export const uploadImage = async (urlImage) => {
+  const token = getAuthToken();
+  const formData = new FormData();
+  formData.append("file", urlImage); // "file" phải trùng với tên trong controller
+  console.log("UrlImage", urlImage)
   try {
-    const response = await api.post(`${API_URL}/upload-image/${id}`, data, {
+    const response = await api.post(`${API_URL}/upload-image`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
         Authorization: `Bearer ${token}`,
