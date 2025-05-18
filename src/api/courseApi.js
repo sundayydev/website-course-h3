@@ -61,19 +61,16 @@ export const createCourse = async (data) => {
 };
 
 export const updateCourse = async (id, data) => {
-  const token = localStorage.getItem('authToken');
-  if (!token) {
-    throw new Error('Không tìm thấy token');
-  }
-
-  const decodedToken = getAuthToken(token);
+  const token = getAuthToken();
 
   const updatedData = {
     title: data.title,
     description: data.description,
     price: data.price,
-    instructorId: decodedToken.id,
+    instructorId: getUserId(),
+    categoryId: data.categoryId,
     contents: data.contents,
+    urlImage: data.urlImage,
   };
   try {
     const response = await api.put(`${API_URL}/${id}`, updatedData, {

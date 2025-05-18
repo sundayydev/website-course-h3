@@ -293,7 +293,7 @@ export default function CourseDetail() {
           <Button
             variant="outline"
             size="icon"
-            onClick={() => navigate(`/instructor/courses/${courseId}/edit`)}
+            onClick={() => navigate(`/instructor/course/${courseId}/edit`)}
           >
             <Edit className="h-4 w-4" />
           </Button>
