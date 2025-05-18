@@ -215,7 +215,7 @@ const LessonDetail = () => {
   }
 
   return (
-    <div className="container mx-auto px-4 py-8 w-[calc(1520px-250px)]">
+    <div className="container mx-auto px-4 py-8 w-full">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
           <Button variant="outline" size="icon">

@@ -158,7 +158,7 @@ const Courses = () => {
   }
 
   return (
-    <div className="p-6 space-y-6 w-[calc(1520px-250px)]">
+    <div className="p-6 space-y-6 w-full">
       {/* Header Section */}
       <div className="flex justify-between items-center">
         <div className="space-y-1">
@@ -285,8 +285,8 @@ const Courses = () => {
                     <img
                       src={
                         editingCourse?.urlImage
-                          ? import.meta.env.VITE_API_URL + editingCourse.urlImage
-                          : import.meta.env.VITE_API_URL + '/uploads/placeholder.png'
+                          ? editingCourse.urlImage
+                          : ""
                       }
                       alt="Preview"
                       className="w-full h-full object-cover"
@@ -378,8 +378,8 @@ const Courses = () => {
                         <img
                           src={
                             course.urlImage
-                              ? import.meta.env.VITE_API_URL + course.urlImage
-                              : import.meta.env.VITE_API_URL + '/uploads/placeholder.png'
+                              ? course.urlImage
+                              : ""
                           }
                           alt={course.title}
                           className="h-12 w-12 rounded-lg object-cover border"

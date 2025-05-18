@@ -154,7 +154,7 @@ const Lessons = () => {
   }
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="p-6 space-y-6 w-full">
       {/* Header Section */}
       <div className="flex justify-between items-center">
         <div className="space-y-1">

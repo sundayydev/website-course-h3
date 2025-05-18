@@ -213,7 +213,7 @@ const CourseDetail = () => {
 
   // Main render
   return (
-    <div className="p-6 space-y-6 w-[calc(1520px-250px)]">
+    <div className="p-6 space-y-6 w-full">
       {/* Header Section */}
       <div className="flex items-center gap-4">
         <Button
@@ -438,8 +438,8 @@ const CourseDetail = () => {
                   <img
                     src={
                       course.urlImage
-                        ? import.meta.env.VITE_API_URL + course.urlImage
-                        : import.meta.env.VITE_API_URL + '/uploads/placeholder.png'
+                        ? course.urlImage
+                        : ""
                     }
                     alt={course.title}
                     className="w-[460px] h-[259px] object-cover"

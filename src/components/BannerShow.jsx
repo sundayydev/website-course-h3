@@ -30,14 +30,13 @@ const BannerShow = () => {
   };
 
   return (
-    <div className="container mx-auto">
+    <div className="p-4 mx-auto">
       <div className="relative w-full h-[270px] overflow-hidden rounded-2xl mt-16">
         {images.map((image, index) => (
           <div
             key={index}
-            className={`absolute inset-0 transition-opacity duration-1000 ${
-              index === currentIndex ? 'opacity-100' : 'opacity-0'
-            }`}
+            className={`absolute inset-0 transition-opacity duration-1000 ${index === currentIndex ? 'opacity-100' : 'opacity-0'
+              }`}
           >
             <img src={image} alt={`Slide ${index}`} className="w-full h-full object-cover" />
           </div>
@@ -65,9 +64,8 @@ const BannerShow = () => {
             <button
               key={index}
               onClick={() => goToSlide(index)}
-              className={`w-3 h-3 rounded-full ${
-                index === currentIndex ? 'bg-white' : 'bg-gray-500'
-              }`}
+              className={`w-3 h-3 rounded-full ${index === currentIndex ? 'bg-white' : 'bg-gray-500'
+                }`}
             />
           ))}
         </div>

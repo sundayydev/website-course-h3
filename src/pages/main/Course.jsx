@@ -107,18 +107,19 @@ const CourseList = () => {
   };
 
   return (
-    <div className="p-4 max-w-7xl mx-auto">
+    <div className="p-4 mx-auto">
       <h1 className="text-3xl font-bold text-left mb-8">Khóa học</h1>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="flex flex-wrap justify-start gap-10">
         {courses.map((course) => (
           <div
             key={course.id}
-            className="rounded-2xl shadow-lg overflow-hidden bg-white transform transition-transform duration-300 hover:scale-105 cursor-pointer flex flex-col"
+            className="rounded-2xl shadow-lg overflow-hidden bg-white w-full md:w-1/3 lg:w-[325px] 
+              transform transition-transform duration-300 hover:scale-105 flex flex-col cursor-pointer"
             onClick={() => handleCourseClick(course.id)}
           >
             <div className="relative">
               <img
-                src={course.urlImage ? `${import.meta.env.VITE_API_URL}${course.urlImage}` : ' '}
+                src={course.urlImage ? `${course.urlImage}` : ' '}
                 className="w-full h-40 object-cover"
                 alt={course.title}
                 onError={(e) => (e.target.src = '')}

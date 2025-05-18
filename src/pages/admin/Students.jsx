@@ -36,7 +36,6 @@ import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { CalendarIcon } from 'lucide-react';
 
-const API_URL = import.meta.env.VITE_API_URL;
 
 const Students = () => {
   const [students, setStudents] = useState([]);
@@ -163,7 +162,7 @@ const Students = () => {
   }
 
   return (
-    <div className="p-6 space-y-6 w-[calc(1520px-250px)]">
+    <div className="p-6 space-y-6 w-full">
       {/* Header Section */}
       <div className="flex justify-between items-center">
         <div className="space-y-1">
@@ -321,7 +320,7 @@ const Students = () => {
                       <img
                         src={
                           editingStudent?.profileImage
-                            ? `${API_URL}/${editingStudent.profileImage}`
+                            ? editingStudent.profileImage
                             : formData.avatar instanceof File
                               ? URL.createObjectURL(formData.avatar)
                               : formData.avatar
@@ -375,12 +374,11 @@ const Students = () => {
               <div
                 className="bg-green-500 h-2.5 rounded-full"
                 style={{
-                  width: `${
-                    students.length > 0
-                      ? (students.filter((s) => s.status === 'Enrolled').length / students.length) *
-                        100
-                      : 0
-                  }%`,
+                  width: `${students.length > 0
+                    ? (students.filter((s) => s.status === 'Enrolled').length / students.length) *
+                    100
+                    : 0
+                    }%`,
                 }}
               ></div>
             </div>
@@ -444,7 +442,7 @@ const Students = () => {
                   <TableRow key={student.id}>
                     <TableCell className="flex items-center gap-3">
                       <Avatar>
-                        <AvatarImage src={`${API_URL}/${student.profileImage}`} />
+                        <AvatarImage src={student.profileImage ? `${student.profileImage}` : null} />
                         <AvatarFallback>
                           {student.fullName?.charAt(0).toUpperCase() || '?'}
                         </AvatarFallback>
