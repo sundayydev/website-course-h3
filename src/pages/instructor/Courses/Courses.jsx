@@ -117,6 +117,7 @@ export default function CoursesPage() {
           <Button
             variant={'outline'}
             className="bg-green-600 hover:bg-green-700 text-white shadow-sm"
+            onClick={() => navigate('/instructor/course/add')}
           >
             <span className="text-white">Thêm Khóa Học Mới</span>
             <Plus size={16} className="ml-2 text-white" />
@@ -205,7 +206,7 @@ export default function CoursesPage() {
               <div className="relative h-[240px] bg-gray-100">
                 <img
                   src={
-                    (course.urlImage || import.meta.env.VITE_API_URL + '/uploads/default-course.png')
+                    course.urlImage || import.meta.env.VITE_API_URL + '/uploads/default-course.png'
                   }
                   alt={course.title}
                   className="w-full h-full object-cover shadow-sm"

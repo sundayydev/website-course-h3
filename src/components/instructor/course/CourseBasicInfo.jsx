@@ -32,7 +32,7 @@ export default function CourseBasicInfo({ course, category, courseId, totalLesso
         <Button
           variant="outline"
           size="sm"
-          onClick={() => navigate(`/instructor/courses/${courseId}/edit`)}
+          onClick={() => navigate(`/instructor/course/${courseId}/edit`)}
         >
           <Edit className="mr-2 h-4 w-4" />
           Chỉnh sửa khóa học
