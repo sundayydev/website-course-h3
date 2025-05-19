@@ -91,3 +91,58 @@ export const deleteLesson = async (id) => {
     throw new Error('Không thể xóa bài học');
   }
 };
+
+// Upload video
+export const uploadVideoLesson = async (videoData, onProgress) => {
+  const formData = new FormData();
+  formData.append('file', videoData);
+  try {
+    const response = await api.post(`${API_URL}/upload-video`, formData, {
+      headers: {
+        'Content-Type': 'multipart/form-data',
+      },
+      onUploadProgress: (progressEvent) => {
+        const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
+        onProgress && onProgress(percentCompleted);
+      },
+    });
+    return response.data;
+  } catch (error) {
+    throw new Error('Không thể tải lên video');
+  }
+};
+
+// Get video preview URL
+export const getVideoPreviewUrl = (videoFile) => {
+  return new Promise((resolve, reject) => {
+    if (!videoFile) {
+      reject(new Error('No video file provided'));
+      return;
+    }
+
+    const video = document.createElement('video');
+    video.preload = 'metadata';
+    video.onloadedmetadata = () => {
+      URL.revokeObjectURL(video.src);
+      resolve({
+        url: URL.createObjectURL(videoFile),
+        duration: video.duration,
+      });
+    };
+    video.onerror = () => {
+      URL.revokeObjectURL(video.src);
+      reject(new Error('Error loading video metadata'));
+    };
+    video.src = URL.createObjectURL(videoFile);
+  });
+};
+
+// Lấy video lesson
+export const getVideoLesson = async (nameVideo) => {
+  try {
+    const response = await api.get(`${API_URL}/stream/${nameVideo}`);
+    return response.data;
+  } catch (error) {
+    throw new Error('Không thể lấy video lesson');
+  }
+};

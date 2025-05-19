@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import {
   Card,
@@ -20,10 +20,13 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Progress } from '@/components/ui/progress';
 import { getCourseById } from '@/api/courseApi';
 import { getChapters, createChapter } from '@/api/chapterApi';
-import { createLesson } from '@/api/lessonApi';
+import { createLesson, uploadVideoLesson, getVideoPreviewUrl } from '@/api/lessonApi';
 import MDEditor from '@uiw/react-md-editor';
+import { Upload, X, Video } from 'lucide-react';
+import { toast } from 'react-toastify';
 
 export default function AddContent() {
   const navigate = useNavigate();
@@ -55,6 +58,11 @@ export default function AddContent() {
   const [error, setError] = useState(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [activeTab, setActiveTab] = useState('lesson');
+  const [videoFile, setVideoFile] = useState(null);
+  const [videoPreview, setVideoPreview] = useState(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef(null);
 
   // Fetch course and chapters
   useEffect(() => {
@@ -92,6 +100,64 @@ export default function AddContent() {
     setChapterData((prev) => ({ ...prev, [name]: value }));
   };
 
+  // Handle video file selection
+  const handleVideoChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('video/')) {
+      toast.error('Vui lòng chọn file video hợp lệ');
+      return;
+    }
+
+    // Validate file size (max 500MB)
+    if (file.size > 500 * 1024 * 1024) {
+      toast.error('Kích thước video không được vượt quá 500MB');
+      return;
+    }
+
+    setVideoFile(file);
+    try {
+      const preview = await getVideoPreviewUrl(file);
+      setVideoPreview(preview);
+      setLessonData((prev) => ({
+        ...prev,
+        duration: Math.round(preview.duration / 60), // Convert to minutes
+        videoName: file.name,
+      }));
+    } catch (error) {
+      toast.error('Không thể tạo preview video');
+    }
+  };
+
+  // Handle video upload
+  const handleVideoUpload = async () => {
+    if (!videoFile) return;
+
+    setIsUploading(true);
+    setUploadProgress(0);
+
+    try {
+      const response = await uploadVideoLesson(videoFile, (progress) => {
+        setUploadProgress(progress);
+      });
+
+      console.log('response', response);
+
+      setLessonData((prev) => ({
+        ...prev,
+        videoName: response.url,
+      }));
+
+      toast.success('Tải lên video thành công');
+    } catch (error) {
+      toast.error('Không thể tải lên video');
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   // Handle lesson form submission
   const handleLessonSubmit = async (e) => {
     e.preventDefault();
@@ -104,6 +170,11 @@ export default function AddContent() {
         throw new Error('Vui lòng điền đầy đủ thông tin bắt buộc');
       }
 
+      // Upload video if exists
+      if (videoFile && !lessonData.videoName) {
+        await handleVideoUpload();
+      }
+
       // Prepare payload
       const payload = {
         ...lessonData,
@@ -111,11 +182,13 @@ export default function AddContent() {
         orderNumber: parseInt(lessonData.orderNumber) || 0,
       };
 
+      console.log('payload', payload);
+
       // Call API to create lesson
       const response = await createLesson(payload);
 
       // Navigate to course management page
-      navigate(`/instructor/courses/${courseId}/lessons`);
+      // navigate(`/instructor/course/${courseId}/lessons`);
     } catch (err) {
       setError(err.message || 'Không thể tạo bài học');
     } finally {
@@ -244,14 +317,76 @@ export default function AddContent() {
                     </div>
 
                     <div className="space-y-2">
-                      <Label htmlFor="videoName">Tên video</Label>
-                      <Input
-                        id="videoName"
-                        name="videoName"
-                        value={lessonData.videoName}
-                        onChange={handleLessonInputChange}
-                        placeholder="Nhập tên video (nếu có)"
-                      />
+                      <Label>Video bài học</Label>
+                      <div
+                        className={`
+                          border-2 border-dashed rounded-lg p-6
+                          ${isUploading ? 'border-gray-300' : 'border-gray-300 hover:border-pink-500'}
+                          transition-colors cursor-pointer
+                        `}
+                        onClick={() => !isUploading && fileInputRef.current?.click()}
+                      >
+                        <input
+                          ref={fileInputRef}
+                          type="file"
+                          accept="video/*"
+                          className="hidden"
+                          onChange={handleVideoChange}
+                          disabled={isUploading}
+                        />
+
+                        <div className="flex flex-col items-center gap-2">
+                          <Upload className="h-8 w-8 text-gray-400" />
+                          <div className="text-center">
+                            <p className="text-sm font-medium">
+                              {isUploading
+                                ? 'Đang tải lên...'
+                                : 'Kéo thả hoặc click để tải video lên'}
+                            </p>
+                            <p className="text-xs text-gray-500">MP4, WebM, MOV (tối đa 500MB)</p>
+                          </div>
+                        </div>
+
+                        {isUploading && (
+                          <div className="mt-4 space-y-2">
+                            <Progress value={uploadProgress} className="h-2" />
+                            <p className="text-sm text-center text-gray-500">
+                              {uploadProgress}% hoàn thành
+                            </p>
+                          </div>
+                        )}
+                      </div>
+
+                      {videoPreview && (
+                        <div className="mt-4 space-y-2">
+                          <div className="relative rounded-lg overflow-hidden border">
+                            <video
+                              src={videoPreview.url}
+                              controls
+                              className="w-full aspect-video"
+                            />
+                            <Button
+                              variant="destructive"
+                              size="icon"
+                              className="absolute top-2 right-2"
+                              onClick={() => {
+                                setVideoFile(null);
+                                setVideoPreview(null);
+                                setLessonData((prev) => ({
+                                  ...prev,
+                                  videoName: '',
+                                  duration: '',
+                                }));
+                              }}
+                            >
+                              <X className="h-4 w-4" />
+                            </Button>
+                          </div>
+                          <p className="text-sm text-gray-500">
+                            {videoFile?.name} ({(videoFile?.size / (1024 * 1024)).toFixed(2)} MB)
+                          </p>
+                        </div>
+                      )}
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
