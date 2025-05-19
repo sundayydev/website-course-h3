@@ -72,106 +72,6 @@ import { getCategoryById } from '@/api/categoryApi';
 import { getReviewsByCourseId } from '@/api/reviewApi'
 
 export default function CourseDetail() {
-  // Mock data based on the provided models
-  // const course = useMemo(
-  //   () => ({
-  //     id: 'CRS-xj4k2m9p',
-  //     title: 'Web Development Masterclass',
-  //     description:
-  //       'A comprehensive course covering all aspects of modern web development from basics to advanced concepts.',
-  //     price: 299.99,
-  //     urlImage: '/api/placeholder/640/360',
-  //     instructorId: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
-  //     categoryId: '5da85f64-5717-4562-b3fc-2c963f66afb7',
-  //     createdAt: '01-05-2025 14:30:45',
-  //     user: {
-  //       id: '3fa85f64-5717-4562-b3fc-2c963f66afa6',
-  //       fullName: 'John Smith',
-  //       email: 'john.smith@example.com',
-  //       profileImage: '/api/placeholder/100/100',
-  //       role: 'Teacher',
-  //     },
-  //     category: {
-  //       id: '5da85f64-5717-4562-b3fc-2c963f66afb7',
-  //       name: 'Programming',
-  //       description: 'Learn programming and software development skills',
-  //     },
-  //     contents: [
-  //       'HTML5 & CSS3 Fundamentals',
-  //       'JavaScript Programming',
-  //       'Responsive Design',
-  //       'Backend Development with Node.js',
-  //     ],
-  //   }),
-  //   []
-  // );
-
-  // // Mock chapters and lessons data
-  // const chapters = [
-  //   {
-  //     id: '6fa85f64-5717-4562-b3fc-2c963f66afc8',
-  //     title: 'Getting Started with Web Development',
-  //     courseId: 'CRS-xj4k2m9p',
-  //     orderNumber: 1,
-  //     description: 'Introduction to the fundamental concepts of web development',
-  //     lessons: [
-  //       {
-  //         id: 'LES-r8k2n3p5',
-  //         title: 'Introduction to HTML',
-  //         description: 'Learn the basics of HTML markup language',
-  //         content: "In this lesson, we'll cover the structure of HTML documents...",
-  //         videoUrls: ['https://example.com/videos/intro-html.mp4'],
-  //         duration: 45,
-  //         orderNumber: 1,
-  //         status: 'Approved',
-  //       },
-  //       {
-  //         id: 'LES-t9m4p6s2',
-  //         title: 'CSS Basics',
-  //         description: 'Understanding CSS styling for web pages',
-  //         content: 'CSS is used to style HTML elements...',
-  //         videoUrls: [
-  //           'https://example.com/videos/css-basics-1.mp4',
-  //           'https://example.com/videos/css-basics-2.mp4',
-  //         ],
-  //         duration: 60,
-  //         orderNumber: 2,
-  //         status: 'Approved',
-  //       },
-  //     ],
-  //   },
-  //   {
-  //     id: '7fa85f64-5717-4562-b3fc-2c963f66afd9',
-  //     title: 'JavaScript Fundamentals',
-  //     courseId: 'CRS-xj4k2m9p',
-  //     orderNumber: 2,
-  //     description: 'Learn the basics of JavaScript programming language',
-  //     lessons: [
-  //       {
-  //         id: 'LES-v2q7r4t8',
-  //         title: 'JavaScript Syntax',
-  //         description: 'Understanding JavaScript syntax and basic constructs',
-  //         content:
-  //           'JavaScript is a programming language that allows you to implement complex features on web pages...',
-  //         videoUrls: ['https://example.com/videos/js-syntax.mp4'],
-  //         duration: 55,
-  //         orderNumber: 1,
-  //         status: 'Approved',
-  //       },
-  //       {
-  //         id: 'LES-w3s8t5u9',
-  //         title: 'DOM Manipulation',
-  //         description: 'Learn how to interact with the Document Object Model',
-  //         content:
-  //           'The Document Object Model (DOM) is a programming interface for web documents...',
-  //         videoUrls: ['https://example.com/videos/dom-manipulation.mp4'],
-  //         duration: 65,
-  //         orderNumber: 2,
-  //         status: 'Pending',
-  //       },
-  //     ],
-  //   },
-  // ];
 
   const { id } = useParams();
   const courseId = id;
@@ -186,7 +86,6 @@ export default function CourseDetail() {
   const [chapters, setChapters] = useState([]);
   const [totalLessons, setTotalLessons] = useState(
     chapters.reduce((total, chapter) => total + chapter.lessons.length, 0));
-
 
   const coursesCount = 0;
   const enrolledStudents = 0;
@@ -236,11 +135,6 @@ export default function CourseDetail() {
     const averageRating = totalRating / reviews.length;
     return Math.round(averageRating * 10) / 10;
   };
-
-  const userReview = async (userId) => {
-    const data = await getUserById(userId);
-    return data.fullName
-  }
 
   if (!course) {
     return (
@@ -330,9 +224,9 @@ export default function CourseDetail() {
                   </div>
                   <Button
                     size="sm"
-                    onClick={() => navigate(`/instructor/courses/${courseId}/curriculum/edit`)}
+                    onClick={() => navigate(`/instructor/course/${courseId}/lessons`)}
                   >
-                    Edit Curriculum
+                    Thêm 
                   </Button>
                 </CardHeader>
 

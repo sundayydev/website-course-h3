@@ -6,6 +6,8 @@ import Courses from '@/pages/instructor/Courses/Courses';
 import CourseDetail from '@/pages/instructor/Courses/CourseDetail';
 import AddCourse from '@/pages/instructor/Courses/AddCourse';
 import EditCourse from '@/pages/instructor/Courses/EditCourse';
+import AddContent from '@/pages/instructor/lessons/AddContent';
+import ManageLessons from '@/pages/instructor/lessons/ManageLessons';
 
 const InstructorRoutes = {
   path: '/instructor', // Đường dẫn chính cho Instructor
@@ -19,9 +21,11 @@ const InstructorRoutes = {
   children: [
     { index: true, element: <Dashboard /> }, //(mặc định)
     { path: 'courses', element: <Courses /> },
-    { path: 'course/add', element: <AddCourse />},
+    { path: 'course/add', element: <AddCourse /> },
     { path: 'course/:id', element: <CourseDetail /> }, // Đường dẫn cho trang chi tiết khóa học
-    { path: 'course/:courseId/edit', element: <EditCourse />}
+    { path: 'course/:courseId/edit', element: <EditCourse /> },
+    { path: 'course/:courseId/content/add', element: <AddContent /> },
+    { path: 'course/:courseId/lessons', element: <ManageLessons /> },
   ],
 };
 

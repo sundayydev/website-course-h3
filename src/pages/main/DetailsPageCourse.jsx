@@ -1,6 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { Play, ChevronDown, ChevronUp, ArrowLeft, Clock, Calendar } from 'lucide-react';
+import {
+  Play,
+  ChevronDown,
+  ChevronUp,
+  ArrowLeft,
+  Clock,
+  Calendar,
+  Copy,
+  Check,
+} from 'lucide-react';
 import { FaPlayCircle } from 'react-icons/fa';
 import { getLessonsByChapterId, getLessonById } from '@/api/lessonApi';
 import { getChaptersByCourseId } from '@/api/chapterApi';
@@ -10,13 +19,15 @@ import { toast } from 'react-toastify';
 import { initializeProgress, updateProgress, getProgressByUserAndLesson } from '@/api/progressApi';
 import LessonQuiz from '../../components/LessonQuiz';
 import { getUserId } from '@/api/authUtils';
-
-
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
+import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
 
 const DetailsPageCourse = () => {
   const { lessonId } = useParams();
   console.log('LessonId trước khi truyền vào LessonQuiz:', lessonId);
-  <LessonQuiz lessonId={lessonId} />
+  <LessonQuiz lessonId={lessonId} />;
   const navigate = useNavigate();
   const playerRef = useRef(null);
   const userId = getUserId();
@@ -34,7 +45,6 @@ const DetailsPageCourse = () => {
   const [currentVideoTime, setCurrentVideoTime] = useState(0);
   const [savedNotes, setSavedNotes] = useState('');
 
-
   const formatDuration = (seconds) => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
@@ -50,7 +60,8 @@ const DetailsPageCourse = () => {
 
   const extractVideoId = (url) => {
     const urlString = Array.isArray(url) ? url[0] : typeof url === 'string' ? url : '';
-    const regex = /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+    const regex =
+      /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
     return urlString.match(regex)?.[1] || null;
   };
 
@@ -149,7 +160,7 @@ const DetailsPageCourse = () => {
 
   const navigateToNextLesson = () => {
     const allLessons = Object.values(lessonsByChapter).flat();
-    const currentIndex = allLessons.findIndex(lesson => String(lesson.id) === String(lessonId));
+    const currentIndex = allLessons.findIndex((lesson) => String(lesson.id) === String(lessonId));
 
     if (currentIndex === -1) {
       toast.error('Không tìm thấy bài học hiện tại trong danh sách.');
@@ -231,9 +242,13 @@ const DetailsPageCourse = () => {
 
         const videoId = extractVideoId(lessonResponse.videoUrls);
         if (videoId) {
-          setCurrentLesson(prev => prev ? { ...prev, duration: 0 } : { ...lessonResponse, duration: 0 });
+          setCurrentLesson((prev) =>
+            prev ? { ...prev, duration: 0 } : { ...lessonResponse, duration: 0 }
+          );
         } else {
-          setCurrentLesson(prev => prev ? { ...prev, duration: 0 } : { ...lessonResponse, duration: 0 });
+          setCurrentLesson((prev) =>
+            prev ? { ...prev, duration: 0 } : { ...lessonResponse, duration: 0 }
+          );
         }
 
         if (lessonResponse.courseId) {
@@ -274,11 +289,13 @@ const DetailsPageCourse = () => {
   }, [lessonId, navigate, userId]);
 
   const formatDate = (isoString) => {
-    return isoString ? new Date(isoString).toLocaleDateString('vi-VN', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-    }) : 'Không rõ ngày';
+    return isoString
+      ? new Date(isoString).toLocaleDateString('vi-VN', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+        })
+      : 'Không rõ ngày';
   };
 
   if (loading) return <p className="text-center text-gray-500">Đang tải dữ liệu...</p>;
@@ -290,146 +307,279 @@ const DetailsPageCourse = () => {
   const completionPercentage = Math.min((completedLessons / totalLessons) * 100, 100);
   const videoId = extractVideoId(currentLesson?.videoUrls || '');
 
+  const MarkdownContent = ({ content }) => {
+    const [copiedCode, setCopiedCode] = useState(null);
+
+    const handleCopyCode = (code, index) => {
+      navigator.clipboard.writeText(code);
+      setCopiedCode(index);
+      setTimeout(() => setCopiedCode(null), 2000);
+    };
+
+    return (
+      <div className="prose prose-lg max-w-none prose-headings:font-bold prose-headings:text-gray-900 prose-p:text-gray-700 prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline prose-strong:text-gray-900 prose-code:text-gray-900 prose-code:bg-gray-100 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-gray-900 prose-pre:text-gray-100 prose-blockquote:border-l-4 prose-blockquote:border-gray-300 prose-blockquote:pl-4 prose-blockquote:italic prose-img:rounded-lg prose-img:shadow-md">
+        <ReactMarkdown
+          remarkPlugins={[remarkGfm]}
+          components={{
+            code({ node, inline, className, children, ...props }) {
+              const match = /language-(\w+)/.exec(className || '');
+              const code = String(children).replace(/\n$/, '');
+              const index = Math.random().toString(36).substring(7);
+
+              return !inline && match ? (
+                <div className="relative group">
+                  <button
+                    onClick={() => handleCopyCode(code, index)}
+                    className="absolute right-2 top-2 p-2 rounded-lg bg-gray-700 text-gray-300 hover:bg-gray-600 transition-colors duration-200 opacity-0 group-hover:opacity-100"
+                    title="Copy code"
+                  >
+                    {copiedCode === index ? (
+                      <Check className="w-4 h-4" />
+                    ) : (
+                      <Copy className="w-4 h-4" />
+                    )}
+                  </button>
+                  <SyntaxHighlighter
+                    style={vscDarkPlus}
+                    language={match[1]}
+                    PreTag="div"
+                    className="rounded-lg shadow-lg"
+                    customStyle={{
+                      margin: '1.5em 0',
+                      padding: '1em',
+                      borderRadius: '0.5rem',
+                      fontSize: '0.875rem',
+                      lineHeight: '1.5',
+                    }}
+                    {...props}
+                  >
+                    {code}
+                  </SyntaxHighlighter>
+                </div>
+              ) : (
+                <code className={className} {...props}>
+                  {children}
+                </code>
+              );
+            },
+            img({ node, ...props }) {
+              return (
+                <img
+                  {...props}
+                  className="rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300"
+                  loading="lazy"
+                />
+              );
+            },
+            table({ node, ...props }) {
+              return (
+                <div className="overflow-x-auto">
+                  <table
+                    {...props}
+                    className="min-w-full divide-y divide-gray-200 border border-gray-200"
+                  />
+                </div>
+              );
+            },
+            th({ node, ...props }) {
+              return (
+                <th
+                  {...props}
+                  className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                />
+              );
+            },
+            td({ node, ...props }) {
+              return (
+                <td
+                  {...props}
+                  className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 border-t border-gray-200"
+                />
+              );
+            },
+          }}
+        >
+          {content}
+        </ReactMarkdown>
+      </div>
+    );
+  };
+
   return (
-      <div className="flex flex-col h-screen overflow-hidden bg-gray-50">
-        <div className="bg-gray-800 text-white flex items-center justify-between p-4 h-[50px] mt-16">
+    <div className="flex flex-col h-screen overflow-hidden bg-gray-50">
+      <div className="bg-gray-800 text-white flex items-center justify-between p-4 h-[50px] mt-16">
+        <div className="flex items-center">
+          <ArrowLeft size={24} className="mr-3 cursor-pointer" onClick={() => navigate(-1)} />
+          <span className="ml-3 font-semibold">Khóa học</span>
+        </div>
+        <div className="flex items-center space-x-6">
           <div className="flex items-center">
-            <ArrowLeft size={24} className="mr-3 cursor-pointer" onClick={() => navigate(-1)} />
-            <span className="ml-3 font-semibold">Khóa học</span>
-          </div>
-          <div className="flex items-center space-x-6">
-            <div className="flex items-center">
-              <Play size={18} className="mr-2 text-gray-400" />
-              <span className="text-sm">
+            <Play size={18} className="mr-2 text-gray-400" />
+            <span className="text-sm">
               Đã học: {completedLessons} / {totalLessons} bài ({completionPercentage.toFixed(2)}%)
             </span>
+          </div>
+          <div className="flex items-center cursor-pointer hover:text-gray-300">
+            <FaPlayCircle size={18} className="mr-2 text-gray-400" />
+            <span className="text-sm">Hướng dẫn</span>
+          </div>
+          <div
+            className="flex items-center cursor-pointer hover:text-gray-300"
+            onClick={handleOpenViewNotesPopup}
+          >
+            <Clock size={18} className="mr-2 text-blue-400" />
+            <span className="text-sm">Ghi chú</span>
+          </div>
+        </div>
+      </div>
+
+      <div className="flex flex-1 overflow-hidden mt-1">
+        <div className="flex-[3] overflow-y-auto">
+          <div className="bg-black flex items-center justify-center min-h-[500px] relative">
+            {videoId ? (
+              <YouTube
+                videoId={videoId}
+                opts={{ width: '1000', height: '500', playerVars: { autoplay: 0 } }}
+                onReady={onPlayerReady}
+                onStateChange={onPlayerStateChange}
+              />
+            ) : (
+              <p className="text-white text-center">Không có video để hiển thị.</p>
+            )}
+          </div>
+
+          <div className="bg-white border-t border-gray-200 py-6 px-8">
+            <h2 className="text-2xl font-bold">{currentLesson?.title || 'Không có tiêu đề'}</h2>
+            <div className="flex items-center text-gray-500 mb-6">
+              <Calendar size={16} className="mr-2" />
+              <span className="text-sm mr-3">{formatDate(currentLesson?.createdAt || '')}</span>
+              {currentLesson?.duration !== undefined && currentLesson.duration > 0 && (
+                <span className="text-sm">Độ dài: {formatDuration(currentLesson.duration)}</span>
+              )}
             </div>
-            <div className="flex items-center cursor-pointer hover:text-gray-300">
-              <FaPlayCircle size={18} className="mr-2 text-gray-400" />
-              <span className="text-sm">Hướng dẫn</span>
+            <div className="mt-6">
+              <h3 className="text-xl font-semibold mb-4">Nội dung bài học</h3>
+              {currentLesson?.content ? (
+                <MarkdownContent content={currentLesson.content} />
+              ) : (
+                <p className="text-gray-500">Không có nội dung bài học.</p>
+              )}
             </div>
-            <div className="flex items-center cursor-pointer hover:text-gray-300" onClick={handleOpenViewNotesPopup}>
-              <Clock size={18} className="mr-2 text-blue-400" />
-              <span className="text-sm">Ghi chú</span>
-            </div>
+            <LessonQuiz lessonId={lessonId} />
+            <button
+              onClick={handleOpenNotePopup}
+              className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+            >
+              Lưu ghi chú
+            </button>
           </div>
         </div>
 
-        <div className="flex flex-1 overflow-hidden mt-1">
-          <div className="flex-[3] overflow-y-auto">
-            <div className="bg-black flex items-center justify-center min-h-[500px] relative">
-              {videoId ? (
-                  <YouTube
-                      videoId={videoId}
-                      opts={{ width: '1000', height: '500', playerVars: { autoplay: 0 } }}
-                      onReady={onPlayerReady}
-                      onStateChange={onPlayerStateChange}
-                  />
-              ) : (
-                  <p className="text-white text-center">Không có video để hiển thị.</p>
-              )}
-            </div>
-
-            <div className="bg-white border-t border-gray-200 py-6 px-8">
-              <h2 className="text-2xl font-bold">{currentLesson?.title || 'Không có tiêu đề'}</h2>
-              <div className="flex items-center text-gray-500 mb-6">
-                <Calendar size={16} className="mr-2" />
-                <span className="text-sm mr-3">{formatDate(currentLesson?.createdAt || '')}</span>
-                {currentLesson?.duration !== undefined && currentLesson.duration > 0 && (
-                    <span className="text-sm">Độ dài: {formatDuration(currentLesson.duration)}</span>
-                )}
-              </div>
-              <p>{currentLesson?.content || 'Không có mô tả.'}</p>
-              {/* Thêm phần trắc nghiệm ngay dưới mô tả */}
-              <LessonQuiz lessonId={lessonId} />
-              <button onClick={handleOpenNotePopup} className="mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
-                Lưu ghi chú
-              </button>
-            </div>
-          </div>
-
-          <div className="flex-1 p-3 bg-gray-100 rounded-lg overflow-y-auto">
-            <h2 className="text-lg font-bold sticky top-0 bg-gray-100 z-10 pb-2">Nội dung khóa học</h2>
-            {chapters.length > 0 ? (
-                chapters.map((chapter, index) => (
-                    <div key={chapter.id} className="mb-3">
-                      <div
-                          className="flex justify-between items-center p-3 bg-gray-200 rounded-lg cursor-pointer hover:bg-gray-300"
-                          onClick={() => setOpenChapters(prev => ({ ...prev, [index]: !prev[index] }))}
-                      >
-                        <span className="font-bold">{chapter.title || 'Không có tiêu đề'}</span>
-                        {openChapters[index] ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
-                      </div>
-                      {openChapters[index] && (
-                          <ul className="mt-2">
-                            {lessonsByChapter[chapter.id]?.length > 0 ? (
-                                lessonsByChapter[chapter.id].map(lesson => (
-                                    <li
-                                        key={lesson.id}
-                                        className={`p-3 rounded-lg cursor-pointer ${lessonId === String(lesson.id) ? 'bg-red-100' : 'hover:bg-gray-200'}`}
-                                        onClick={() => navigate(`/DetailsPageCourse/${lesson.id}`)}
-                                    >
-                                      <div className="flex flex-col">
-                                        <span className="text-sm">{lesson.title || 'Không có tiêu đề'}</span>
-                                        <span className="text-xs text-gray-500 flex items-center">
+        <div className="flex-1 p-3 bg-gray-100 rounded-lg overflow-y-auto">
+          <h2 className="text-lg font-bold sticky top-0 bg-gray-100 z-10 pb-2">
+            Nội dung khóa học
+          </h2>
+          {chapters.length > 0 ? (
+            chapters.map((chapter, index) => (
+              <div key={chapter.id} className="mb-3">
+                <div
+                  className="flex justify-between items-center p-3 bg-gray-200 rounded-lg cursor-pointer hover:bg-gray-300"
+                  onClick={() => setOpenChapters((prev) => ({ ...prev, [index]: !prev[index] }))}
+                >
+                  <span className="font-bold">{chapter.title || 'Không có tiêu đề'}</span>
+                  {openChapters[index] ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                </div>
+                {openChapters[index] && (
+                  <ul className="mt-2">
+                    {lessonsByChapter[chapter.id]?.length > 0 ? (
+                      lessonsByChapter[chapter.id].map((lesson) => (
+                        <li
+                          key={lesson.id}
+                          className={`p-3 rounded-lg cursor-pointer ${lessonId === String(lesson.id) ? 'bg-red-100' : 'hover:bg-gray-200'}`}
+                          onClick={() => navigate(`/DetailsPageCourse/${lesson.id}`)}
+                        >
+                          <div className="flex flex-col">
+                            <span className="text-sm">{lesson.title || 'Không có tiêu đề'}</span>
+                            <span className="text-xs text-gray-500 flex items-center">
                               <FaPlayCircle className="mr-2 text-xs" />
                               <span>{formatDate(lesson.createdAt)}</span>
                             </span>
-                                      </div>
-                                    </li>
-                                ))
-                            ) : (
-                                <li className="p-3 text-gray-500">Chưa có bài học</li>
-                            )}
-                          </ul>
-                      )}
-                    </div>
-                ))
-            ) : (
-                <p className="p-3 text-gray-500">Chưa có chương nào.</p>
-            )}
+                          </div>
+                        </li>
+                      ))
+                    ) : (
+                      <li className="p-3 text-gray-500">Chưa có bài học</li>
+                    )}
+                  </ul>
+                )}
+              </div>
+            ))
+          ) : (
+            <p className="p-3 text-gray-500">Chưa có chương nào.</p>
+          )}
+        </div>
+      </div>
+
+      {isNotePopupOpen && (
+        <div
+          className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
+          onClick={() => setIsNotePopupOpen(false)}
+        >
+          <div
+            className="bg-white p-4 rounded-lg shadow-lg w-96"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-lg font-bold mb-2">
+              Thêm ghi chú tại{' '}
+              <span className="text-orange-500">{formatVideoTime(currentVideoTime)}</span>
+            </h2>
+            <textarea
+              value={noteContent}
+              onChange={(e) => setNoteContent(e.target.value)}
+              placeholder="Nội dung ghi chú..."
+              className="w-full p-2 border rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
+            />
+            <div className="flex justify-end space-x-2">
+              <button
+                onClick={() => setIsNotePopupOpen(false)}
+                className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300"
+              >
+                Hủy bỏ
+              </button>
+              <button
+                onClick={handleSaveNote}
+                className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600"
+              >
+                Tạo ghi chú
+              </button>
+            </div>
           </div>
         </div>
+      )}
 
-        {isNotePopupOpen && (
-            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50" onClick={() => setIsNotePopupOpen(false)}>
-              <div className="bg-white p-4 rounded-lg shadow-lg w-96" onClick={e => e.stopPropagation()}>
-                <h2 className="text-lg font-bold mb-2">
-                  Thêm ghi chú tại <span className="text-orange-500">{formatVideoTime(currentVideoTime)}</span>
-                </h2>
-                <textarea
-                    value={noteContent}
-                    onChange={e => setNoteContent(e.target.value)}
-                    placeholder="Nội dung ghi chú..."
-                    className="w-full p-2 border rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <div className="flex justify-end space-x-2">
-                  <button onClick={() => setIsNotePopupOpen(false)} className="px-4 py-2 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300">
-                    Hủy bỏ
-                  </button>
-                  <button onClick={handleSaveNote} className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600">
-                    Tạo ghi chú
-                  </button>
-                </div>
-              </div>
-            </div>
-        )}
-
-        {isViewNotesPopupOpen && (
-            <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50" onClick={() => setIsViewNotesPopupOpen(false)}>
-              <div className="bg-white p-4 rounded-lg shadow-lg w-96" onClick={e => e.stopPropagation()}>
-                <h2 className="text-lg font-bold mb-2">Ghi chú - {currentLesson?.title || 'Không có tiêu đề'}</h2>
-                <p className="text-sm whitespace-pre-wrap">{savedNotes || 'Chưa có ghi chú nào.'}</p>
-                <button
-                    onClick={() => setIsViewNotesPopupOpen(false)}
-                    className="mt-4 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
-                >
-                  Đóng
-                </button>
-              </div>
-            </div>
-        )}
-      </div>
+      {isViewNotesPopupOpen && (
+        <div
+          className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50"
+          onClick={() => setIsViewNotesPopupOpen(false)}
+        >
+          <div
+            className="bg-white p-4 rounded-lg shadow-lg w-96"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 className="text-lg font-bold mb-2">
+              Ghi chú - {currentLesson?.title || 'Không có tiêu đề'}
+            </h2>
+            <p className="text-sm whitespace-pre-wrap">{savedNotes || 'Chưa có ghi chú nào.'}</p>
+            <button
+              onClick={() => setIsViewNotesPopupOpen(false)}
+              className="mt-4 px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600"
+            >
+              Đóng
+            </button>
+          </div>
+        </div>
+      )}
+    </div>
   );
 };
 
