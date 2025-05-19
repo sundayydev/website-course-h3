@@ -23,6 +23,8 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
 import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
+import { formatDate } from '@/utils/formatDate';
+import MarkdownContent from '@/components/MarkdownContent';
 
 const DetailsPageCourse = () => {
   const { lessonId } = useParams();
@@ -288,16 +290,6 @@ const DetailsPageCourse = () => {
     fetchLesson();
   }, [lessonId, navigate, userId]);
 
-  const formatDate = (isoString) => {
-    return isoString
-      ? new Date(isoString).toLocaleDateString('vi-VN', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric',
-        })
-      : 'Không rõ ngày';
-  };
-
   if (loading) return <p className="text-center text-gray-500">Đang tải dữ liệu...</p>;
   if (error) return <p className="text-center text-red-500">{error}</p>;
 
@@ -306,104 +298,6 @@ const DetailsPageCourse = () => {
   const completedLessons = completedLessonIds.length;
   const completionPercentage = Math.min((completedLessons / totalLessons) * 100, 100);
   const videoId = extractVideoId(currentLesson?.videoUrls || '');
-
-  const MarkdownContent = ({ content }) => {
-    const [copiedCode, setCopiedCode] = useState(null);
-
-    const handleCopyCode = (code, index) => {
-      navigator.clipboard.writeText(code);
-      setCopiedCode(index);
-      setTimeout(() => setCopiedCode(null), 2000);
-    };
-
-    return (
-      <div className="prose prose-lg max-w-none prose-headings:font-bold prose-headings:text-gray-900 prose-p:text-gray-700 prose-a:text-blue-600 prose-a:no-underline hover:prose-a:underline prose-strong:text-gray-900 prose-code:text-gray-900 prose-code:bg-gray-100 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-pre:bg-gray-900 prose-pre:text-gray-100 prose-blockquote:border-l-4 prose-blockquote:border-gray-300 prose-blockquote:pl-4 prose-blockquote:italic prose-img:rounded-lg prose-img:shadow-md">
-        <ReactMarkdown
-          remarkPlugins={[remarkGfm]}
-          components={{
-            code({ node, inline, className, children, ...props }) {
-              const match = /language-(\w+)/.exec(className || '');
-              const code = String(children).replace(/\n$/, '');
-              const index = Math.random().toString(36).substring(7);
-
-              return !inline && match ? (
-                <div className="relative group">
-                  <button
-                    onClick={() => handleCopyCode(code, index)}
-                    className="absolute right-2 top-2 p-2 rounded-lg bg-gray-700 text-gray-300 hover:bg-gray-600 transition-colors duration-200 opacity-0 group-hover:opacity-100"
-                    title="Copy code"
-                  >
-                    {copiedCode === index ? (
-                      <Check className="w-4 h-4" />
-                    ) : (
-                      <Copy className="w-4 h-4" />
-                    )}
-                  </button>
-                  <SyntaxHighlighter
-                    style={vscDarkPlus}
-                    language={match[1]}
-                    PreTag="div"
-                    className="rounded-lg shadow-lg"
-                    customStyle={{
-                      margin: '1.5em 0',
-                      padding: '1em',
-                      borderRadius: '0.5rem',
-                      fontSize: '0.875rem',
-                      lineHeight: '1.5',
-                    }}
-                    {...props}
-                  >
-                    {code}
-                  </SyntaxHighlighter>
-                </div>
-              ) : (
-                <code className={className} {...props}>
-                  {children}
-                </code>
-              );
-            },
-            img({ node, ...props }) {
-              return (
-                <img
-                  {...props}
-                  className="rounded-lg shadow-md hover:shadow-lg transition-shadow duration-300"
-                  loading="lazy"
-                />
-              );
-            },
-            table({ node, ...props }) {
-              return (
-                <div className="overflow-x-auto">
-                  <table
-                    {...props}
-                    className="min-w-full divide-y divide-gray-200 border border-gray-200"
-                  />
-                </div>
-              );
-            },
-            th({ node, ...props }) {
-              return (
-                <th
-                  {...props}
-                  className="px-6 py-3 bg-gray-50 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
-                />
-              );
-            },
-            td({ node, ...props }) {
-              return (
-                <td
-                  {...props}
-                  className="px-6 py-4 whitespace-nowrap text-sm text-gray-500 border-t border-gray-200"
-                />
-              );
-            },
-          }}
-        >
-          {content}
-        </ReactMarkdown>
-      </div>
-    );
-  };
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-gray-50">

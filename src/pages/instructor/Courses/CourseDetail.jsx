@@ -26,6 +26,15 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog';
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from '@/components/ui/dialog';
+import {
   CalendarIcon,
   CheckCircle,
   Clock,
@@ -38,6 +47,7 @@ import {
   User,
   XCircle,
   Play,
+  Pencil,
 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
 import {
@@ -69,10 +79,12 @@ import CourseBasicInfo from '@/components/instructor/course/CourseBasicInfo';
 import { getCourseById } from '@/api/courseApi';
 import { getUserById } from '@/api/userApi';
 import { getCategoryById } from '@/api/categoryApi';
-import { getReviewsByCourseId } from '@/api/reviewApi'
+import { getReviewsByCourseId } from '@/api/reviewApi';
+import { getChaptersByCourseId, deleteChapter } from '@/api/chapterApi';
+import { getLessonsByChapterId, deleteLesson, getVideoLesson } from '@/api/lessonApi';
+import { toast } from 'react-hot-toast';
 
 export default function CourseDetail() {
-
   const { id } = useParams();
   const courseId = id;
 
@@ -85,30 +97,45 @@ export default function CourseDetail() {
   const [category, setCategory] = useState(course.category);
   const [chapters, setChapters] = useState([]);
   const [totalLessons, setTotalLessons] = useState(
-    chapters.reduce((total, chapter) => total + chapter.lessons.length, 0));
+    chapters.reduce((total, chapter) => total + chapter.lessons.length, 0)
+  );
+  const [selectedLesson, setSelectedLesson] = useState(null);
+  const [isVideoDialogOpen, setIsVideoDialogOpen] = useState(false);
+  const [videoUrl, setVideoUrl] = useState('');
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const coursesCount = 0;
   const enrolledStudents = 0;
-  
+
   useEffect(() => {
     const fetchData = async () => {
       // First fetch course data
       const data = await getCourseById(courseId);
       setCourse(data);
-      
+
       // Then fetch instructor and category details only if course data exists
       if (data) {
         const instructorData = await getUserById(data.instructorId);
         setInstructor(instructorData.data);
-        
+
         const categoryData = await getCategoryById(data.categoryId);
         setCategory(categoryData);
 
-        const reviewsData = await getReviewsByCourseId(data.id)
+        const reviewsData = await getReviewsByCourseId(data.id);
         setReviews(reviewsData);
+
+        // Fetch chapters and their lessons
+        const chaptersData = await getChaptersByCourseId(data.id);
+        const chaptersWithLessons = await Promise.all(
+          chaptersData.map(async (chapter) => {
+            const lessons = await getLessonsByChapterId(chapter.id);
+            return { ...chapter, lessons };
+          })
+        );
+        setChapters(chaptersWithLessons);
       }
     };
-    
+
     fetchData();
   }, [courseId]);
 
@@ -123,17 +150,59 @@ export default function CourseDetail() {
     if (!reviews || reviews.length === 0) {
       return 0;
     }
-    
+
     // Tính tổng tất cả các rating
     const totalRating = reviews.reduce((sum, review) => {
       // Kiểm tra nếu review có rating và rating là số hợp lệ
       const rating = parseFloat(review.rating);
       return !isNaN(rating) ? sum + rating : sum;
     }, 0);
-    
+
     // Tính trung bình và làm tròn đến 1 chữ số thập phân
     const averageRating = totalRating / reviews.length;
     return Math.round(averageRating * 10) / 10;
+  };
+
+  const handleDeleteChapter = async (chapterId) => {
+    try {
+      setIsDeleting(true);
+      await deleteChapter(chapterId);
+      setChapters(chapters.filter((chapter) => chapter.id !== chapterId));
+      toast.success('Xóa chương thành công');
+    } catch (error) {
+      toast.error('Không thể xóa chương');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handleDeleteLesson = async (lessonId) => {
+    try {
+      setIsDeleting(true);
+      await deleteLesson(lessonId);
+      setChapters(
+        chapters.map((chapter) => ({
+          ...chapter,
+          lessons: chapter.lessons.filter((lesson) => lesson.id !== lessonId),
+        }))
+      );
+      toast.success('Xóa bài học thành công');
+    } catch (error) {
+      toast.error('Không thể xóa bài học');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const handlePreviewVideo = async (lesson) => {
+    try {
+      setSelectedLesson(lesson);
+      const urlVideo = import.meta.env.VITE_API_URL + '/api/lesson/stream/' + lesson.videoName;
+      setVideoUrl(urlVideo);
+      setIsVideoDialogOpen(true);
+    } catch (error) {
+      toast.error('Không thể tải video');
+    }
   };
 
   if (!course) {
@@ -153,11 +222,10 @@ export default function CourseDetail() {
       {/* Admin Actions Header */}
 
       <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-
-        <div className='flex items-center gap-4'>
-        <Button variant="outline" onClick={() => navigate('/instructor/courses')}>
-          Quay lại
-        </Button>
+        <div className="flex items-center gap-4">
+          <Button variant="outline" onClick={() => navigate('/instructor/courses')}>
+            Quay lại
+          </Button>
           <h1 className="text-3xl font-bold flex items-center gap-2">
             Chi tiết khóa học
             {/* <CourseStatusBadge status={course.status} /> */}
@@ -197,13 +265,13 @@ export default function CourseDetail() {
       </div>
 
       {/* Course Stats */}
-      <CourseStats rating={calculateAverageRating(reviews)} reviewCount={reviews.length}/>
+      <CourseStats rating={calculateAverageRating(reviews)} reviewCount={reviews.length} />
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Main content - 2/3 width on large screens */}
         <div className="lg:col-span-2 space-y-8">
           {/* Course Basic Info */}
-          <CourseBasicInfo courseId={courseId} course={course} category={category}/>
+          <CourseBasicInfo courseId={courseId} course={course} category={category} />
 
           {/* Content Tabs */}
           <Tabs defaultValue="curriculum">
@@ -226,7 +294,7 @@ export default function CourseDetail() {
                     size="sm"
                     onClick={() => navigate(`/instructor/course/${courseId}/lessons`)}
                   >
-                    Thêm 
+                    Thêm
                   </Button>
                 </CardHeader>
 
@@ -263,7 +331,10 @@ export default function CourseDetail() {
                                   className="flex justify-between items-center p-3 border border-gray-100 rounded-lg hover:bg-gray-50"
                                 >
                                   <div className="flex items-center">
-                                    <div className="mr-3 bg-gray-100 rounded-full p-2">
+                                    <div
+                                      className="mr-3 bg-gray-100 rounded-full p-2 cursor-pointer hover:bg-gray-200"
+                                      onClick={() => handlePreviewVideo(lesson)}
+                                    >
                                       <Play className="h-4 w-4 text-gray-700" />
                                     </div>
                                     <div>
@@ -280,6 +351,44 @@ export default function CourseDetail() {
                                     <span className="text-sm text-gray-500 whitespace-nowrap">
                                       {lesson.duration} min
                                     </span>
+                                    <div className="flex items-center gap-2">
+                                      <Button
+                                        variant="ghost"
+                                        size="icon"
+                                        onClick={() =>
+                                          navigate(
+                                            `/instructor/course/${courseId}/lessons/edit/${lesson.id}`
+                                          )
+                                        }
+                                      >
+                                        <Pencil className="h-4 w-4" />
+                                      </Button>
+                                      <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                          <Button variant="ghost" size="icon">
+                                            <Trash className="h-4 w-4" />
+                                          </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                          <AlertDialogHeader>
+                                            <AlertDialogTitle>Xác nhận xóa</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                              Bạn có chắc chắn muốn xóa bài học này? Hành động này
+                                              không thể hoàn tác.
+                                            </AlertDialogDescription>
+                                          </AlertDialogHeader>
+                                          <AlertDialogFooter>
+                                            <AlertDialogCancel>Hủy</AlertDialogCancel>
+                                            <AlertDialogAction
+                                              onClick={() => handleDeleteLesson(lesson.id)}
+                                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                            >
+                                              Xóa
+                                            </AlertDialogAction>
+                                          </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                      </AlertDialog>
+                                    </div>
                                   </div>
                                 </div>
                               ))}
@@ -294,7 +403,9 @@ export default function CourseDetail() {
                         No curriculum content has been added yet.
                       </p>
                       <Button
-                        onClick={() => navigate(`/instructor/courses/${courseId}/curriculum/create`)}
+                        onClick={() =>
+                          navigate(`/instructor/courses/${courseId}/curriculum/create`)
+                        }
                       >
                         Create Curriculum
                       </Button>
@@ -302,6 +413,26 @@ export default function CourseDetail() {
                   )}
                 </CardContent>
               </Card>
+
+              {/* Video Preview Dialog */}
+              <Dialog open={isVideoDialogOpen} onOpenChange={setIsVideoDialogOpen}>
+                <DialogContent className="max-w-4xl">
+                  <DialogHeader>
+                    <DialogTitle>{selectedLesson?.title}</DialogTitle>
+                    <DialogDescription>{selectedLesson?.description}</DialogDescription>
+                  </DialogHeader>
+                  {videoUrl && (
+                    <div className="aspect-video">
+                      <video src={videoUrl} controls className="w-full h-full rounded-lg" />
+                    </div>
+                  )}
+                  <DialogFooter>
+                    <Button variant="outline" onClick={() => setIsVideoDialogOpen(false)}>
+                      Đóng
+                    </Button>
+                  </DialogFooter>
+                </DialogContent>
+              </Dialog>
             </TabsContent>
 
             {/* Enrollments Tab */}
@@ -429,9 +560,7 @@ export default function CourseDetail() {
                             >
                               {review.status}
                             </Badge> */}
-                            <div className="text-xs text-muted-foreground">
-                              {review.createdAt}
-                            </div>
+                            <div className="text-xs text-muted-foreground">{review.createdAt}</div>
                           </div>
                         </div>
                         <p className="text-sm">{review.comment}</p>
