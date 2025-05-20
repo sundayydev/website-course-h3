@@ -48,7 +48,7 @@ const CardPost = () => {
               />
             </div>
             <div className="bg-gray-50 text-black p-4">
-              <h3 className="text-lg font-semibold mb-2">{post.title}</h3>
+              <h3 className="text-lg font-semibold mb-2 min-h-[3rem]">{post.title}</h3>
               <div className="flex items-center justify-between text-xs text-gray-500">
                 <div className="flex items-center gap-2">
                   <img
