@@ -126,7 +126,7 @@ const CourseList = () => {
               />
             </div>
             <div className="p-4 flex flex-col flex-grow">
-              <h3 className="text-lg font-semibold mb-2 line-clamp-2">{course.title}</h3>
+              <h3 className="text-lg font-semibold mb-2 line-clamp-2 min-h-[3rem]">{course.title}</h3>
               <p className="text-rose-500 text-lg font-semibold mb-2">
                 {course.price > 0 ? `${course.price.toLocaleString()} VND` : 'Miễn phí'}
               </p>

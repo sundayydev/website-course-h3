@@ -347,7 +347,7 @@ const Header = () => {
         <a href="/" className="rounded-lg">
           <img className="rounded-lg" src={LogoH3} alt="Logo H3" width={38} height={38} />
         </a>
-        <a className="font-semibold text-base text-black hover:text-pink-600 hidden md:block" href="/">
+        <a className="font-semibold text-base text-black hover:text-emerald-600 hidden md:block" href="/">
           Học Lập Trình Cùng H3
         </a>
       </h1>
@@ -357,7 +357,7 @@ const Header = () => {
         <input
           type="text"
           placeholder="Tìm kiếm khóa học, bài viết, video, ..."
-          className="w-full px-4 py-2 pl-10 border font-semibold rounded-full focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm"
+          className="w-full px-4 py-2 pl-10 border font-semibold rounded-full focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
         />
@@ -435,7 +435,7 @@ const Header = () => {
               className="p-2 relative"
               onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
             >
-              <Bell className="h-6 w-6 text-gray-600 hover:text-pink-500" />
+              <Bell className="h-6 w-6 text-gray-600 hover:text-emerald-500" />
               {notifications.some((n) => n.userNotifications.some((un) => !un.isRead && un.userId === user.id)) && (
                 <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></span>
               )}
@@ -511,7 +511,7 @@ const Header = () => {
                 Đăng ký
               </Button>
               <Button
-                className="bg-gradient-to-r from-pink-500 to-pink-600 text-white px-4 py-2 rounded-full font-semibold"
+                className="bg-gradient-to-r from-emerald-500 to-emerald-600 text-white px-4 py-2 rounded-full font-semibold"
                 onClick={() => setIsLoginOpen(true)}
               >
                 Đăng nhập
@@ -619,7 +619,7 @@ const Header = () => {
                   placeholder="Email"
                   value={loginData.email}
                   onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
-                  className="w-full px-9 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm md:text-base"
+                  className="w-full px-9 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm md:text-base"
                 />
               </div>
               <div className="relative mb-3">
@@ -629,7 +629,7 @@ const Header = () => {
                   placeholder="Mật khẩu"
                   value={loginData.password}
                   onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
-                  className="w-full px-9 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm md:text-base"
+                  className="w-full px-9 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm md:text-base"
                 />
                 <button
                   type="button"
@@ -657,7 +657,7 @@ const Header = () => {
                 </button>
               </div>
               <Button
-                className="w-full bg-pink-500 hover:bg-pink-600 text-white py-2 rounded-lg font-semibold"
+                className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-2 rounded-lg font-semibold"
                 onClick={handleLogin}
               >
                 Đăng nhập
@@ -716,7 +716,7 @@ const Header = () => {
                   required
                   placeholder="Nhập họ và tên"
                   onChange={(e) => setRegisterData({ ...registerData, fullName: e.target.value })}
-                  className="w-full px-9 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm md:text-base"
+                  className="w-full px-9 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm md:text-base"
                 />
               </div>
               <div className="relative mb-3">
@@ -726,7 +726,7 @@ const Header = () => {
                   placeholder="Email"
                   value={registerData.email}
                   onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
-                  className="w-full px-9 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm md:text-base"
+                  className="w-full px-9 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm md:text-base"
                 />
               </div>
               <div className="relative mb-3">
@@ -736,7 +736,7 @@ const Header = () => {
                   placeholder="Mật khẩu"
                   value={registerData.password}
                   onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
-                  className="w-full px-9 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-pink-500 text-sm md:text-base"
+                  className="w-full px-9 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm md:text-base"
                 />
                 <button
                   type="button"
@@ -747,7 +747,7 @@ const Header = () => {
                 </button>
               </div>
               <Button
-                className="w-full bg-pink-500 hover:bg-pink-600 text-white py-2 rounded-lg font-semibold"
+                className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-2 rounded-lg font-semibold"
                 onClick={handleRegister}
               >
                 Đăng Ký
@@ -798,11 +798,11 @@ const Header = () => {
                 placeholder="Nhập email"
                 value={forgotEmail}
                 onChange={(e) => setForgotEmail(e.target.value)}
-                className="w-full px-9 py-2 border rounded-lg focus:ring-2 focus:ring-pink-500"
+                className="w-full px-9 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500"
               />
             </div>
             <Button
-              className="w-full bg-pink-500 hover:bg-pink-600 text-white py-2 rounded-lg"
+              className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-2 rounded-lg"
               onClick={handleForgotPassword}
             >
               Gửi Yêu Cầu
@@ -829,7 +829,7 @@ const Header = () => {
                 placeholder="Nhập email"
                 value={resetPasswordData.email}
                 onChange={(e) => setResetPasswordData({ ...resetPasswordData, email: e.target.value })}
-                className="w-full px-9 py-2 border rounded-lg focus:ring-2 focus:ring-pink-500"
+                className="w-full px-9 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500"
               />
             </div>
             <div className="relative mb-3">
@@ -839,7 +839,7 @@ const Header = () => {
                 placeholder="Nhập mã xác nhận"
                 value={resetPasswordData.resetCode}
                 onChange={(e) => setResetPasswordData({ ...resetPasswordData, resetCode: e.target.value })}
-                className="w-full px-9 py-2 border rounded-lg focus:ring-2 focus:ring-pink-500"
+                className="w-full px-9 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500"
               />
             </div>
             <div className="relative mb-3">
@@ -849,7 +849,7 @@ const Header = () => {
                 placeholder="Nhập mật khẩu mới"
                 value={resetPasswordData.newPassword}
                 onChange={(e) => setResetPasswordData({ ...resetPasswordData, newPassword: e.target.value })}
-                className="w-full px-9 py-2 border rounded-lg focus:ring-2 focus:ring-pink-500"
+                className="w-full px-9 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500"
               />
               <button
                 type="button"
@@ -860,7 +860,7 @@ const Header = () => {
               </button>
             </div>
             <Button
-              className="w-full bg-pink-500 hover:bg-pink-600 text-white py-2 rounded-lg"
+              className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-2 rounded-lg"
               onClick={handleResetPassword}
               disabled={loading}
             >
