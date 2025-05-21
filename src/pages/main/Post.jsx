@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { getAllPost } from '../../api/postApi';
 import defaultAvatar from '../../assets/imgs/default-avatar.jpg';
 import { formatDate } from '../../utils/formatDate';
-
+import HashLoader from 'react-spinners/HashLoader';
 // Định nghĩa topics
 const topics = ['HTML', 'CSS', 'JavaScript', 'React', 'Node.js'];
 
@@ -56,7 +56,9 @@ const Post = () => {
         <p className="font-bold text-3xl text-red-600 mb-10">Bài viết nổi bật</p>
 
         {loading ? (
-          <p>Đang tải bài viết...</p>
+          <div className="flex justify-center items-center h-64">
+            <HashLoader color="#a858a7" size={45} />
+          </div>
         ) : error ? (
           <p className="text-red-500">{error}</p>
         ) : (

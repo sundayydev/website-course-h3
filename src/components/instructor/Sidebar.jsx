@@ -9,6 +9,7 @@ import {
   Settings,
   HelpCircle,
   LogOut,
+  CreditCard,
 } from 'lucide-react';
 
 import { useEffect, useState } from 'react';
@@ -113,6 +114,13 @@ const Sidebar = () => {
             >
               <BarChart3 size={20} />
               {sidebarOpen && <span className="ml-4">Báo cáo</span>}
+            </NavLink>
+            <NavLink
+              to="/instructor/orders"
+              className={`flex items-center p-3 text-gray-400 hover:bg-gray-800 rounded-lg ${pathname === '/orders' ? 'bg-blue-700 text-white' : ''}`}
+            >
+              <CreditCard size={20} />
+              {sidebarOpen && <span className="ml-4">Thanh toán</span>}
             </NavLink>
           </div>
         </nav>

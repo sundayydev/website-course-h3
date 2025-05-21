@@ -9,7 +9,7 @@ import { getUserId } from '../../api/authUtils';
 import defaultAvatar from '../../assets/imgs/default-avatar.jpg';
 import { formatDate } from '../../utils/formatDate';
 import { useNavigate } from 'react-router-dom';
-
+import HashLoader from 'react-spinners/HashLoader';
 const ProfileImage = ({ src, onClick }) => (
   <img
     src={src || defaultAvatar}
@@ -116,7 +116,11 @@ const UserProfile = () => {
   };
 
   if (isLoading) {
-    return <p className="text-center text-gray-500">Đang tải...</p>;
+    return (
+      <div className="flex justify-center items-center h-64">
+        <HashLoader color="#a858a7" size={45} />
+      </div>
+    );
   }
 
   if (!user) {
