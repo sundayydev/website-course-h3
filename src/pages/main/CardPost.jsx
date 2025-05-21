@@ -5,6 +5,7 @@ import { toast } from 'react-toastify';
 import { getAllPost } from '../../api/postApi';
 import defaultAvatar from '../../assets/imgs/default-avatar.jpg';
 import { formatDate } from '../../utils/formatDate';
+import HashLoader from 'react-spinners/HashLoader';
 
 const CardPost = () => {
   const [posts, setPosts] = useState([]);
@@ -28,7 +29,13 @@ const CardPost = () => {
     fetchPosts();
   }, []);
 
-  if (loading) return <p>Đang tải bài viết...</p>;
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <HashLoader color="#a858a7" size={45} />
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 mx-auto">

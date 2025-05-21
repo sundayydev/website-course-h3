@@ -11,7 +11,7 @@ import { formatDate } from '../../../utils/formatDate';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { vi } from 'date-fns/locale';
-
+import HashLoader from 'react-spinners/HashLoader';
 const ProfileImage = ({ src, onClick, onImageChange }) => (
   <div className="relative inline-block">
     <img
@@ -230,7 +230,16 @@ const ProfilePage = () => {
     setIsDropdownOpen(prev => !prev);
   };
 
-  if (isLoading && !user) return <div className="min-h-screen flex items-center justify-center">Đang tải...</div>;
+
+  if (isLoading) {
+    return (
+      <div className="flex justify-center items-center h-64">
+        <HashLoader color="#a858a7" size={45} />
+      </div>
+    );
+  }
+
+
 
   if (error) return (
     <div className="min-h-screen flex items-center justify-center">
@@ -419,7 +428,7 @@ const ProfilePage = () => {
                     }}
                   >
                     <img
-                      src={follower.followerProfileImage ? `${import.meta.env.VITE_API_URL}${follower.followerProfileImage}` : defaultAvatar}
+                      src={follower.followerProfileImage ? `${follower.followerProfileImage}` : defaultAvatar}
                       alt={follower.followerFullName || 'Không có tên'}
                       className="w-10 h-10 rounded-full"
                     />
@@ -462,7 +471,7 @@ const ProfilePage = () => {
                     }}
                   >
                     <img
-                      src={followedUser.followingProfileImage ? `${import.meta.env.VITE_API_URL}${followedUser.followingProfileImage}` : defaultAvatar}
+                      src={followedUser.followingProfileImage ? `${followedUser.followingProfileImage}` : defaultAvatar}
                       alt={followedUser.followingFullName || 'Không có tên'}
                       className="w-10 h-10 rounded-full"
                     />
