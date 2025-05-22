@@ -6,6 +6,7 @@ import { getAllPost } from '../../api/postApi';
 import defaultAvatar from '../../assets/imgs/default-avatar.jpg';
 import { formatDate } from '../../utils/formatDate';
 import HashLoader from 'react-spinners/HashLoader';
+import { FaBookOpen } from 'react-icons/fa';
 
 const CardPost = () => {
   const [posts, setPosts] = useState([]);
@@ -39,7 +40,10 @@ const CardPost = () => {
 
   return (
     <div className="p-4 mx-auto">
-      <h1 className="text-3xl font-bold text-left mb-8">Bài viết nổi bật</h1>
+      <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
+        <FaBookOpen className="text-gray-600 text-xl" />
+        Bài viết
+      </h2>
       <div className="flex flex-wrap justify-start gap-10">
         {posts.map((post, index) => (
           <div

@@ -1,7 +1,6 @@
 import { Contact } from 'lucide-react';
 import AdminLayout from '../layouts/AdminLayout';
 import Dashboard from '../pages/admin/Dashboard';
-import ProtectedRoute from './ProtectedRoute';
 import Students from '../pages/admin/Students';
 import Courses from '../pages/admin/Courses';
 import CourseDetail from '../pages/admin/CourseDetail';
@@ -10,13 +9,13 @@ import PaymentManagement from '../pages/admin/PaymentManagement';
 import Comment from '../pages/admin/Comment';
 import PostManagement from '../pages/admin/PostManagement';
 import Notifications from '../pages/admin/Notifications';
-
+import { ProtectedRouteAdmin } from './ProtectedRoute';
 const AdminRoutes = {
   path: '/admin',
   element: (
-    <ProtectedRoute>
+    <ProtectedRouteAdmin>
       <AdminLayout />
-    </ProtectedRoute>
+    </ProtectedRouteAdmin>
   ),
   children: [
     { index: true, element: <Dashboard /> }, // /admin (mặc định)

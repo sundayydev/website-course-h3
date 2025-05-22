@@ -17,11 +17,11 @@ const ProfileImage = ({ src, onClick, onImageChange }) => (
     <img
       src={src || defaultAvatar}
       alt="Profile"
-      className="w-32 h-32 sm:w-48 sm:h-48 rounded-full mx-auto mb-4 border-4 border-pink-500 hover:scale-105 transition-transform"
+      className="w-32 h-32 sm:w-48 sm:h-48 rounded-full mx-auto mb-4 border-4 border-green-500 hover:scale-105 transition-transform"
       onClick={onClick}
       loading="lazy"
     />
-    <label className="absolute bottom-4 right-4 bg-pink-600 text-white rounded-full p-2 cursor-pointer hover:bg-pink-700 transition-colors">
+    <label className="absolute bottom-4 right-4 bg-green-600 text-white rounded-full p-2 cursor-pointer hover:bg-green-700 transition-colors">
       <FaCamera />
       <input type="file" className="hidden" accept="image/*" onChange={onImageChange} />
     </label>
@@ -30,14 +30,14 @@ const ProfileImage = ({ src, onClick, onImageChange }) => (
 
 const Section = ({ title, children }) => (
   <div className="mb-6">
-    <h2 className="text-xl font-semibold text-pink-500 mb-4">{title}</h2>
+    <h2 className="text-xl font-semibold text-green-500 mb-4">{title}</h2>
     {children}
   </div>
 );
 
 const ContactItem = ({ icon, text }) => (
   <li className="flex items-center gap-2 text-lg">
-    <span className="text-pink-500">{icon}</span>
+    <span className="text-black-500">{icon}</span>
     {text}
   </li>
 );
@@ -245,7 +245,7 @@ const ProfilePage = () => {
     <div className="min-h-screen flex items-center justify-center">
       <div className="text-red-500 text-center">
         <p>{error}</p>
-        <button onClick={fetchUserData} className="mt-4 px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700">
+        <button onClick={fetchUserData} className="mt-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
           Thử lại
         </button>
       </div>
@@ -266,7 +266,7 @@ const ProfilePage = () => {
 
           <div className="flex-1 mt-10 ml-10">
             <div className="flex items-center gap-4 mb-2">
-              <h1 className="text-2xl font-bold text-pink-500">
+              <h1 className="text-2xl font-bold text-green-500">
                 {user.fullName || 'Không có tên'}
               </h1>
 
@@ -285,28 +285,28 @@ const ProfilePage = () => {
             <div className="flex items-center gap-4 mb-4 mt-3">
               <button
                 onClick={() => setIsFollowersModalOpen(true)}
-                className="text-gray-600 hover:text-pink-500"
+                className="text-gray-600 hover:text-green-500"
               >
                 {`0 bài viết`}
               </button>
               <button
                 onClick={() => setIsFollowersModalOpen(true)}
-                className="text-gray-600 hover:text-pink-500"
+                className="text-gray-600 hover:text-green-500"
               >
                 {`0 khóa học`}
               </button>
 
               <button
                 onClick={() => setIsFollowersModalOpen(true)}
-                className="text-gray-600 hover:text-pink-500"
+                className="text-gray-600 hover:text-green-500"
               >
-                <span className="font-bold text-pink-500">{followerCount}</span> người theo dõi
+                <span className="font-bold text-green-500">{followerCount}</span> người theo dõi
               </button>
               <button
                 onClick={() => setIsFollowingModalOpen(true)}
-                className="text-gray-600 hover:text-pink-500"
+                className="text-gray-600 hover:text-green-500"
               >
-                <span className="font-bold text-pink-500">{followingCount}</span> đang theo dõi
+                <span className="font-bold text-green-500">{followingCount}</span> đang theo dõi
               </button>
 
             </div>
@@ -407,7 +407,7 @@ const ProfilePage = () => {
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-75 p-4 z-50">
           <div className="bg-white rounded-xl w-full max-w-md p-6">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-pink-500">Người theo dõi</h2>
+              <h2 className="text-xl font-bold text-green-500">Người theo dõi</h2>
               <button
                 className="text-gray-500 hover:text-gray-700"
                 onClick={() => setIsFollowersModalOpen(false)}
@@ -450,7 +450,7 @@ const ProfilePage = () => {
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-75 p-4 z-50">
           <div className="bg-white rounded-xl w-full max-w-md p-6">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-xl font-bold text-pink-500">Đang theo dõi</h2>
+              <h2 className="text-xl font-bold text-green-500">Đang theo dõi</h2>
               <button
                 className="text-gray-500 hover:text-gray-700"
                 onClick={() => setIsFollowingModalOpen(false)}
@@ -492,7 +492,7 @@ const ProfilePage = () => {
       {isEditInfoModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-75 p-4 z-50">
           <div className="bg-white rounded-xl w-full max-w-3xl p-6 mr-4">
-            <h2 className="text-2xl font-bold text-pink-500 mb-6 mr-2 text-center">Chỉnh sửa thông tin</h2>
+            <h2 className="text-2xl font-bold text-green-500 mb-6 mr-2 text-center">Chỉnh sửa thông tin</h2>
             <form onSubmit={handleEditInfoSubmit}>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
@@ -555,7 +555,7 @@ const ProfilePage = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700"
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
                   disabled={isLoading}
                 >
                   {isLoading ? 'Đang lưu...' : 'Lưu thay đổi'}
@@ -569,7 +569,7 @@ const ProfilePage = () => {
       {isEditPasswordModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-75 p-4 z-50">
           <div className="bg-white rounded-xl w-full max-w-md p-6">
-            <h2 className="text-2xl font-bold text-pink-500 mb-6 text-center">Đổi mật khẩu</h2>
+            <h2 className="text-2xl font-bold text-green-500 mb-6 text-center">Đổi mật khẩu</h2>
             <form onSubmit={handleEditPasswordSubmit}>
               <div className="space-y-4">
                 <div>
@@ -609,7 +609,7 @@ const ProfilePage = () => {
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-pink-600 text-white rounded-lg hover:bg-pink-700"
+                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
                   disabled={isLoading}
                 >
                   {isLoading ? 'Đang lưu...' : 'Lưu mật khẩu'}
