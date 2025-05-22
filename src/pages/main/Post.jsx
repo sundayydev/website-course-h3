@@ -4,7 +4,8 @@ import { getAllPost } from '../../api/postApi';
 import defaultAvatar from '../../assets/imgs/default-avatar.jpg';
 import { formatDate } from '../../utils/formatDate';
 import HashLoader from 'react-spinners/HashLoader';
-// Định nghĩa topics
+import { FaBookOpen, FaUser, FaClock, FaTag } from 'react-icons/fa';
+
 const topics = ['HTML', 'CSS', 'JavaScript', 'React', 'Node.js'];
 
 const Post = () => {
@@ -16,7 +17,6 @@ const Post = () => {
   const fetchPosts = async () => {
     try {
       const response = await getAllPost();
-      console.log('Posts Data:', response.data);
       if (Array.isArray(response.data) && response.data.length > 0) {
         setPosts(response.data);
       } else {
@@ -35,16 +35,19 @@ const Post = () => {
   }, []);
 
   return (
-    <div className="w-full lg:h-auto h-full flex flex-col items-center justify-center py-20 bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-6xl mx-auto p-2">
-        <div className="md:hidden mb-4">
-          <div className="bg-white shadow-md p-4 rounded-lg">
-            <h4 className="font-semibold mb-4">XEM CÁC BÀI VIẾT THEO CHỦ ĐỀ</h4>
-            <div className="space-y-2">
+    <div className="w-full min-h-screen bg-gradient-to-b from-gray-50 to-gray-100 dark:from-gray-900 dark:to-gray-800">
+      <div className="max-w-7xl mx-auto px-4 py-12">
+        <div className="md:hidden mb-8">
+          <div className="bg-white dark:bg-gray-800 shadow-lg p-6 rounded-xl">
+            <h4 className="font-bold text-lg mb-4 text-gray-800 dark:text-white flex items-center gap-2">
+              <FaBookOpen className="text-emerald-600" />
+              XEM CÁC BÀI VIẾT THEO CHỦ ĐỀ
+            </h4>
+            <div className="grid grid-cols-2 gap-3">
               {topics.map((topic, index) => (
                 <button
                   key={index}
-                  className="block px-4 py-2 bg-gray-200 rounded-full text-sm w-full text-left"
+                  className="px-4 py-2 bg-emerald-100 dark:bg--900 text-emerald-700 dark:text-emerald-200 rounded-lg text-sm font-medium hover:bg-emerald-200 dark:hover:bg-emerald-800 transition-colors"
                 >
                   {topic}
                 </button>
@@ -53,80 +56,97 @@ const Post = () => {
           </div>
         </div>
 
-        <p className="font-bold text-3xl text-red-600 mb-10">Bài viết nổi bật</p>
+        <h2 className="text-4xl font-bold text-emerald-600 mb-12 text-center mt-10">Bài viết nổi bật</h2>
 
         {loading ? (
           <div className="flex justify-center items-center h-64">
-            <HashLoader color="#a858a7" size={45} />
+            <HashLoader color="#9333ea" size={50} />
           </div>
         ) : error ? (
-          <p className="text-red-500">{error}</p>
+          <div className="text-center p-8 bg-red-50 dark:bg-red-900/20 rounded-xl">
+            <p className="text-red-600 dark:text-red-400 text-lg">{error}</p>
+          </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-            <div className="md:col-span-2 space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 space-y-8">
               {posts.length > 0 ? (
                 posts.map((post) => (
                   <div
                     key={post.id}
-                    className="p-4 border rounded-lg shadow-sm flex flex-col gap-4 cursor-pointer"
+                    className="bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden cursor-pointer transform"
                     onClick={() => navigate(`/detailspost/${post.id}`)}
                   >
-                    <div className="flex items-center gap-3">
-                      <img
-                        src={post.user.profileImage ? `${post.user.profileImage}` : defaultAvatar}
-                        alt="Avatar"
-                        className="w-10 h-10 rounded-full object-cover"
-                        onError={(e) => (e.target.src = defaultAvatar)}
-                      />
-                      <p className="font-semibold">{post.user?.fullName || 'Ẩn danh'}</p>
-                    </div>
-                    <div className="flex gap-4 items-start">
-                      <div className="flex-1 flex flex-col gap-2">
-                        <h3 className="font-bold text-lg">{post.title}</h3>
-                        <p className="text-sm text-gray-600 line-clamp-2">{post.content}</p>
+                    <div className="p-6">
+                      <div className="flex items-center gap-4 mb-4">
+                        <img
+                          src={post.user.profileImage || defaultAvatar}
+                          alt="Avatar"
+                          className="w-12 h-12 rounded-full object-cover ring-2 ring-emerald-200"
+                          onError={(e) => (e.target.src = defaultAvatar)}
+                        />
+                        <div>
+                          <p className="font-semibold text-gray-800 dark:text-white">{post.user?.fullName || 'Ẩn danh'}</p>
+                          <p className="text-sm text-gray-500">{formatDate(post.createdAt)}</p>
+                        </div>
                       </div>
-                      <img
-                        src={post.urlImage ? `${post.urlImage}` : defaultAvatar}
-                        alt="Ảnh bài viết"
-                        className="w-[200px] h-[120px] md:w-40 md:h-28 rounded-lg object-cover"
-                      />
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-500 flex-wrap">
-                      {post.tags && post.tags.trim() !== '' && (
-                        <>
-                          {post.tags.split(',').map((tag, index) => (
-                            <span
-                              key={index}
-                              className="inline-block bg-blue-200 text-blue-800 px-2 py-1 rounded-full text-xs font-semibold"
-                            >
-                              {tag.trim()}
-                            </span>
-                          ))}
-                          <span className="text-gray-500">•</span>
-                        </>
-                      )}
-                      <p>{formatDate(post.createdAt)}</p>
+
+                      <div className="flex gap-6">
+                        <div className="flex-1">
+                          <h3 className="font-bold text-xl mb-3 text-gray-800 dark:text-white">{post.title}</h3>
+                          <p className="text-gray-600 dark:text-gray-300 line-clamp-2 mb-4">{post.content}</p>
+
+                          {post.tags && post.tags.trim() !== '' && (
+                            <div className="flex flex-wrap gap-2">
+                              {post.tags.split(',').map((tag, index) => (
+                                <span
+                                  key={index}
+                                  className="inline-flex items-center gap-1 px-3 py-1 bg-emerald-100 dark:bg-emerald-900/50 text-emerald-700 dark:text-emerald-300 rounded-full text-sm"
+                                >
+                                  <FaTag className="text-xs" />
+                                  {tag.trim()}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                        <img
+                          src={post.urlImage || defaultAvatar}
+                          alt="Ảnh bài viết"
+                          className="w-48 h-32 rounded-lg object-cover"
+                        />
+                      </div>
                     </div>
                   </div>
                 ))
               ) : (
-                <p className="text-gray-500">Không có bài viết nào.</p>
+                <div className="text-center p-8 bg-gray-50 dark:bg-gray-800 rounded-xl">
+                  <p className="text-gray-500 dark:text-gray-400">Không có bài viết nào.</p>
+                </div>
               )}
             </div>
 
-            <div className="hidden md:block ml-16">
-              <div className="sticky top-20 w-72 bg-purple-600 text-white p-4 rounded-lg shadow-lg">
-                <h4 className="font-bold text-lg text-center">Khóa học HTML CSS PRO</h4>
-                <ul className="text-sm text-left space-y-2 mt-2">
-                  <li>✔ Thực hành 8 dự án</li>
-                  <li>✔ Hơn 300 bài tập thử thách</li>
-                  <li>✔ Tặng ứng dụng Flashcards</li>
-                  <li>✔ Tặng 3 Games luyện HTML CSS</li>
-                  <li>✔ Tặng 20+ thiết kế trên Figma</li>
-                </ul>
-                <button className="mt-4 w-full px-4 py-2 bg-red-500 text-white rounded-full font-semibold">
-                  Tìm hiểu thêm →
-                </button>
+            <div className="hidden lg:block">
+              <div className="sticky top-24">
+                <div className="bg-gradient-to-br from-emerald-600 to-emerald-800 text-white p-6 rounded-xl shadow-xl">
+                  <h4 className="font-bold text-xl text-center mb-6">Khóa học HTML CSS PRO</h4>
+                  <ul className="space-y-3">
+                    {[
+                      'Thực hành 8 dự án',
+                      'Hơn 300 bài tập thử thách',
+                      'Tặng ứng dụng Flashcards',
+                      'Tặng 3 Games luyện HTML CSS',
+                      'Tặng 20+ thiết kế trên Figma'
+                    ].map((item, index) => (
+                      <li key={index} className="flex items-center gap-2">
+                        <span className="text-green-300">✔</span>
+                        {item}
+                      </li>
+                    ))}
+                  </ul>
+                  <button className="mt-6 w-full px-6 py-3 bg-white text-emerald-600 rounded-lg font-semibold hover:bg-emerald-50 transition-colors">
+                    Tìm hiểu thêm →
+                  </button>
+                </div>
               </div>
             </div>
           </div>

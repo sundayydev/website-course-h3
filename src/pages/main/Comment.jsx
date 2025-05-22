@@ -344,7 +344,7 @@ const CommentPost = ({ postId }) => {
           <img
             src={getUserAvatar(reply.userProfileImage)}
             alt={reply.userFullName || 'Ẩn danh'}
-            className="w-10 h-10 rounded-full object-cover border-2 border-pink-500"
+            className="w-10 h-10 rounded-full object-cover border-2 border-emerald-500"
 
           />
           <div className="flex-1">
@@ -393,7 +393,7 @@ const CommentPost = ({ postId }) => {
               value={localReplyText}
               onChange={(e) => setLocalReplyText(e.target.value)}
               placeholder="Viết trả lời của bạn..."
-              className="w-full p-2 border rounded-lg mb-2 focus:outline-none focus:ring-2 focus:ring-pink-500 resize-none"
+              className="w-full p-2 border rounded-lg mb-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
               rows="2"
             />
             <button
@@ -469,7 +469,7 @@ const CommentPost = ({ postId }) => {
             <img
               src={getUserAvatar(comment.userProfileImage)}
               alt={comment.userFullName || 'Ẩn danh'}
-              className="w-10 h-10 rounded-full object-cover border-2 border-pink-500"
+              className="w-10 h-10 rounded-full object-cover border-2 border-emerald-500"
               onError={(e) => (e.target.src = defaultAvatar)}
             />
           </Link>
@@ -528,7 +528,7 @@ const CommentPost = ({ postId }) => {
               value={localReplyText}
               onChange={(e) => setLocalReplyText(e.target.value)}
               placeholder="Viết trả lời của bạn..."
-              className="w-full p-2 border rounded-lg mb-2 focus:outline-none focus:ring-2 focus:ring-pink-500 resize-none"
+              className="w-full p-2 border rounded-lg mb-2 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
               rows="2"
             />
             <button
@@ -574,7 +574,7 @@ const CommentPost = ({ postId }) => {
   // Main Render
   return (
     <div className="mt-8 p-4 bg-white rounded-xl shadow-md">
-      <h3 className="text-xl font-bold text-pink-500 mb-4">Bình luận bài viết</h3>
+      <h3 className="text-xl font-bold text-emerald-500 mb-4">Bình luận bài viết</h3>
 
       {isLoading ? (
         <p className="text-center text-gray-500">Đang tải bình luận...</p>
@@ -584,12 +584,12 @@ const CommentPost = ({ postId }) => {
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
             placeholder="Viết bình luận của bạn..."
-            className="w-full p-3 border rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-pink-500 resize-none"
+            className="w-full p-3 border rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
             rows="4"
           />
           <button
             onClick={editCommentId ? handleEditComment : handleSubmitComment}
-            className={`${editCommentId ? 'bg-pink-600 hover:bg-pink-700' : 'bg-blue-600 hover:bg-blue-700'} text-white py-2 px-4 rounded-lg transition duration-200`}
+            className={`${editCommentId ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-blue-600 hover:bg-blue-700'} text-white py-2 px-4 rounded-lg transition duration-200`}
             disabled={isSubmitting}
           >
             {isSubmitting ? 'Đang xử lý...' : editCommentId ? 'Lưu chỉnh sửa' : 'Gửi bình luận'}

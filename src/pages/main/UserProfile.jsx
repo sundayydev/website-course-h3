@@ -14,7 +14,7 @@ const ProfileImage = ({ src, onClick }) => (
   <img
     src={src || defaultAvatar}
     alt="Profile"
-    className="w-24 h-24 rounded-full object-cover border-2 border-pink-500 cursor-pointer"
+    className="w-24 h-24 rounded-full object-cover border-2 border-emerald-500 cursor-pointer"
     onClick={onClick}
     onError={(e) => (e.target.src = defaultAvatar)}
   />
@@ -140,7 +140,7 @@ const UserProfile = () => {
 
           <div className="flex-1 ml-10">
             <div className="flex items-center gap-4 mb-2">
-              <h1 className="text-2xl font-bold text-pink-500">
+              <h1 className="text-2xl font-bold text-emerald-500">
                 {user.fullName || 'Không có tên'}
               </h1>
 
@@ -159,29 +159,29 @@ const UserProfile = () => {
             <div className="flex items-center gap-4 mb-4 mt-2">
               <button
                 onClick={() => setIsFollowersModalOpen(true)}
-                className="text-gray-600 hover:text-pink-500"
+                className="text-gray-600 hover:text-emerald-500"
               >
                 {`0 bài viết`}
               </button>
               <button
                 onClick={() => setIsFollowersModalOpen(true)}
-                className="text-gray-600 hover:text-pink-500"
+                className="text-gray-600 hover:text-emerald-500"
               >
                 {`0 khóa học`}
               </button>
 
               <button
                 onClick={() => setIsFollowersModalOpen(true)}
-                className="text-gray-600 hover:text-pink-500"
+                className="text-gray-600 hover:text-emerald-500"
               >
-                <span className="font-bold text-pink-500">{followerCount}</span> người theo dõi
+                <span className="font-bold text-emerald-500">{followerCount}</span> người theo dõi
               </button>
 
               <button
                 onClick={() => setIsFollowingModalOpen(true)}
-                className="text-gray-600 hover:text-pink-500"
+                className="text-gray-600 hover:text-emerald-500"
               >
-                <span className="font-bold text-pink-500">{followingCount}</span> đang theo dõi
+                <span className="font-bold text-emerald-500">{followingCount}</span> đang theo dõi
               </button>
 
             </div>
@@ -201,7 +201,7 @@ const UserProfile = () => {
                 <button
                   className={`px-3 py-1.5 rounded-md transition-colors flex items-center gap-1.5 ${isFollowing
                     ? 'bg-gray-200 text-black hover:bg-gray-300'
-                    : 'bg-pink-500 text-white hover:bg-pink-600'
+                    : 'bg-emerald-500 text-white hover:bg-emerald-600'
                     }`}
                   onClick={handleFollowToggle}
                   aria-label={isFollowing ? 'Hủy theo dõi' : 'Theo dõi'}
@@ -291,7 +291,7 @@ const UserProfile = () => {
           <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-75 p-4 z-50">
             <div className="bg-white rounded-xl w-full max-w-md p-6">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold text-pink-500">Người theo dõi</h2>
+                <h2 className="text-xl font-bold text-emerald-500">Người theo dõi</h2>
                 <button
                   className="text-gray-500 hover:text-gray-700"
                   onClick={() => setIsFollowersModalOpen(false)}
@@ -336,7 +336,7 @@ const UserProfile = () => {
           <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-75 p-4 z-50">
             <div className="bg-white rounded-xl w-full max-w-md p-6">
               <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold text-pink-500">Đang theo dõi</h2>
+                <h2 className="text-xl font-bold text-emerald-500">Đang theo dõi</h2>
                 <button
                   className="text-gray-500 hover:text-gray-700"
                   onClick={() => setIsFollowingModalOpen(false)}

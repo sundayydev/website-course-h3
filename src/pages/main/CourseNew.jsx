@@ -1,6 +1,6 @@
 /* eslint-disable no-unused-vars */
 import React, { useEffect, useState } from 'react';
-import { FaClock, FaUser, FaStar } from 'react-icons/fa';
+import { FaClock, FaUser, FaStar, FaFire } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import HashLoader from 'react-spinners/HashLoader';
 import { getCourses } from '../../api/courseApi';
@@ -36,7 +36,7 @@ const calculateCourseStatus = (lessonStatuses) => {
   return anyInProgressOrCompleted ? 'in progress' : 'not started';
 };
 
-const CourseList = () => {
+const CourseNew = () => {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -57,6 +57,7 @@ const CourseList = () => {
           const userId = getUserId();
           // Lấy danh sách đăng ký
           const enrollmentResponse = await getEnrollmentByUserId();
+          console.log('Dữ liệu đăng ký từ getEnrollmentByUserId:', enrollmentResponse);
           if (Array.isArray(enrollmentResponse.data)) {
             enrollmentResponse.data.forEach((enrollment) => {
               enrollmentData[enrollment.courseId] = { isEnrolled: true };
@@ -88,6 +89,7 @@ const CourseList = () => {
             const parsedCreatedAt = formatDate(course.createdAt, 'yyyy-MM-dd HH:mm:ss');
             const createdAtDate = new Date(parsedCreatedAt);
             isNew = !isNaN(createdAtDate.getTime()) && createdAtDate > sevenDaysAgo;
+            console.log(`Kiểm tra khóa học ${course.id}: createdAt=${course.createdAt}, isNew=${isNew}`);
           }
 
           // Kiểm tra trạng thái đăng ký
@@ -197,64 +199,71 @@ const CourseList = () => {
     );
   }
 
+  // Lọc khóa học mới để hiển thị riêng (tùy chọn)
+  const newCourses = courses.filter((course) => course.isNew);
+
   return (
     <div className="p-4 mx-auto">
-      <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-        Danh sách khóa học
-      </h2>
-      <div className="flex flex-wrap justify-start gap-10">
-        {courses.map((course) => (
-          <div
-            key={course.id}
-            className="rounded-2xl shadow-lg overflow-hidden bg-white w-full md:w-1/3 lg:w-[325px] 
-              transform transition-transform duration-300 hover:scale-105 flex flex-col cursor-pointer"
-            onClick={() => navigate(`/details/${course.id}`)}
-          >
-            <div className="relative">
-              <img
-                src={course.urlImage ? `${course.urlImage}` : ' '}
-                className="w-full h-40 object-cover"
-                alt={course.title}
-                onError={(e) => (e.target.src = '')}
-              />
-              {course.isNew && (
-                <span className="absolute top-2 left-2 bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded">
-                  Mới
-                </span>
-              )}
-              {course.isEnrolled && (
-                <span className="absolute top-2 right-2 bg-blue-500 text-white text-xs font-semibold px-2 py-1 rounded">
-                  {getStatusText(course.courseStatus)}
-                </span>
-              )}
-            </div>
-            <div className="p-4 flex flex-col flex-grow">
-              <h3 className="text-lg font-semibold mb-2 line-clamp-2 min-h-[3rem]">{course.title}</h3>
-              <p className="text-rose-500 text-lg font-semibold mb-2">
-                {course.price > 0 ? `${course.price.toLocaleString()} VND` : 'Miễn phí'}
-              </p>
-              <div className="flex flex-wrap gap-4 text-sm text-gray-600">
-                <div className="flex items-center gap-1">
-                  <FaUser className="text-gray-500" />
-                  <span>{course.students} học viên</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <FaClock className="text-gray-500" />
-                  <span>{course.totalHours}</span>
-                </div>
-                <div className="flex items-center gap-1">
-                  <FaStar className="text-yellow-500" />
-                  <span>
-                    {course.averageRating} ({course.totalReviews})
+      {/* Phần Khóa học mới (nếu có) */}
+      {newCourses.length > 0 && (
+        <div>
+          <h2 className="text-2xl font-bold mb-4 text-red-600 flex items-center gap-2">
+            <FaFire className="text-red-600 text-xl" />
+            Khóa học mới
+          </h2>
+          <div className="flex flex-wrap justify-start gap-10 mb-8">
+            {newCourses.map((course) => (
+              <div
+                key={course.id}
+                className="rounded-2xl shadow-lg overflow-hidden bg-white w-full md:w-1/3 lg:w-[325px] 
+                  transform transition-transform duration-300 hover:scale-105 flex flex-col cursor-pointer"
+                onClick={() => navigate(`/details/${course.id}`)}
+              >
+                <div className="relative">
+                  <img
+                    src={course.urlImage ? `${course.urlImage}` : ' '}
+                    className="w-full h-40 object-cover"
+                    alt={course.title}
+                    onError={(e) => (e.target.src = '')}
+                  />
+                  <span className="absolute top-2 left-2 bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded">
+                    Mới
                   </span>
+                  {course.isEnrolled && (
+                    <span className="absolute top-2 right-2 bg-blue-500 text-white text-xs font-semibold px-2 py-1 rounded">
+                      {getStatusText(course.courseStatus)}
+                    </span>
+                  )}
+                </div>
+                <div className="p-4 flex flex-col flex-grow">
+                  <h3 className="text-lg font-semibold mb-2 line-clamp-2 min-h-[3rem]">{course.title}</h3>
+                  <p className="text-rose-500 text-lg font-semibold mb-2">
+                    {course.price > 0 ? `${course.price.toLocaleString()} VND` : 'Miễn phí'}
+                  </p>
+                  <div className="flex flex-wrap gap-4 text-sm text-gray-600">
+                    <div className="flex items-center gap-1">
+                      <FaUser className="text-gray-500" />
+                      <span>{course.students} học viên</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <FaClock className="text-gray-500" />
+                      <span>{course.totalHours}</span>
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <FaStar className="text-yellow-500" />
+                      <span>
+                        {course.averageRating} ({course.totalReviews})
+                      </span>
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
+            ))}
           </div>
-        ))}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
 
-export default CourseList;
+export default CourseNew;

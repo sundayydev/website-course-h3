@@ -52,7 +52,7 @@ const PostDetails = () => {
         <img
           src={`${post.urlImage}`}
           alt={post.title}
-          className="w-full h-full object-cover rounded-lg mb-4"
+          className="w-[60%] h-[60%] object-cover rounded-lg mb-4"
         />
       )}
       <p className="text-gray-700 leading-relaxed mb-4">{post.content || 'Không có nội dung.'}</p>

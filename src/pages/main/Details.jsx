@@ -213,7 +213,7 @@ const Details = () => {
         <h2 className="text-xl font-bold mt-8 text-gray-800">Nội dung khóa học</h2>
         <div className="text-gray-600 flex items-center space-x-6">
           <div className="flex items-center space-x-2">
-            <BookOpen size={18} className="text-pink-500" />
+            <BookOpen size={18} className="text-emerald-500" />
             <span className="text-sm font-medium">
               Tổng số <strong className="text-black">{chapters.length}</strong> chương,{' '}
               <strong className="text-black">{lessons.length}</strong> bài học
@@ -228,16 +228,15 @@ const Details = () => {
           {chapters.map((chapter) => (
             <div key={chapter.id} className="overflow-hidden w-full">
               <div
-                className={`bg-gray-200 p-3 cursor-pointer flex justify-between items-center w-full h-16 ${
-                  expandedChapter === chapter.id ? 'rounded-t-2xl' : 'rounded-2xl'
-                }`}
+                className={`bg-gray-200 p-3 cursor-pointer flex justify-between items-center w-full h-16 ${expandedChapter === chapter.id ? 'rounded-t-2xl' : 'rounded-2xl'
+                  }`}
                 onClick={() => toggleChapterExpand(chapter.id)}
               >
                 <div className="flex items-center space-x-2">
                   {expandedChapter === chapter.id ? (
-                    <Minus className="text-pink-500" size={16} />
+                    <Minus className="text-emerald-500" size={16} />
                   ) : (
-                    <Plus className="text-pink-500" size={16} />
+                    <Plus className="text-emerald-500" size={16} />
                   )}
                   <span className="text-base font-bold">{chapter.title}</span>
                 </div>
@@ -250,16 +249,15 @@ const Details = () => {
                       .map((lesson) => (
                         <div key={lesson.id} className="overflow-hidden w-full">
                           <div
-                            className={`bg-gray-100 p-2 cursor-pointer flex justify-between items-center w-full h-14 ${
-                              expandedLesson === lesson.id ? 'rounded-t-xl' : 'rounded-xl'
-                            }`}
+                            className={`bg-gray-100 p-2 cursor-pointer flex justify-between items-center w-full h-14 ${expandedLesson === lesson.id ? 'rounded-t-xl' : 'rounded-xl'
+                              }`}
                             onClick={() => toggleLessonExpand(lesson.id)}
                           >
                             <div className="flex items-center space-x-2">
                               {expandedLesson === lesson.id ? (
-                                <Minus className="text-pink-500" size={16} />
+                                <Minus className="text-emerald-500" size={16} />
                               ) : (
-                                <Plus className="text-pink-500" size={16} />
+                                <Plus className="text-emerald-500" size={16} />
                               )}
                               <span className="text-sm font-medium">{lesson.title}</span>
                             </div>
@@ -290,7 +288,7 @@ const Details = () => {
 
         {/* Đánh giá khóa học */}
         <div className="mt-6">
-          <h2 className="text-xl font-bold mb-4 text-gray-800">Đánh giá khóa học</h2>
+          <h2 className="text-2xl font-bold text-emerald-600">Đánh giá khóa học</h2>
           <Review
             courseId={courseId}
             reviews={reviews}
@@ -302,16 +300,15 @@ const Details = () => {
 
       {/* Thanh bên phải - Video bài học đầu tiên & Đăng ký */}
       <div className="flex flex-col items-center space-y-4 p-4">
-        {lessons.length > 0 && lessons[0].videoUrl && (
+        {lessons.length > 0 && course.urlImage && (
           <div className="w-full max-w-md relative">
             <div className="relative pb-[56.25%] h-0">
-              <iframe
-                src={getEmbedUrl(lessons[0].videoUrl)}
-                className="absolute top-0 left-0 w-full h-full rounded-2xl"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                title="Bài học đầu tiên"
-              ></iframe>
+              <img
+                src={course.urlImage}
+                className="absolute top-0 left-0 w-full h-full rounded-2xl object-cover"
+                alt="Course Image"
+                onError={(e) => (e.target.src = 'path/to/default-image.jpg')} // Thêm fallback image nếu cần
+              />
             </div>
           </div>
         )}
@@ -319,30 +316,29 @@ const Details = () => {
           {course.price ? `${course.price.toLocaleString()} VND` : 'Miễn phí'}
         </div>
         <Button
-          className={`w-64 text-white rounded-2xl shadow-lg ${
-            isEnrolled ? 'bg-blue-600 hover:bg-blue-700' : 'bg-pink-600 hover:bg-pink-700'
-          }`}
+          className={`w-64 text-white rounded-2xl shadow-lg ${isEnrolled ? 'bg-blue-600 hover:bg-blue-700' : 'bg-emerald-600 hover:bg-emerald-700'
+            }`}
           onClick={handleEnrollClick}
         >
           {isEnrolled ? 'Vào học' : 'Đăng ký học'}
         </Button>
         <ul className="mt-4 space-y-2 text-gray-600">
           <li className="flex items-center">
-            <BookOpen className="text-pink-500 mr-2" size={15} />
+            <BookOpen className="text-emerald-500 mr-2" size={15} />
             Tổng số <strong className="text-gray-600 mr-1 ml-1 font-semibold">{chapters.length}</strong>
             chương, <strong className="text-gray-600 mr-1 ml-1 font-semibold">{lessons.length}</strong>
             bài học
           </li>
           <li className="flex items-center">
-            <Clock className="text-pink-500 mr-2" size={15} />
+            <Clock className="text-emerald-500 mr-2" size={15} />
             Thời lượng: <strong className="text-gray-600 mr-1 ml-1 font-semibold">{calculateTotalHours()}</strong>
           </li>
           <li className="flex items-center">
-            <GraduationCap className="text-pink-500 mr-2" size={15} />
+            <GraduationCap className="text-emerald-500 mr-2" size={15} />
             Trình độ cơ bản
           </li>
           <li className="flex items-center">
-            <Globe className="text-pink-500 mr-2" size={15} />
+            <Globe className="text-emerald-500 mr-2" size={15} />
             Học mọi lúc, mọi nơi
           </li>
         </ul>
