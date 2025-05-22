@@ -7,31 +7,22 @@ import {
   ArrowLeft,
   Clock,
   Calendar,
-  Copy,
-  Check,
 } from 'lucide-react';
 import { FaPlayCircle } from 'react-icons/fa';
 import { getLessonsByChapterId, getLessonById } from '@/api/lessonApi';
 import { getChaptersByCourseId } from '@/api/chapterApi';
-import { jwtDecode } from 'jwt-decode';
-import YouTube from 'react-youtube';
 import { toast } from 'react-toastify';
 import { initializeProgress, updateProgress, getProgressByUserAndLesson } from '@/api/progressApi';
 import LessonQuiz from '../../components/LessonQuiz';
 import { getUserId } from '@/api/authUtils';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { vscDarkPlus } from 'react-syntax-highlighter/dist/esm/styles/prism';
-import { formatDate } from '@/utils/formatDate';
 import MarkdownContent from '@/components/MarkdownContent';
+import { formatDate } from '@/utils/formatDate';
+import { Button } from '@/components/ui/button';
 
 const DetailsPageCourse = () => {
   const { lessonId } = useParams();
-  console.log('LessonId trước khi truyền vào LessonQuiz:', lessonId);
-  <LessonQuiz lessonId={lessonId} />;
   const navigate = useNavigate();
-  const playerRef = useRef(null);
+  const videoRef = useRef(null);
   const userId = getUserId();
 
   const [currentLesson, setCurrentLesson] = useState(null);
@@ -47,6 +38,22 @@ const DetailsPageCourse = () => {
   const [currentVideoTime, setCurrentVideoTime] = useState(0);
   const [savedNotes, setSavedNotes] = useState('');
 
+  const getVideoUrl = (videoName) => {
+    if (!videoName) {
+      console.warn('No videoName provided');
+      return '';
+    }
+    if (videoName.includes('s3.amazonaws.com')) {
+      return videoName;
+    }
+    const apiUrl = import.meta.env.VITE_API_URL;
+    if (!apiUrl) {
+      console.error('VITE_API_URL is not defined');
+      return '';
+    }
+    return `${apiUrl}/api/lesson/stream/${videoName}`;
+  };
+
   const formatDuration = (seconds) => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
@@ -60,30 +67,9 @@ const DetailsPageCourse = () => {
     return `${minutes < 10 ? '0' : ''}${minutes}:${secs < 10 ? '0' : ''}${secs}`;
   };
 
-  const extractVideoId = (url) => {
-    const urlString = Array.isArray(url) ? url[0] : typeof url === 'string' ? url : '';
-    const regex =
-      /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|.*[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
-    return urlString.match(regex)?.[1] || null;
-  };
-
-  const onPlayerReady = (event) => {
-    playerRef.current = event.target;
-    console.log('YouTube player đã sẵn sàng');
-  };
-
-  const onPlayerStateChange = async (event) => {
-    console.log('Trạng thái video thay đổi:', event.data);
-    if (event.data === 0 && lessonId) {
-      console.log('Video đã kết thúc, xử lý hoàn thành bài học:', lessonId);
-      await handleLessonComplete(lessonId);
-      await navigateToNextLesson();
-    }
-  };
-
   const handleOpenNotePopup = () => {
-    if (playerRef.current) {
-      const currentTime = playerRef.current.getCurrentTime() ?? 0;
+    if (videoRef.current) {
+      const currentTime = videoRef.current.currentTime ?? 0;
       setCurrentVideoTime(currentTime);
     } else {
       setCurrentVideoTime(0);
@@ -235,23 +221,15 @@ const DetailsPageCourse = () => {
 
       try {
         const lessonResponse = await getLessonById(lessonId);
+        console.log('Lesson Response:', lessonResponse);
         if (!lessonResponse) {
           setError('Không tìm thấy bài học.');
           setLoading(false);
           return;
         }
-        setCurrentLesson(lessonResponse);
-
-        const videoId = extractVideoId(lessonResponse.videoUrls);
-        if (videoId) {
-          setCurrentLesson((prev) =>
-            prev ? { ...prev, duration: 0 } : { ...lessonResponse, duration: 0 }
-          );
-        } else {
-          setCurrentLesson((prev) =>
-            prev ? { ...prev, duration: 0 } : { ...lessonResponse, duration: 0 }
-          );
-        }
+        const videoUrl = getVideoUrl(lessonResponse.videoName);
+        console.log('Video URL:', videoUrl);
+        setCurrentLesson({ ...lessonResponse, videoUrls: videoUrl });
 
         if (lessonResponse.courseId) {
           const chaptersResponse = await getChaptersByCourseId(lessonResponse.courseId);
@@ -290,6 +268,22 @@ const DetailsPageCourse = () => {
     fetchLesson();
   }, [lessonId, navigate, userId]);
 
+  // Tạm dừng video khi chuyển tab hoặc ứng dụng
+  useEffect(() => {
+    const handleVisibilityChange = () => {
+      if (document.hidden && videoRef.current && !videoRef.current.paused) {
+        console.log('Tab hidden, pausing video');
+        videoRef.current.pause();
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, []);
+
   if (loading) return <p className="text-center text-gray-500">Đang tải dữ liệu...</p>;
   if (error) return <p className="text-center text-red-500">{error}</p>;
 
@@ -297,7 +291,6 @@ const DetailsPageCourse = () => {
   const totalLessons = allLessons.length || 1;
   const completedLessons = completedLessonIds.length;
   const completionPercentage = Math.min((completedLessons / totalLessons) * 100, 100);
-  const videoId = extractVideoId(currentLesson?.videoUrls || '');
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-gray-50">
@@ -313,10 +306,6 @@ const DetailsPageCourse = () => {
               Đã học: {completedLessons} / {totalLessons} bài ({completionPercentage.toFixed(2)}%)
             </span>
           </div>
-          <div className="flex items-center cursor-pointer hover:text-gray-300">
-            <FaPlayCircle size={18} className="mr-2 text-gray-400" />
-            <span className="text-sm">Hướng dẫn</span>
-          </div>
           <div
             className="flex items-center cursor-pointer hover:text-gray-300"
             onClick={handleOpenViewNotesPopup}
@@ -330,13 +319,25 @@ const DetailsPageCourse = () => {
       <div className="flex flex-1 overflow-hidden mt-1">
         <div className="flex-[3] overflow-y-auto">
           <div className="bg-black flex items-center justify-center min-h-[500px] relative">
-            {videoId ? (
-              <YouTube
-                videoId={videoId}
-                opts={{ width: '1000', height: '500', playerVars: { autoplay: 0 } }}
-                onReady={onPlayerReady}
-                onStateChange={onPlayerStateChange}
-              />
+            {currentLesson?.videoUrls ? (
+              <video
+                ref={videoRef}
+                src={currentLesson.videoUrls}
+                controls
+                controlsList="nodownload"
+                className="w-full h-full max-w-[1000px] max-h-[500px] rounded-lg"
+                onContextMenu={(e) => e.preventDefault()}
+                onEnded={() => {
+                  console.log('Video đã kết thúc, xử lý hoàn thành bài học:', lessonId);
+                  handleLessonComplete(lessonId).then(() => navigateToNextLesson());
+                }}
+                onError={() => {
+                  toast.error('Không thể tải video. Vui lòng thử lại.');
+                }}
+              >
+                <source src={currentLesson.videoUrls} type="video/mp4" />
+                Trình duyệt của bạn không hỗ trợ thẻ video.
+              </video>
             ) : (
               <p className="text-white text-center">Không có video để hiển thị.</p>
             )}
