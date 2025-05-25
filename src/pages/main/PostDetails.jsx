@@ -5,6 +5,7 @@ import { getPostById } from '../../api/postApi';
 import CommentPost from './Comment';
 import { formatDate } from '../../utils/formatDate';
 import defaultAvatar from '../../assets/imgs/default-avatar.jpg';
+import MarkdownContent from '@/components/MarkdownContent';
 
 const PostDetails = () => {
   const { id } = useParams();
@@ -55,7 +56,9 @@ const PostDetails = () => {
           className="w-[60%] h-[60%] object-cover rounded-lg mb-4"
         />
       )}
-      <p className="text-gray-700 leading-relaxed mb-4">{post.content || 'Không có nội dung.'}</p>
+      <p className="text-gray-700 leading-relaxed mb-4">
+        <MarkdownContent content={post.content} />
+      </p>
       {post.tags && (
         <div className="mt-4">
           <strong>Tags:</strong>{' '}

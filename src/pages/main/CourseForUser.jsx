@@ -102,7 +102,7 @@ const CourseForUser = () => {
       setCourses(enrichedCourses);
     } catch (err) {
       console.error('Lỗi khi tải khóa học:', err);
-      setError('Không thể tải danh sách khóa học. Vui lòng thử lại sau.');
+
     } finally {
       setLoading(false);
     }
@@ -136,7 +136,7 @@ const CourseForUser = () => {
       </h2>
 
       {courses.length === 0 ? (
-        <p className="text-gray-600 text-center">Bạn chưa đăng ký khóa học nào.</p>
+        <p className="text-gray-600 text-center font-bold">Bạn chưa đăng ký khóa học nào.</p>
       ) : (
         <div className="flex flex-wrap justify-start gap-10">
           {courses.map((course) => (

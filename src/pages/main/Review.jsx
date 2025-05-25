@@ -164,7 +164,7 @@ const Review = ({ courseId }) => {
           <img
             src={getUserAvatar(review.userProfileImage)}
             alt={review.userFullName || 'Ẩn danh'}
-            className="w-10 h-10 rounded-full object-cover border-2 border-emerald-500"
+            className="w-10 h-10 rounded-full object-cover "
             onError={(e) => (e.target.src = defaultAvatar)}
           />
         </Link>

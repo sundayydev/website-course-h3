@@ -136,94 +136,92 @@ const LessonQuiz = ({ lessonId }) => {
 
   if (loading) {
     return (
-        <div className="flex justify-center items-center h-32">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-500"></div>
-        </div>
+      <div className="flex justify-center items-center h-32">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-4 border-blue-500"></div>
+      </div>
     );
   }
 
   if (error) {
     return (
-        <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg">
-          <p>{error}</p>
-        </div>
+      <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded-lg">
+        <p>{error}</p>
+      </div>
     );
   }
 
   if (quizzes.length === 0) {
     return (
-        <div className="bg-gray-100 text-gray-600 p-4 rounded-lg text-center">
-          <p>Chưa có câu hỏi nào cho bài học này.</p>
-        </div>
+      <div className="bg-gray-100 text-gray-600 p-4 rounded-lg text-center">
+        <p>Chưa có câu hỏi nào cho bài học này.</p>
+      </div>
     );
   }
 
   return (
-      <div className="mt-8 max-w-2xl mx-auto">
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-2xl font-bold text-gray-800">Trắc nghiệm bài học</h3>
-          {Object.keys(results).length > 0 && (
-              <button
-                  onClick={handleReset}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all duration-300 shadow-md hover:shadow-lg"
+    <div className="mt-8 w-full mx-auto">
+      <div className="flex justify-between items-center mb-6">
+        <h3 className="text-2xl font-bold text-red-500">Trắc nghiệm bài học</h3>
+        {Object.keys(results).length > 0 && (
+          <button
+            onClick={handleReset}
+            className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all duration-300 shadow-md hover:shadow-lg"
+          >
+            Làm lại
+          </button>
+        )}
+      </div>
+      {quizzes.map((quiz) => (
+        <div
+          key={quiz.id}
+          className="mb-6 p-6 bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300"
+        >
+          <p className="font-semibold text-lg text-gray-800 mb-4">{quiz.question}</p>
+          <div className="space-y-3">
+            {quiz.options.map((option, index) => (
+              <label
+                key={index}
+                className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors duration-200 ${selectedAnswers[quiz.id] === option
+                  ? 'bg-blue-50 border border-blue-200'
+                  : 'hover:bg-gray-50'
+                  }`}
               >
-                Làm lại
-              </button>
+                <input
+                  type="radio"
+                  name={`quiz-${quiz.id}`}
+                  value={option}
+                  checked={selectedAnswers[quiz.id] === option}
+                  onChange={() => handleAnswerChange(quiz.id, option)}
+                  className="form-radio h-5 w-5 text-blue-600 focus:ring-blue-500"
+                  disabled={results[quiz.id]}
+                />
+                <span className="ml-3 text-gray-700">{option}</span>
+              </label>
+            ))}
+          </div>
+          {results[quiz.id] && (
+            <div className="mt-4 p-3 rounded-lg bg-gray-50">
+              <p
+                className={`font-medium ${results[quiz.id].isCorrect ? 'text-green-600' : 'text-red-600'
+                  }`}
+              >
+                {results[quiz.id].isCorrect
+                  ? 'Đúng!'
+                  : `Sai! ${results[quiz.id].Feedback || 'Không có phản hồi'}`}
+              </p>
+            </div>
+          )}
+          {!results[quiz.id] && (
+            <button
+              onClick={() => handleSubmitAnswer(quiz.id)}
+              className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-300 shadow-md hover:shadow-lg"
+            >
+              Gửi đáp án
+            </button>
           )}
         </div>
-        {quizzes.map((quiz) => (
-            <div
-                key={quiz.id}
-                className="mb-6 p-6 bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300"
-            >
-              <p className="font-semibold text-lg text-gray-800 mb-4">{quiz.question}</p>
-              <div className="space-y-3">
-                {quiz.options.map((option, index) => (
-                    <label
-                        key={index}
-                        className={`flex items-center p-3 rounded-lg cursor-pointer transition-colors duration-200 ${
-                            selectedAnswers[quiz.id] === option
-                                ? 'bg-blue-50 border border-blue-200'
-                                : 'hover:bg-gray-50'
-                        }`}
-                    >
-                      <input
-                          type="radio"
-                          name={`quiz-${quiz.id}`}
-                          value={option}
-                          checked={selectedAnswers[quiz.id] === option}
-                          onChange={() => handleAnswerChange(quiz.id, option)}
-                          className="form-radio h-5 w-5 text-blue-600 focus:ring-blue-500"
-                          disabled={results[quiz.id]}
-                      />
-                      <span className="ml-3 text-gray-700">{option}</span>
-                    </label>
-                ))}
-              </div>
-              {results[quiz.id] && (
-                  <div className="mt-4 p-3 rounded-lg bg-gray-50">
-                    <p
-                        className={`font-medium ${
-                            results[quiz.id].isCorrect ? 'text-green-600' : 'text-red-600'
-                        }`}
-                    >
-                      {results[quiz.id].isCorrect
-                          ? 'Đúng!'
-                          : `Sai! ${results[quiz.id].Feedback || 'Không có phản hồi'}`}
-                    </p>
-                  </div>
-              )}
-              {!results[quiz.id] && (
-                  <button
-                      onClick={() => handleSubmitAnswer(quiz.id)}
-                      className="mt-4 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-all duration-300 shadow-md hover:shadow-lg"
-                  >
-                    Gửi đáp án
-                  </button>
-              )}
-            </div>
-        ))}
-      </div>
+      ))}
+    </div>
   );
 };
 

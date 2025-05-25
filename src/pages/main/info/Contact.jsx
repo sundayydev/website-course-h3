@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { FaMapMarkerAlt, FaPhoneAlt, FaEnvelope } from 'react-icons/fa';
-import { sendContactEmail } from '../../api/contactApi';
+import { sendContactEmail } from '../../../api/contactApi';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
 import { motion } from 'framer-motion'; // Thêm framer-motion cho hiệu ứng

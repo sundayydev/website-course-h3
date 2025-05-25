@@ -48,12 +48,12 @@ const Footer = () => {
               </Link>
             </li>
             <li>
-              <a href="#" className="hover:text-white">
+              <a href="/terms" className="hover:text-white">
                 Điều khoản
               </a>
             </li>
             <li>
-              <a href="#" className="hover:text-white">
+              <a href="/privacy" className="hover:text-white">
                 Bảo mật
               </a>
             </li>
