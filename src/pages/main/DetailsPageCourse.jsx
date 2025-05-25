@@ -344,20 +344,18 @@ const DetailsPageCourse = () => {
           </div>
 
           <div className="bg-white border-t border-gray-200 py-6 px-8">
-            <h2 className="text-2xl font-bold">{currentLesson?.title || 'Không có tiêu đề'}</h2>
+            <h2 className="text-3xl font-bold">{currentLesson?.title || 'Không có tiêu đề'}</h2>
             <div className="flex items-center text-gray-500 mb-6">
               <Calendar size={16} className="mr-2" />
               <span className="text-sm mr-3">{formatDate(currentLesson?.createdAt || '')}</span>
-              {currentLesson?.duration !== undefined && currentLesson.duration > 0 && (
-                <span className="text-sm">Độ dài: {formatDuration(currentLesson.duration)}</span>
-              )}
+
             </div>
             <div className="mt-6">
-              <h3 className="text-xl font-semibold mb-4">Nội dung bài học</h3>
+              <h3 className="text-3xl font-bold mb-4 text-gray-800">Nội dung bài học</h3>
               {currentLesson?.content ? (
                 <MarkdownContent content={currentLesson.content} />
               ) : (
-                <p className="text-gray-500">Không có nội dung bài học.</p>
+                <p className="text-gray-300">Không có nội dung bài học.</p>
               )}
             </div>
             <LessonQuiz lessonId={lessonId} />
