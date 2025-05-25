@@ -48,15 +48,18 @@ import {
   XCircle,
   Play,
   Pencil,
+  Check,
+  Trash2,
 } from 'lucide-react';
 import { Separator } from '@/components/ui/separator';
+import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import {
   Accordion,
   AccordionItem,
   AccordionTrigger,
   AccordionContent,
 } from '@/components/ui/accordion';
-import { format } from 'date-fns';
+
 import {
   Select,
   SelectContent,
@@ -75,14 +78,33 @@ import {
 import ConfirmDeleteDialog from '@/components/instructor/course/ConfirmDeleteDialog';
 import CourseStats from '@/components/instructor/course/CourseStats';
 import CourseBasicInfo from '@/components/instructor/course/CourseBasicInfo';
+import MediaPlayer from '@/components/MediaPlayer';
 
 import { getCourseById } from '@/api/courseApi';
 import { getUserById } from '@/api/userApi';
 import { getCategoryById } from '@/api/categoryApi';
-import { getReviewsByCourseId } from '@/api/reviewApi';
+import { getReviewsByCourseId, updateReview, deleteReview } from '@/api/reviewApi';
 import { getChaptersByCourseId, deleteChapter } from '@/api/chapterApi';
 import { getLessonsByChapterId, deleteLesson, getVideoLesson } from '@/api/lessonApi';
+import { getEnrollmentsByCourseId } from '@/api/enrollmentApi';
+import { getStudentById } from '@/api/studentApi';
+import { getProgressByUserAndLesson } from '@/api/progressApi';
+import { formatDate } from '@/utils/formatDate';
+
 import { toast } from 'react-hot-toast';
+import { getCourseAnalytics, COLORS } from '@/api/analyticsApi';
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  PieChart,
+  Pie,
+  Cell,
+} from 'recharts';
 
 export default function CourseDetail() {
   const { id } = useParams();
@@ -103,6 +125,20 @@ export default function CourseDetail() {
   const [isVideoDialogOpen, setIsVideoDialogOpen] = useState(false);
   const [videoUrl, setVideoUrl] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [showAllReviews, setShowAllReviews] = useState(false);
+  const [reviewLoading, setReviewLoading] = useState(true);
+  const [reviewError, setReviewError] = useState(null);
+  const [analytics, setAnalytics] = useState({
+    revenue: [],
+    enrollments: [],
+    demographics: {
+      locations: [],
+      ageGroups: [],
+    },
+  });
+  const [analyticsLoading, setAnalyticsLoading] = useState(true);
 
   const coursesCount = 0;
   const enrolledStudents = 0;
@@ -137,6 +173,116 @@ export default function CourseDetail() {
     };
 
     fetchData();
+  }, [courseId]);
+
+  // Fetch enrollments when courseId changes
+  useEffect(() => {
+    const fetchEnrollments = async () => {
+      if (!courseId) return;
+
+      try {
+        setLoading(true);
+        const enrollmentsData = await getEnrollmentsByCourseId(courseId);
+
+        // Fetch additional student details and progress for each enrollment
+        const enrichedEnrollments = await Promise.all(
+          enrollmentsData.map(async (enrollment) => {
+            try {
+              // Get student details
+              const studentData = await getStudentById(enrollment.userId);
+
+              // Calculate overall progress
+              let totalProgress = 0;
+              let completedLessons = 0;
+
+              // Get progress for each lesson in the course
+              for (const chapter of chapters) {
+                for (const lesson of chapter.lessons) {
+                  const progress = await getProgressByUserAndLesson(enrollment.userId, lesson.id);
+                  if (progress) {
+                    totalProgress += progress.completionPercentage;
+                    if (progress.completionPercentage === 100) {
+                      completedLessons++;
+                    }
+                  }
+                }
+              }
+
+              const averageProgress =
+                chapters.length > 0
+                  ? Math.round(totalProgress / (chapters.length * chapters[0].lessons.length))
+                  : 0;
+
+              return {
+                ...enrollment,
+                studentName: studentData.fullName,
+                studentEmail: studentData.email,
+                completionPercentage: averageProgress,
+                completedLessons,
+                status:
+                  averageProgress === 100
+                    ? 'completed'
+                    : averageProgress > 0
+                      ? 'active'
+                      : 'not_started',
+              };
+            } catch (error) {
+              console.error('Error fetching student details:', error);
+              return enrollment;
+            }
+          })
+        );
+
+        setEnrollments(enrichedEnrollments);
+      } catch (error) {
+        console.error('Error fetching enrollments:', error);
+        setError('Failed to load enrollments');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchEnrollments();
+  }, [courseId, chapters]);
+
+  // Fetch reviews when courseId changes
+  useEffect(() => {
+    const fetchReviews = async () => {
+      if (!courseId) return;
+
+      try {
+        setReviewLoading(true);
+        const reviewsData = await getReviewsByCourseId(courseId);
+        setReviews(reviewsData);
+      } catch (error) {
+        console.error('Error fetching reviews:', error);
+        setReviewError('Không thể tải đánh giá');
+      } finally {
+        setReviewLoading(false);
+      }
+    };
+
+    fetchReviews();
+  }, [courseId]);
+
+  // Add useEffect for analytics
+  useEffect(() => {
+    const fetchAnalytics = async () => {
+      if (!courseId) return;
+
+      try {
+        setAnalyticsLoading(true);
+        const data = await getCourseAnalytics(courseId);
+        setAnalytics(data);
+      } catch (error) {
+        console.error('Error fetching analytics:', error);
+        toast.error('Không thể tải dữ liệu thống kê');
+      } finally {
+        setAnalyticsLoading(false);
+      }
+    };
+
+    fetchAnalytics();
   }, [courseId]);
 
   const formatDuration = (minutes) => {
@@ -202,6 +348,47 @@ export default function CourseDetail() {
       setIsVideoDialogOpen(true);
     } catch (error) {
       toast.error('Không thể tải video');
+    }
+  };
+
+  const handleApproveReview = async (reviewId) => {
+    try {
+      await updateReview(reviewId, { status: 'approved' });
+      setReviews(
+        reviews.map((review) =>
+          review.id === reviewId ? { ...review, status: 'approved' } : review
+        )
+      );
+      toast.success('Đã phê duyệt đánh giá');
+    } catch (error) {
+      console.error('Error approving review:', error);
+      toast.error('Không thể phê duyệt đánh giá');
+    }
+  };
+
+  const handleFlagReview = async (reviewId) => {
+    try {
+      await updateReview(reviewId, { status: 'flagged' });
+      setReviews(
+        reviews.map((review) =>
+          review.id === reviewId ? { ...review, status: 'flagged' } : review
+        )
+      );
+      toast.success('Đã gắn cờ đánh giá');
+    } catch (error) {
+      console.error('Error flagging review:', error);
+      toast.error('Không thể gắn cờ đánh giá');
+    }
+  };
+
+  const handleDeleteReview = async (reviewId) => {
+    try {
+      await deleteReview(reviewId);
+      setReviews(reviews.filter((review) => review.id !== reviewId));
+      toast.success('Đã xóa đánh giá');
+    } catch (error) {
+      console.error('Error deleting review:', error);
+      toast.error('Không thể xóa đánh giá');
     }
   };
 
@@ -276,10 +463,10 @@ export default function CourseDetail() {
           {/* Content Tabs */}
           <Tabs defaultValue="curriculum">
             <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="curriculum">Curriculum</TabsTrigger>
-              <TabsTrigger value="enrollments">Enrollments</TabsTrigger>
+              <TabsTrigger value="curriculum">Nội dung khóa học</TabsTrigger>
+              <TabsTrigger value="enrollments">Học viên</TabsTrigger>
               <TabsTrigger value="reviews">Đánh giá</TabsTrigger>
-              <TabsTrigger value="analytics">Analytics</TabsTrigger>
+              <TabsTrigger value="analytics">Thống kê</TabsTrigger>
             </TabsList>
 
             {/* Curriculum Tab */}
@@ -287,8 +474,8 @@ export default function CourseDetail() {
               <Card>
                 <CardHeader className="flex flex-row items-center justify-between">
                   <div>
-                    <CardTitle>Course Curriculum</CardTitle>
-                    <CardDescription>Manage course content and structure</CardDescription>
+                    <CardTitle>Nội dung khóa học</CardTitle>
+                    <CardDescription>Quản lý nội dung và cấu trúc khóa học</CardDescription>
                   </div>
                   <Button
                     size="sm"
@@ -422,8 +609,19 @@ export default function CourseDetail() {
                     <DialogDescription>{selectedLesson?.description}</DialogDescription>
                   </DialogHeader>
                   {videoUrl && (
-                    <div className="aspect-video">
-                      <video src={videoUrl} controls className="w-full h-full rounded-lg" />
+                    <div className="w-full aspect-video bg-black rounded-lg overflow-hidden">
+                      <MediaPlayer
+                        type="video"
+                        url={videoUrl}
+                        title={selectedLesson?.title}
+                        controls={true}
+                        autoplay={false}
+                        muted={false}
+                        loop={false}
+                        playsinline={true}
+                        preload="auto"
+                        poster={selectedLesson?.thumbnailUrl}
+                      />
                     </div>
                   )}
                   <DialogFooter>
@@ -439,87 +637,101 @@ export default function CourseDetail() {
             <TabsContent value="enrollments" className="mt-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Student Enrollments</CardTitle>
-                  <CardDescription>Students enrolled in this course</CardDescription>
+                  <CardTitle>Học viên đã đăng ký</CardTitle>
+                  <CardDescription>Danh sách học viên đã đăng ký khóa học này</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Student</TableHead>
-                        <TableHead>Enrollment Date</TableHead>
-                        <TableHead>Progress</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {enrollments.map((enrollment) => (
-                        <TableRow key={enrollment.id}>
-                          <TableCell>
-                            <div>
-                              <div className="font-medium">{enrollment.studentName}</div>
-                              <div className="text-sm text-muted-foreground">
-                                {enrollment.studentEmail}
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            {format(new Date(enrollment.enrollDate), 'MMM d, yyyy')}
-                          </TableCell>
-                          <TableCell>
-                            <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
-                              <div
-                                className={`h-full ${
-                                  enrollment.completionPercentage >= 80
-                                    ? 'bg-green-500'
-                                    : enrollment.completionPercentage >= 40
-                                      ? 'bg-amber-500'
-                                      : 'bg-red-500'
-                                }`}
-                                style={{
-                                  width: `${enrollment.completionPercentage}%`,
-                                }}
-                              ></div>
-                            </div>
-                            <div className="text-xs text-muted-foreground mt-1 text-right">
-                              {enrollment.completionPercentage}%
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              variant={
-                                enrollment.status === 'active'
-                                  ? 'default'
-                                  : enrollment.status === 'completed'
-                                    ? 'outline'
-                                    : 'destructive'
-                              }
-                            >
-                              {enrollment.status.charAt(0).toUpperCase() +
-                                enrollment.status.slice(1)}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => navigate(`/admin/students/${enrollment.id}`)}
-                            >
-                              View Details
-                            </Button>
-                          </TableCell>
+                  {loading ? (
+                    <div className="flex items-center justify-center py-8">
+                      <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                    </div>
+                  ) : error ? (
+                    <div className="text-center py-8 text-red-500">{error}</div>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Học viên</TableHead>
+                          <TableHead>Ngày đăng ký</TableHead>
+                          <TableHead>Tiến độ</TableHead>
+                          <TableHead>Trạng thái</TableHead>
+                          <TableHead className="text-right">Thao tác</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
+                      </TableHeader>
+                      <TableBody>
+                        {enrollments.map((enrollment) => (
+                          <TableRow key={enrollment.id}>
+                            <TableCell>
+                              <div>
+                                <div className="font-medium">{enrollment.studentName}</div>
+                                <div className="text-sm text-muted-foreground">
+                                  {enrollment.studentEmail}
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>{formatDate(enrollment.createdAt)}</TableCell>
+                            <TableCell>
+                              <div className="space-y-2">
+                                <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
+                                  <div
+                                    className={`h-full transition-all duration-300 ${
+                                      enrollment.completionPercentage >= 80
+                                        ? 'bg-green-500'
+                                        : enrollment.completionPercentage >= 40
+                                          ? 'bg-amber-500'
+                                          : 'bg-red-500'
+                                    }`}
+                                    style={{
+                                      width: `${enrollment.completionPercentage}%`,
+                                    }}
+                                  ></div>
+                                </div>
+                                <div className="flex justify-between text-xs text-muted-foreground">
+                                  <span>{enrollment.completedLessons} bài học hoàn thành</span>
+                                  <span>{enrollment.completionPercentage}%</span>
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge
+                                variant={
+                                  enrollment.status === 'completed'
+                                    ? 'default'
+                                    : enrollment.status === 'active'
+                                      ? 'secondary'
+                                      : 'outline'
+                                }
+                              >
+                                {enrollment.status === 'completed'
+                                  ? 'Hoàn thành'
+                                  : enrollment.status === 'active'
+                                    ? 'Đang học'
+                                    : 'Chưa bắt đầu'}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() =>
+                                  navigate(`/instructor/students/${enrollment.userId}`)
+                                }
+                              >
+                                Xem chi tiết
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
                 </CardContent>
                 <CardFooter className="flex justify-between border-t pt-6">
                   <div className="text-sm text-muted-foreground">
-                    Showing {enrollments.length} of {course.enrollments} enrollments
+                    Hiển thị {enrollments.length} học viên
                   </div>
                   <Button variant="outline" size="sm">
-                    View All Enrollments
+                    Xuất danh sách
                   </Button>
                 </CardFooter>
               </Card>
@@ -533,57 +745,105 @@ export default function CourseDetail() {
                   <CardDescription>Quản lý đánh giá và xếp hạng của học viên</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-6">
-                    {reviews.map((review) => (
-                      <div key={review.id} className="p-4 border rounded-lg">
-                        <div className="flex items-center justify-between mb-2">
-                          <div className="flex items-center gap-2">
-                            <div className="font-medium">{review.userFullName}</div>
-                            <div className="flex items-center">
-                              {[...Array(5)].map((_, i) => (
-                                <Star
-                                  key={i}
-                                  className={`h-4 w-4 ${i < review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-muted-foreground'}`}
-                                />
-                              ))}
-                            </div>
+                  <div className="space-y-4">
+                    <div className="flex items-center justify-between">
+                      <h3 className="text-lg font-semibold">Đánh giá ({reviews.length})</h3>
+                      {reviews.length > 3 && (
+                        <Button variant="ghost" onClick={() => setShowAllReviews(!showAllReviews)}>
+                          {showAllReviews ? 'Thu gọn' : 'Xem tất cả'}
+                        </Button>
+                      )}
+                    </div>
+
+                    {reviewLoading ? (
+                      <div className="space-y-4">
+                        {[1, 2, 3].map((i) => (
+                          <div key={i} className="animate-pulse">
+                            <div className="h-4 bg-gray-200 rounded w-1/4 mb-2"></div>
+                            <div className="h-4 bg-gray-200 rounded w-1/2 mb-2"></div>
+                            <div className="h-4 bg-gray-200 rounded w-3/4"></div>
                           </div>
-                          <div className="flex items-center gap-2">
-                            {/* <Badge
-                              variant={
-                                review.status === 'approved'
-                                  ? 'default'
-                                  : review.status === 'pending'
-                                    ? 'outline'
-                                    : 'destructive'
-                              }
-                            >
-                              {review.status}
-                            </Badge> */}
-                            <div className="text-xs text-muted-foreground">{review.createdAt}</div>
-                          </div>
-                        </div>
-                        <p className="text-sm">{review.comment}</p>
-                        <div className="flex justify-end gap-2 mt-4">
-                          {review.status !== 'approved' && (
-                            <Button variant="outline" size="sm" className="text-green-600">
-                              <CheckCircle className="mr-1 h-4 w-4" />
-                              Approve
-                            </Button>
-                          )}
-                          {review.status !== 'flagged' && (
-                            <Button variant="outline" size="sm" className="text-amber-600">
-                              <Flag className="mr-1 h-4 w-4" />
-                              Flag
-                            </Button>
-                          )}
-                          <Button variant="ghost" size="sm" className="text-red-600">
-                            <XCircle className="mr-1 h-4 w-4" />
-                            Xóa đánh giá
-                          </Button>
-                        </div>
+                        ))}
                       </div>
-                    ))}
+                    ) : reviewError ? (
+                      <div className="text-red-500">{reviewError}</div>
+                    ) : reviews.length === 0 ? (
+                      <div className="text-gray-500">Chưa có đánh giá nào</div>
+                    ) : (
+                      <div className="space-y-4">
+                        {(showAllReviews ? reviews : reviews.slice(0, 3)).map((review) => (
+                          <Card key={review.id}>
+                            <CardContent className="p-4">
+                              <div className="flex items-start justify-between">
+                                <div className="flex items-center space-x-2">
+                                  <Avatar>
+                                    <AvatarImage src={review.user?.avatar} />
+                                    <AvatarFallback>
+                                      {review.user?.name?.charAt(0) || 'U'}
+                                    </AvatarFallback>
+                                  </Avatar>
+                                  <div>
+                                    <p className="font-medium">{review.user?.name}</p>
+                                    <p className="text-sm text-gray-500">
+                                      {new Date(review.createdAt).toLocaleDateString()}
+                                    </p>
+                                  </div>
+                                </div>
+                                <div className="flex items-center space-x-2">
+                                  {review.status === 'pending' && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => handleApproveReview(review.id)}
+                                    >
+                                      <Check className="h-4 w-4 mr-1" />
+                                      Phê duyệt
+                                    </Button>
+                                  )}
+                                  {review.status !== 'flagged' && (
+                                    <Button
+                                      variant="outline"
+                                      size="sm"
+                                      onClick={() => handleFlagReview(review.id)}
+                                    >
+                                      <Flag className="h-4 w-4 mr-1" />
+                                      Gắn cờ
+                                    </Button>
+                                  )}
+                                  <Button
+                                    variant="destructive"
+                                    size="sm"
+                                    onClick={() => handleDeleteReview(review.id)}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                              <div className="mt-2">
+                                <div className="flex items-center mb-2">
+                                  <div className="flex items-center">
+                                    {[1, 2, 3, 4, 5].map((star) => (
+                                      <Star
+                                        key={star}
+                                        className={`h-4 w-4 ${
+                                          star <= review.rating
+                                            ? 'text-yellow-400 fill-yellow-400'
+                                            : 'text-gray-300'
+                                        }`}
+                                      />
+                                    ))}
+                                  </div>
+                                  <span className="ml-2 text-sm text-gray-500">
+                                    {review.rating}/5
+                                  </span>
+                                </div>
+                                <p className="text-gray-700">{review.content}</p>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
@@ -593,43 +853,158 @@ export default function CourseDetail() {
             <TabsContent value="analytics" className="mt-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Course Analytics</CardTitle>
-                  <CardDescription>Performance metrics and insights</CardDescription>
+                  <CardTitle>Thống kê khóa học</CardTitle>
+                  <CardDescription>Số liệu và thông tin chi tiết</CardDescription>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-8">
-                    {/* Revenue Chart Placeholder */}
-                    <div>
-                      <h3 className="text-lg font-medium mb-4">Revenue Over Time</h3>
-                      <div className="w-full h-64 bg-muted rounded-lg flex items-center justify-center">
-                        <p className="text-muted-foreground">Revenue chart placeholder</p>
-                      </div>
-                    </div>
-
-                    {/* Enrollment Chart Placeholder */}
-                    <div>
-                      <h3 className="text-lg font-medium mb-4">Enrollments Over Time</h3>
-                      <div className="w-full h-64 bg-muted rounded-lg flex items-center justify-center">
-                        <p className="text-muted-foreground">Enrollments chart placeholder</p>
-                      </div>
-                    </div>
-
-                    {/* Demographics */}
-                    <div>
-                      <h3 className="text-lg font-medium mb-4">Student Demographics</h3>
-                      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        {/* Location Chart Placeholder */}
-                        <div className="w-full h-48 bg-muted rounded-lg flex items-center justify-center">
-                          <p className="text-muted-foreground">Geographic distribution</p>
+                  {analyticsLoading ? (
+                    <div className="space-y-8">
+                      {[1, 2, 3].map((i) => (
+                        <div key={i} className="animate-pulse">
+                          <div className="h-8 bg-gray-200 rounded w-1/4 mb-4"></div>
+                          <div className="h-64 bg-gray-200 rounded"></div>
                         </div>
-
-                        {/* Age Distribution Placeholder */}
-                        <div className="w-full h-48 bg-muted rounded-lg flex items-center justify-center">
-                          <p className="text-muted-foreground">Age distribution</p>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="space-y-8">
+                      {/* Revenue Chart */}
+                      <div>
+                        <h3 className="text-lg font-medium mb-4">Doanh thu theo thời gian</h3>
+                        <div className="w-full h-64">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={analytics.revenue}>
+                              <CartesianGrid strokeDasharray="3 3" />
+                              <XAxis dataKey="month" />
+                              <YAxis />
+                              <Tooltip />
+                              <Bar dataKey="amount" fill="#8884d8" />
+                            </BarChart>
+                          </ResponsiveContainer>
                         </div>
                       </div>
+
+                      {/* Enrollment Chart */}
+                      <div>
+                        <h3 className="text-lg font-medium mb-4">
+                          Số lượng học viên theo thời gian
+                        </h3>
+                        <div className="w-full h-64">
+                          <ResponsiveContainer width="100%" height="100%">
+                            <BarChart data={analytics.enrollments}>
+                              <CartesianGrid strokeDasharray="3 3" />
+                              <XAxis dataKey="month" />
+                              <YAxis />
+                              <Tooltip />
+                              <Bar dataKey="count" fill="#82ca9d" />
+                            </BarChart>
+                          </ResponsiveContainer>
+                        </div>
+                      </div>
+
+                      {/* Demographics */}
+                      <div>
+                        <h3 className="text-lg font-medium mb-4">Thông tin học viên</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                          {/* Location Chart */}
+                          <div>
+                            <h4 className="text-sm font-medium mb-2">Phân bố địa lý</h4>
+                            <div className="w-full h-48">
+                              <ResponsiveContainer width="100%" height="100%">
+                                <PieChart>
+                                  <Pie
+                                    data={analytics.demographics.locations}
+                                    dataKey="value"
+                                    nameKey="name"
+                                    cx="50%"
+                                    cy="50%"
+                                    outerRadius={80}
+                                    label
+                                  >
+                                    {analytics.demographics.locations.map((entry, index) => (
+                                      <Cell
+                                        key={`cell-${index}`}
+                                        fill={COLORS[index % COLORS.length]}
+                                      />
+                                    ))}
+                                  </Pie>
+                                  <Tooltip />
+                                </PieChart>
+                              </ResponsiveContainer>
+                            </div>
+                          </div>
+
+                          {/* Age Distribution */}
+                          <div>
+                            <h4 className="text-sm font-medium mb-2">Phân bố độ tuổi</h4>
+                            <div className="w-full h-48">
+                              <ResponsiveContainer width="100%" height="100%">
+                                <BarChart data={analytics.demographics.ageGroups}>
+                                  <CartesianGrid strokeDasharray="3 3" />
+                                  <XAxis dataKey="range" />
+                                  <YAxis />
+                                  <Tooltip />
+                                  <Bar dataKey="count" fill="#ffc658" />
+                                </BarChart>
+                              </ResponsiveContainer>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Key Metrics */}
+                      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <Card>
+                          <CardContent className="pt-6">
+                            <div className="text-sm font-medium text-muted-foreground">
+                              Tổng doanh thu
+                            </div>
+                            <div className="text-2xl font-bold">
+                              {new Intl.NumberFormat('vi-VN', {
+                                style: 'currency',
+                                currency: 'VND',
+                              }).format(
+                                analytics.revenue.reduce((sum, item) => sum + item.amount, 0)
+                              )}
+                            </div>
+                          </CardContent>
+                        </Card>
+                        <Card>
+                          <CardContent className="pt-6">
+                            <div className="text-sm font-medium text-muted-foreground">
+                              Tổng học viên
+                            </div>
+                            <div className="text-2xl font-bold">{enrollments.length}</div>
+                          </CardContent>
+                        </Card>
+                        <Card>
+                          <CardContent className="pt-6">
+                            <div className="text-sm font-medium text-muted-foreground">
+                              Tỷ lệ hoàn thành
+                            </div>
+                            <div className="text-2xl font-bold">
+                              {Math.round(
+                                (enrollments.filter((e) => e.status === 'completed').length /
+                                  enrollments.length) *
+                                  100
+                              )}
+                              %
+                            </div>
+                          </CardContent>
+                        </Card>
+                        <Card>
+                          <CardContent className="pt-6">
+                            <div className="text-sm font-medium text-muted-foreground">
+                              Đánh giá trung bình
+                            </div>
+                            <div className="text-2xl font-bold">
+                              {calculateAverageRating(reviews)}/5
+                            </div>
+                          </CardContent>
+                        </Card>
+                      </div>
                     </div>
-                  </div>
+                  )}
                 </CardContent>
               </Card>
             </TabsContent>
@@ -697,103 +1072,53 @@ export default function CourseDetail() {
             {/* Course Settings */}
             <Card>
               <CardHeader>
-                <CardTitle>Course Settings</CardTitle>
+                <CardTitle>Cài đặt khóa học</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <label className="text-sm font-medium mb-1 block">Visibility</label>
+                  <label className="text-sm font-medium mb-1 block">Hiển thị</label>
                   <Select defaultValue="public">
                     <SelectTrigger>
-                      <SelectValue placeholder="Select visibility" />
+                      <SelectValue placeholder="Chọn chế độ hiển thị" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="public">Public</SelectItem>
-                      <SelectItem value="private">Private</SelectItem>
-                      <SelectItem value="password">Password Protected</SelectItem>
+                      <SelectItem value="public">Công khai</SelectItem>
+                      <SelectItem value="private">Riêng tư</SelectItem>
+                      <SelectItem value="password">Bảo vệ bằng mật khẩu</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div>
-                  <label className="text-sm font-medium mb-1 block">Featured Status</label>
+                  <label className="text-sm font-medium mb-1 block">Trạng thái nổi bật</label>
                   <Select defaultValue="not-featured">
                     <SelectTrigger>
-                      <SelectValue placeholder="Select featured status" />
+                      <SelectValue placeholder="Chọn trạng thái nổi bật" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="featured">Featured</SelectItem>
-                      <SelectItem value="not-featured">Not Featured</SelectItem>
+                      <SelectItem value="featured">Nổi bật</SelectItem>
+                      <SelectItem value="not-featured">Không nổi bật</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 <div>
-                  <label className="text-sm font-medium mb-1 block">Comments</label>
+                  <label className="text-sm font-medium mb-1 block">Bình luận</label>
                   <Select defaultValue="enabled">
                     <SelectTrigger>
-                      <SelectValue placeholder="Comment settings" />
+                      <SelectValue placeholder="Cài đặt bình luận" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="enabled">Enabled</SelectItem>
-                      <SelectItem value="moderated">Moderated</SelectItem>
-                      <SelectItem value="disabled">Disabled</SelectItem>
+                      <SelectItem value="enabled">Cho phép</SelectItem>
+                      <SelectItem value="moderated">Kiểm duyệt</SelectItem>
+                      <SelectItem value="disabled">Tắt</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
               </CardContent>
               <CardFooter className="border-t pt-6">
-                <Button className="w-full">Save Settings</Button>
+                <Button className="w-full">Lưu cài đặt</Button>
               </CardFooter>
-            </Card>
-
-            {/* Approval Actions */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Admin Actions</CardTitle>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                <div className="grid grid-cols-2 gap-3">
-                  <Button variant="outline" className="w-full">
-                    <CheckCircle className="mr-2 h-4 w-4" />
-                    Approve
-                  </Button>
-                  <Button variant="outline" className="w-full">
-                    <XCircle className="mr-2 h-4 w-4" />
-                    Reject
-                  </Button>
-                </div>
-
-                <Button variant="outline" className="w-full">
-                  <Edit className="mr-2 h-4 w-4" />
-                  Request Changes
-                </Button>
-
-                <Separator />
-
-                <AlertDialog>
-                  <AlertDialogTrigger asChild>
-                    <Button variant="destructive" className="w-full">
-                      <Trash className="mr-2 h-4 w-4" />
-                      Delete Course
-                    </Button>
-                  </AlertDialogTrigger>
-                  <AlertDialogContent>
-                    <AlertDialogHeader>
-                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                      <AlertDialogDescription>
-                        This action cannot be undone. This will permanently delete the course &quot;
-                        {course.title}&quot; and remove all associated data from our servers.
-                      </AlertDialogDescription>
-                    </AlertDialogHeader>
-                    <AlertDialogFooter>
-                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                      <AlertDialogAction className="bg-destructive text-destructive-foreground hover:bg-destructive/90">
-                        Delete
-                      </AlertDialogAction>
-                    </AlertDialogFooter>
-                  </AlertDialogContent>
-                </AlertDialog>
-              </CardContent>
             </Card>
           </div>
         </div>

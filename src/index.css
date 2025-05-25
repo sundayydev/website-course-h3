@@ -89,3 +89,23 @@ body {
     @apply bg-background text-foreground;
   }
 }
+
+.line-center {
+  display: inline-flex;
+  align-items: center;
+  gap: .5rem;
+  font-size: 14px;
+  color: #fff;
+  padding: .5rem .7rem;
+  border-radius: 2rem;
+  background-color: #78140f;
+}
+
+.footer-icon {
+  position: absolute !important;
+  z-index: 1 !important;
+  width: 600px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%,-50%);
+}

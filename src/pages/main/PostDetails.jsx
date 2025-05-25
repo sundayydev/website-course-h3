@@ -5,6 +5,7 @@ import { getPostById } from '../../api/postApi';
 import CommentPost from './Comment';
 import { formatDate } from '../../utils/formatDate';
 import defaultAvatar from '../../assets/imgs/default-avatar.jpg';
+import MarkdownContent from '@/components/MarkdownContent';
 
 const PostDetails = () => {
   const { id } = useParams();
@@ -43,9 +44,7 @@ const PostDetails = () => {
         />
         <div>
           <p className="font-semibold">{post.user?.fullName || 'Tác giả ẩn danh'}</p>
-          <p className="text-gray-500 text-sm">
-            {formatDate(post.createdAt)}
-          </p>
+          <p className="text-gray-500 text-sm">{formatDate(post.createdAt)}</p>
         </div>
       </div>
       {post.urlImage && (
@@ -55,7 +54,7 @@ const PostDetails = () => {
           className="w-full h-full object-cover rounded-lg mb-4"
         />
       )}
-      <p className="text-gray-700 leading-relaxed mb-4">{post.content || 'Không có nội dung.'}</p>
+      <MarkdownContent content={post.content} />
       {post.tags && (
         <div className="mt-4">
           <strong>Tags:</strong>{' '}

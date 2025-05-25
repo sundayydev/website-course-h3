@@ -5,15 +5,15 @@ import LogoH3 from '../assets/LogoH3.png';
 
 const Footer = () => {
   return (
-    <footer className="bg-gray-900 text-gray-300 py-10 px-6">
-      <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
-        {/* Cột 1: Logo + Thông tin liên hệ */}
+    <footer className="bg-[#1A1A19] text-gray-300 py-10 px-6 bg-[url('/footer-icon.svg')] bg-cover bg-center bg-no-repeat p-8">
+
+    <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-8">
         <div>
           <h1 className="flex items-center space-x-2">
             <a href="/" className="rounded-lg">
               <img className="rounded-lg" src={LogoH3} alt="Logo H3" width={40} height={40} />
             </a>
-            <a className="font-semibold text-lg text-white hover:text-pink-200" href="/">
+            <a className="font-semibold text-lg text-white hover:text-green-400" href="/">
               Học Lập Trình Cùng H3
             </a>
           </h1>
@@ -163,12 +163,24 @@ const Footer = () => {
             </a>
           </div>
         </div>
+
       </div>
 
       {/* Copyright */}
+
+      <div className='mt-10 text-center text-gray-500 text-sm'>
+        <div className="line-center">
+          <div className="w-[20px] h-[20px]">
+            <img src="/src/assets/imgs/vn_flag.svg" alt="Vietnam" />
+          </div>
+          <span>Hoàng Sa &amp; Trường Sa là của Việt Nam!</span>
+        </div>
+      </div>
+
       <div className="text-center text-gray-500 text-xs mt-10">
         © 2025 H3. Nền tảng học lập trình hàng đầu Việt Nam (Bốc phét)
       </div>
+
     </footer>
   );
 };

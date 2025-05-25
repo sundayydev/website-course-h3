@@ -18,6 +18,8 @@ import {
   TableRow,
 } from '@/components/ui/table';
 import { toast } from 'react-toastify';
+import MDEditor from '@uiw/react-md-editor';
+import { Pagination } from '@mui/material';
 
 function PostManagement() {
   const [posts, setPosts] = useState([]);
@@ -28,12 +30,15 @@ function PostManagement() {
     title: '',
     content: '',
     tags: '',
-    urlImage: null, // Thay đổi từ '' thành null để đồng bộ với Courses
+    urlImage: null,
     userId: '',
   });
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const postsPerPage = 10;
 
   // Fetch all posts
   const fetchPosts = async () => {
@@ -42,6 +47,7 @@ function PostManagement() {
       const response = await getAllPost();
       setPosts(response.data);
       setFilteredPosts(response.data);
+      setTotalPages(Math.ceil(response.data.length / postsPerPage));
     } catch (err) {
       setError('Không thể tải danh sách bài viết');
       console.error('Error fetching posts:', err);
@@ -62,11 +68,16 @@ function PostManagement() {
         post.tags?.toLowerCase().includes(searchTerm.toLowerCase())
     );
     setFilteredPosts(results);
+    setTotalPages(Math.ceil(results.length / postsPerPage));
   }, [searchTerm, posts]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setCurrentPost({ ...currentPost, [name]: value });
+  };
+
+  const handleContentChange = (value) => {
+    setCurrentPost({ ...currentPost, content: value });
   };
 
   const handleImageChange = (file) => {
@@ -82,7 +93,7 @@ function PostManagement() {
       title: '',
       content: '',
       tags: '',
-      urlImage: null, // Đồng bộ với Courses
+      urlImage: null,
       userId: '',
     });
     setIsEditing(false);
@@ -100,7 +111,7 @@ function PostManagement() {
       title: post.title,
       content: post.content || '',
       tags: post.tags || '',
-      urlImage: post.urlImage || null, // Đồng bộ với Courses
+      urlImage: post.urlImage || null,
       userId: post.userId || '',
     });
     setIsEditing(true);
@@ -139,8 +150,7 @@ function PostManagement() {
       try {
         await updatePost(currentPost.id, formData);
         if (currentPost.urlImage && currentPost.urlImage instanceof File) {
-          console.log(currentPost.id);
-          await uploadImage(currentPost.id, currentPost.urlImage);
+          await uploadPostImage(currentPost.id, currentPost.urlImage);
         }
         toast.success('Cập nhật bài viết thành công');
         setIsModalOpen(false);
@@ -153,9 +163,8 @@ function PostManagement() {
     } else {
       try {
         const response = await createPost(formData);
-        console.log(response.data.id);
         if (currentPost.urlImage && currentPost.urlImage instanceof File) {
-          await uploadImage(response.data.id, currentPost.urlImage);
+          await uploadPostImage(response.data.id, currentPost.urlImage);
         }
         toast.success('Thêm bài viết thành công');
         setIsModalOpen(false);
@@ -171,6 +180,11 @@ function PostManagement() {
   const formatDate = (dateString) => {
     return dateString ? new Date(dateString).toLocaleDateString() : 'N/A';
   };
+
+  // Calculate pagination
+  const indexOfLastPost = page * postsPerPage;
+  const indexOfFirstPost = indexOfLastPost - postsPerPage;
+  const currentPosts = filteredPosts.slice(indexOfFirstPost, indexOfLastPost);
 
   return (
     <div className="container mx-auto px-4 py-8 w-full">
@@ -218,17 +232,13 @@ function PostManagement() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredPosts.map((post) => (
+                {currentPosts.map((post) => (
                   <TableRow key={post.id}>
                     <TableCell>
                       <div className="flex items-center">
                         {post && (
                           <img
-                            src={
-                              post.urlImage
-                                ? post.urlImage
-                                : ""
-                            }
+                            src={post.urlImage || ''}
                             alt={post.title}
                             className="h-12 w-12 object-cover rounded-md mr-3"
                             onError={(e) => (e.target.src = '/placeholder-image.jpg')}
@@ -249,22 +259,26 @@ function PostManagement() {
                         post.tags.split(',').map((tag, index) => (
                           <span
                             key={index}
-                            className="inline-block bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full mr-1 mb-1"
+                            className="inline-block bg-gray-200 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 mr-2 mb-2"
                           >
                             {tag.trim()}
                           </span>
                         ))
                       ) : (
-                        <span className="text-gray-400">Không có tags</span>
+                        <span className="text-gray-500">Không có tags</span>
                       )}
                     </TableCell>
                     <TableCell>
                       <div className="flex space-x-2">
-                        <Button variant="outline" size="icon" onClick={() => openEditModal(post)}>
-                          <FaEdit className="h-5 w-5" />
+                        <Button variant="outline" size="sm" onClick={() => openEditModal(post)}>
+                          <FaEdit className="mr-1" /> Sửa
                         </Button>
-                        <Button variant="outline" size="icon" onClick={() => handleDelete(post.id)}>
-                          <FaTrash className="h-5 w-5" />
+                        <Button
+                          variant="destructive"
+                          size="sm"
+                          onClick={() => handleDelete(post.id)}
+                        >
+                          <FaTrash className="mr-1" /> Xóa
                         </Button>
                       </div>
                     </TableCell>
@@ -276,120 +290,62 @@ function PostManagement() {
         </Card>
       )}
 
-      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-        <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
-          <DialogHeader>
-            <DialogTitle>{isEditing ? 'Chỉnh sửa bài viết' : 'Tạo bài viết mới'}</DialogTitle>
-          </DialogHeader>
+      <div className="mt-4 flex justify-center">
+        <Pagination
+          count={totalPages}
+          page={page}
+          onChange={(e, value) => setPage(value)}
+          color="primary"
+        />
+      </div>
 
-          <form onSubmit={handleSubmit} className="space-y-4" encType="multipart/form-data">
+      <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>{isEditing ? 'Chỉnh sửa bài viết' : 'Thêm bài viết mới'}</DialogTitle>
+          </DialogHeader>
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label>Tiêu đề</Label>
+              <Label htmlFor="title">Tiêu đề</Label>
               <Input
-                type="text"
+                id="title"
                 name="title"
                 value={currentPost.title}
                 onChange={handleInputChange}
                 required
               />
             </div>
-
             <div>
-              <Label>Nội dung</Label>
-              <textarea
-                name="content"
-                rows="4"
-                className="w-full px-3 py-2 border rounded-lg"
-                value={currentPost.content}
-                onChange={handleInputChange}
-              />
+              <Label htmlFor="content">Nội dung</Label>
+              <div data-color-mode="light">
+                <MDEditor value={currentPost.content} onChange={handleContentChange} height={400} />
+              </div>
             </div>
-
             <div>
-              <Label>Tags (phân cách bởi dấu phẩy)</Label>
+              <Label htmlFor="tags">Tags (phân cách bằng dấu phẩy)</Label>
               <Input
-                type="text"
+                id="tags"
                 name="tags"
                 value={currentPost.tags}
                 onChange={handleInputChange}
-                placeholder="tag1, tag2, tag3"
+                placeholder="Ví dụ: JavaScript, React, Node.js"
               />
             </div>
-
-            <div className="flex flex-row gap-4">
-              <div className="flex-1 space-y-2">
-                <Label htmlFor="image">Ảnh bài viết</Label>
-                <div
-                  className="
-                    border-2 border-dashed border-gray-300 rounded-lg p-4 
-                    text-center cursor-pointer 
-                    hover:border-pink-500 transition-colors"
-                  onDragOver={(e) => e.preventDefault()}
-                  onDrop={(e) => {
-                    e.preventDefault();
-                    const file = e.dataTransfer.files[0];
-                    handleImageChange(file);
-                  }}
-                >
-                  <Input
-                    id="image"
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={(e) => handleImageChange(e.target.files[0])}
-                  />
-                  <label
-                    htmlFor="image"
-                    className="flex flex-col items-center gap-2 cursor-pointer"
-                  >
-                    <FileVideo className="w-8 h-8 text-gray-400" />
-                    <span className="text-sm text-gray-500">Kéo thả hoặc click để tải ảnh lên</span>
-                  </label>
-                </div>
-              </div>
-
-              <div className="w-[230px] flex flex-col items-center gap-2">
-                <div className="w-[230px] h-[129px] bg-gray-100 rounded-lg overflow-hidden">
-                  {currentPost.urlImage ? (
-                    <img
-                      src={
-                        currentPost.urlImage instanceof Blob || currentPost.urlImage instanceof File
-                          ? URL.createObjectURL(currentPost.urlImage)
-                          : import.meta.env.VITE_API_URL + currentPost.urlImage
-                      }
-                      alt="Preview"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : isEditing && currentPost.urlImage ? (
-                    <img
-                      src={
-                        currentPost.urlImage
-                          ? currentPost.urlImage
-                          : ""
-                      }
-                      alt="Preview"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-400">
-                      Chưa có ảnh
-                    </div>
-                  )}
-                </div>
-                <span className="text-sm text-gray-500">Kích thước: 460x259</span>
-              </div>
+            <div>
+              <Label htmlFor="image">Hình ảnh</Label>
+              <Input
+                id="image"
+                type="file"
+                accept="image/*"
+                onChange={(e) => handleImageChange(e.target.files[0])}
+              />
             </div>
-
-            <div className="flex justify-end space-x-3">
+            <div className="flex justify-end space-x-2">
               <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
                 Hủy
               </Button>
-              <Button
-                type="submit"
-                disabled={loading}
-                className="bg-blue-500 hover:bg-blue-600 text-white"
-              >
-                {loading ? 'Đang xử lý...' : isEditing ? 'Cập nhật' : 'Tạo mới'}
+              <Button type="submit" className="bg-blue-500 hover:bg-blue-600">
+                {isEditing ? 'Cập nhật' : 'Tạo mới'}
               </Button>
             </div>
           </form>
