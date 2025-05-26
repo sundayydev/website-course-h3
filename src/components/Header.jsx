@@ -465,7 +465,6 @@ const Header = () => {
                                     return "Ngày không hợp lệ";
                                   }
                                   return format(parsedDate, "dd/MM/yyyy HH:mm:ss");
-                                  // eslint-disable-next-line no-unused-vars
                                 } catch (error) {
                                   return "Ngày không hợp lệ";
                                 }
@@ -518,11 +517,22 @@ const Header = () => {
               </Button>
             </>
           )}
+
           {isLoggedIn && (
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <button className="flex items-center justify-center w-10 h-10 rounded-full bg-blue-500 text-white font-bold shadow-xl hover:bg-blue-800">
-                  {isUserLoading ? '?' : user?.fullName?.charAt(0).toUpperCase() || 'U'}
+                  {isUserLoading ? (
+                    '?'
+                  ) : user?.profileImage ? (
+                    <img
+                      src={user.profileImage}
+                      alt="User Avatar"
+                      className="w-full h-full rounded-full object-cover"
+                    />
+                  ) : (
+                    user?.fullName?.charAt(0).toUpperCase() || 'U'
+                  )}
                 </button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-80 p-2 shadow-lg rounded-2xl m-4">

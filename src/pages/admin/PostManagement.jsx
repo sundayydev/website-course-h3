@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import { FaSearch, FaEdit, FaTrash, FaPlus } from 'react-icons/fa';
@@ -40,7 +41,7 @@ function PostManagement() {
   const [totalPages, setTotalPages] = useState(1);
   const postsPerPage = 10;
 
-  // Fetch all posts
+  // Lấy tất cả bài viết
   const fetchPosts = async () => {
     setLoading(true);
     try {
@@ -50,7 +51,7 @@ function PostManagement() {
       setTotalPages(Math.ceil(response.data.length / postsPerPage));
     } catch (err) {
       setError('Không thể tải danh sách bài viết');
-      console.error('Error fetching posts:', err);
+      console.error('Lỗi khi lấy bài viết:', err);
     } finally {
       setLoading(false);
     }
@@ -80,8 +81,11 @@ function PostManagement() {
     setCurrentPost({ ...currentPost, content: value });
   };
 
-  const handleImageChange = (file) => {
-    setCurrentPost({ ...currentPost, urlImage: file });
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setCurrentPost({ ...currentPost, urlImage: file });
+    }
   };
 
   const handleSearchChange = (e) => {
@@ -111,7 +115,7 @@ function PostManagement() {
       title: post.title,
       content: post.content || '',
       tags: post.tags || '',
-      urlImage: post.urlImage || null,
+      urlImage: post.urlImage || null, // Giữ nguyên urlImage hiện tại
       userId: post.userId || '',
     });
     setIsEditing(true);
@@ -127,7 +131,7 @@ function PostManagement() {
         toast.success('Xóa bài viết thành công');
       } catch (err) {
         toast.error('Không thể xóa bài viết');
-        console.error('Error deleting post:', err);
+        console.error('Lỗi khi xóa bài viết:', err);
       } finally {
         setLoading(false);
       }
@@ -139,17 +143,21 @@ function PostManagement() {
     const token = localStorage.getItem('authToken');
     const decoded = jwtDecode(token);
 
+    // Bao gồm urlImage trong formData
     const formData = {
       title: currentPost.title,
       content: currentPost.content,
       tags: currentPost.tags,
       userId: decoded.id,
+      urlImage: currentPost.urlImage && typeof currentPost.urlImage === 'string' ? currentPost.urlImage : null,
     };
 
     if (isEditing) {
       try {
+        // Cập nhật bài viết với formData chứa urlImage hiện tại
         await updatePost(currentPost.id, formData);
-        if (currentPost.urlImage && currentPost.urlImage instanceof File) {
+        // Chỉ tải ảnh lên nếu có file ảnh mới
+        if (currentPost.urlImage instanceof File) {
           await uploadPostImage(currentPost.id, currentPost.urlImage);
         }
         toast.success('Cập nhật bài viết thành công');
@@ -157,13 +165,13 @@ function PostManagement() {
         fetchPosts();
         resetForm();
       } catch (error) {
-        console.error('Error updating post:', error);
+        console.error('Lỗi khi cập nhật bài viết:', error);
         toast.error('Có lỗi xảy ra khi cập nhật bài viết');
       }
     } else {
       try {
         const response = await createPost(formData);
-        if (currentPost.urlImage && currentPost.urlImage instanceof File) {
+        if (currentPost.urlImage instanceof File) {
           await uploadPostImage(response.data.id, currentPost.urlImage);
         }
         toast.success('Thêm bài viết thành công');
@@ -171,7 +179,7 @@ function PostManagement() {
         fetchPosts();
         resetForm();
       } catch (error) {
-        console.error('Error creating post:', error);
+        console.error('Lỗi khi tạo bài viết:', error);
         toast.error('Có lỗi xảy ra khi tạo bài viết');
       }
     }
@@ -181,7 +189,7 @@ function PostManagement() {
     return dateString ? new Date(dateString).toLocaleDateString() : 'N/A';
   };
 
-  // Calculate pagination
+  // Tính toán phân trang
   const indexOfLastPost = page * postsPerPage;
   const indexOfFirstPost = indexOfLastPost - postsPerPage;
   const currentPosts = filteredPosts.slice(indexOfFirstPost, indexOfLastPost);
@@ -302,45 +310,66 @@ function PostManagement() {
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="max-w-4xl">
           <DialogHeader>
-            <DialogTitle>{isEditing ? 'Chỉnh sửa bài viết' : 'Thêm bài viết mới'}</DialogTitle>
+            <DialogTitle>
+              {isEditing ? 'Chỉnh sửa bài viết' : 'Thêm bài viết mới'}
+            </DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div>
-              <Label htmlFor="title">Tiêu đề</Label>
-              <Input
-                id="title"
-                name="title"
-                value={currentPost.title}
-                onChange={handleInputChange}
-                required
-              />
-            </div>
-            <div>
-              <Label htmlFor="content">Nội dung</Label>
-              <div data-color-mode="light">
-                <MDEditor value={currentPost.content} onChange={handleContentChange} height={400} />
+          <form onSubmit={handleSubmit} className="grid gap-6 md:grid-cols-[1fr_2fr]">
+            {/* Cột trái - nhỏ hơn */}
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="title">Tiêu đề</Label>
+                <Input
+                  id="title"
+                  name="title"
+                  value={currentPost.title}
+                  onChange={handleInputChange}
+                  required
+                />
+              </div>
+              <div>
+                <Label htmlFor="tags">Tags (phân cách bằng dấu phẩy)</Label>
+                <Input
+                  id="tags"
+                  name="tags"
+                  value={currentPost.tags}
+                  onChange={handleInputChange}
+                  placeholder="Ví dụ: JavaScript, React, Node.js"
+                />
+              </div>
+              <div>
+                <Label htmlFor="image">Hình ảnh</Label>
+                {isEditing && currentPost.urlImage && typeof currentPost.urlImage === 'string' && (
+                  <div className="mb-2">
+                    <img
+                      src={currentPost.urlImage}
+                      alt="Ảnh hiện tại"
+                      className="h-24 w-24 object-cover rounded-md"
+                    />
+                    <p className="text-sm text-gray-500">Ảnh hiện tại</p>
+                  </div>
+                )}
+                <Input
+                  id="image"
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageChange}
+                />
               </div>
             </div>
-            <div>
-              <Label htmlFor="tags">Tags (phân cách bằng dấu phẩy)</Label>
-              <Input
-                id="tags"
-                name="tags"
-                value={currentPost.tags}
-                onChange={handleInputChange}
-                placeholder="Ví dụ: JavaScript, React, Node.js"
-              />
+
+            {/* Cột phải - rộng hơn */}
+            <div className="space-y-4">
+              <div>
+                <Label htmlFor="content">Nội dung</Label>
+                <div data-color-mode="light">
+                  <MDEditor value={currentPost.content} onChange={handleContentChange} height={400} />
+                </div>
+              </div>
             </div>
-            <div>
-              <Label htmlFor="image">Hình ảnh</Label>
-              <Input
-                id="image"
-                type="file"
-                accept="image/*"
-                onChange={(e) => handleImageChange(e.target.files[0])}
-              />
-            </div>
-            <div className="flex justify-end space-x-2">
+
+            {/* Nút hành động */}
+            <div className="md:col-span-2 flex justify-end space-x-2">
               <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
                 Hủy
               </Button>
@@ -351,6 +380,8 @@ function PostManagement() {
           </form>
         </DialogContent>
       </Dialog>
+
+
     </div>
   );
 }

@@ -8,6 +8,7 @@ import AddContent from '@/pages/instructor/lessons/AddContent';
 import ManageLessons from '@/pages/instructor/lessons/ManageLessons';
 import OdersDetail from '@/pages/instructor/oders/OdersDetail';
 import { ProtectedRouteInstructor } from './ProtectedRoute';
+import Post from '../pages/instructor/post/Post';
 const InstructorRoutes = {
   path: '/instructor', // Đường dẫn chính cho Instructor
   element: (
@@ -26,6 +27,7 @@ const InstructorRoutes = {
     { path: 'course/:courseId/content/add', element: <AddContent /> },
     { path: 'course/:courseId/lessons', element: <ManageLessons /> },
     { path: 'orders', element: <OdersDetail /> },
+    { path: 'post', element: <Post /> }
   ],
 };
 

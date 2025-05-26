@@ -341,12 +341,14 @@ const CommentPost = ({ postId }) => {
     return (
       <div key={reply.id} className="ml-24 pb-4">
         <div className="flex items-start space-x-3 mt-2">
-          <img
-            src={getUserAvatar(reply.userProfileImage)}
-            alt={reply.userFullName || 'Ẩn danh'}
-            className="w-10 h-10 rounded-full object-cover border-2 border-emerald-500"
+          <Link to={`/profile/${post.userId}`}>
+            <img
+              src={getUserAvatar(reply.userProfileImage)}
+              alt={reply.userFullName || 'Ẩn danh'}
+              className="w-10 h-10 rounded-full object-cover"
 
-          />
+            />
+          </Link>
           <div className="flex-1">
             <div className="flex items-center justify-between mb-1">
               <p className="font-semibold text-gray-800">{reply.userFullName || 'Ẩn danh'}</p>
@@ -469,7 +471,7 @@ const CommentPost = ({ postId }) => {
             <img
               src={getUserAvatar(comment.userProfileImage)}
               alt={comment.userFullName || 'Ẩn danh'}
-              className="w-10 h-10 rounded-full object-cover border-2 border-emerald-500"
+              className="w-10 h-10 rounded-full object-cover border-2 "
               onError={(e) => (e.target.src = defaultAvatar)}
             />
           </Link>
