@@ -78,7 +78,7 @@ const Post = () => {
                         <img
                           src={post.user.profileImage || defaultAvatar}
                           alt="Avatar"
-                          className="w-12 h-12 rounded-full object-cover border-2 border-green-200"
+                          className="w-12 h-12 rounded-full object-cover"
                           onError={(e) => (e.target.src = defaultAvatar)}
                         />
                         <div>

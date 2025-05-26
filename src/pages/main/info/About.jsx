@@ -107,7 +107,7 @@ const About = () => {
                 lập trình viên chuyên nghiệp.
               </p>
               <button
-                onClick={() => navigate('/contact')}
+                onClick={() => navigate('/')}
                 className="px-8 py-3 bg-emerald-600 text-white rounded-full text-lg font-semibold 
                 hover:bg-emerald-700 transition-all duration-300 shadow-md hover:shadow-lg transform hover:-translate-y-1"
               >

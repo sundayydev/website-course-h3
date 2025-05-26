@@ -36,16 +36,9 @@ const sidebarItems = [
     items: [
       { icon: <GraduationCap size={16} />, text: 'Khóa học', path: '/admin/courses' },
       { icon: <BookOpenText size={16} />, text: 'Bài viết', path: '/admin/post-management' },
-      {
-        icon: <CreditCard size={16} />,
-        text: 'Quản lý khóa học',
-        path: '/admin/course-management',
-        badge: 'NEW',
-        badgeType: 'beta',
-      },
+
       { icon: <BookOpen size={16} />, text: 'Bình luận bài viết', path: '/admin/comment' },
       { icon: <CreditCard size={16} />, text: 'Quản lý khóa học', path: '/admin/course-management', badge: 'NEW', badgeType: 'beta' },
-      { icon: <BookOpen size={16} />, text: 'Bình luận bài viết', path: '/admin/comment' },
       { icon: <BookOpen size={16} />, text: 'Thông báo hệ thống', path: '/admin/Notifications' },
     ],
   },
@@ -109,17 +102,15 @@ function SidebarItem({ icon, text, badge, badgeType, active, path }) {
   return (
     <NavLink to={path || '#'}>
       <div
-        className={`flex items-center p-2.5 rounded-lg transition-colors ${
-          active ? 'bg-pink-50 text-pink-600' : 'text-gray-600 hover:bg-gray-50 hover:text-pink-600'
-        }`}
+        className={`flex items-center p-2.5 rounded-lg transition-colors ${active ? 'bg-pink-50 text-pink-600' : 'text-gray-600 hover:bg-gray-50 hover:text-pink-600'
+          }`}
       >
         {icon}
         <span className="ml-3 font-medium">{text}</span>
         {badge && (
           <span
-            className={`ml-auto px-2 py-0.5 text-xs rounded-full font-semibold ${
-              badgeType === 'beta' ? 'bg-pink-100 text-pink-600' : 'bg-red-100 text-red-600'
-            }`}
+            className={`ml-auto px-2 py-0.5 text-xs rounded-full font-semibold ${badgeType === 'beta' ? 'bg-pink-100 text-pink-600' : 'bg-red-100 text-red-600'
+              }`}
           >
             {badge}
           </span>

@@ -10,6 +10,7 @@ import {
   HelpCircle,
   LogOut,
   CreditCard,
+  Book,
 } from 'lucide-react';
 
 import { useEffect, useState } from 'react';
@@ -121,6 +122,13 @@ const Sidebar = () => {
             >
               <CreditCard size={20} />
               {sidebarOpen && <span className="ml-4">Thanh toán</span>}
+            </NavLink>
+            <NavLink
+              to="/instructor/post"
+              className={`flex items-center p-3 text-gray-400 hover:bg-gray-800 rounded-lg ${pathname === '/post' ? 'bg-blue-700 text-white' : ''}`}
+            >
+              <Book size={20} />
+              {sidebarOpen && <span className="ml-4">Bài viết</span>}
             </NavLink>
           </div>
         </nav>
