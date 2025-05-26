@@ -4,8 +4,8 @@ import { getAllPost } from '../../api/postApi';
 import defaultAvatar from '../../assets/imgs/default-avatar.jpg';
 import { formatDate } from '../../utils/formatDate';
 import HashLoader from 'react-spinners/HashLoader';
-// Định nghĩa topics
-const topics = ['HTML', 'CSS', 'JavaScript', 'React', 'Node.js'];
+
+const topics = ['HTML', 'CSS', 'JavaScript', 'React', 'Node.js', 'Python', 'Java', 'PHP'];
 
 const Post = () => {
   const [posts, setPosts] = useState([]);
@@ -16,7 +16,6 @@ const Post = () => {
   const fetchPosts = async () => {
     try {
       const response = await getAllPost();
-      console.log('Posts Data:', response.data);
       if (Array.isArray(response.data) && response.data.length > 0) {
         setPosts(response.data);
       } else {
@@ -35,16 +34,17 @@ const Post = () => {
   }, []);
 
   return (
-    <div className="w-full lg:h-auto h-full flex flex-col items-center justify-center py-20 bg-gray-50 dark:bg-gray-900">
-      <div className="max-w-6xl mx-auto p-2">
-        <div className="md:hidden mb-4">
-          <div className="bg-white shadow-md p-4 rounded-lg">
-            <h4 className="font-semibold mb-4">XEM CÁC BÀI VIẾT THEO CHỦ ĐỀ</h4>
-            <div className="space-y-2">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12 mt-12">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        {/* Mobile Topics */}
+        <div className="md:hidden mb-8">
+          <div className="bg-white dark:bg-gray-800 shadow-lg rounded-xl p-6">
+            <h4 className="font-bold text-xl mb-4 text-gray-800 dark:text-white">Chủ đề nổi bật</h4>
+            <div className="grid grid-cols-2 gap-3">
               {topics.map((topic, index) => (
                 <button
                   key={index}
-                  className="block px-4 py-2 bg-gray-200 rounded-full text-sm w-full text-left"
+                  className="px-4 py-2 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-100 rounded-lg text-sm font-medium hover:bg-green-200 dark:hover:bg-green-800 transition-colors"
                 >
                   {topic}
                 </button>
@@ -53,80 +53,128 @@ const Post = () => {
           </div>
         </div>
 
-        <p className="font-bold text-3xl text-red-600 mb-10">Bài viết nổi bật</p>
+        <h1 className="text-4xl font-bold text-green-600 mb-8">Bài viết nổi bật</h1>
 
         {loading ? (
-          <div className="flex justify-center items-center h-64">
-            <HashLoader color="#a858a7" size={45} />
+          <div className="flex justify-center items-center h-96">
+            <HashLoader color="#16a34a" size={50} />
           </div>
         ) : error ? (
-          <p className="text-red-500">{error}</p>
+          <div className="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 rounded">
+            <p>{error}</p>
+          </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
-            <div className="md:col-span-2 space-y-6">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div className="lg:col-span-2 space-y-6">
               {posts.length > 0 ? (
                 posts.map((post) => (
                   <div
                     key={post.id}
-                    className="p-4 border rounded-lg shadow-sm flex flex-col gap-4 cursor-pointer"
+                    className="bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden cursor-pointer"
                     onClick={() => navigate(`/detailspost/${post.id}`)}
                   >
-                    <div className="flex items-center gap-3">
-                      <img
-                        src={post.user.profileImage ? `${post.user.profileImage}` : defaultAvatar}
-                        alt="Avatar"
-                        className="w-10 h-10 rounded-full object-cover"
-                        onError={(e) => (e.target.src = defaultAvatar)}
-                      />
-                      <p className="font-semibold">{post.user?.fullName || 'Ẩn danh'}</p>
-                    </div>
-                    <div className="flex gap-4 items-start">
-                      <div className="flex-1 flex flex-col gap-2">
-                        <h3 className="font-bold text-lg">{post.title}</h3>
-                        <p className="text-sm text-gray-600 line-clamp-2">{post.content}</p>
+                    <div className="p-6">
+                      <div className="flex items-center gap-4 mb-4">
+                        <img
+                          src={post.user.profileImage || defaultAvatar}
+                          alt="Avatar"
+                          className="w-12 h-12 rounded-full object-cover border-2 border-green-200"
+                          onError={(e) => (e.target.src = defaultAvatar)}
+                        />
+                        <div>
+                          <p className="font-semibold text-gray-800 dark:text-white">
+                            {post.user?.fullName || 'Ẩn danh'}
+                          </p>
+                          <p className="text-sm text-gray-500">{formatDate(post.createdAt)}</p>
+                        </div>
                       </div>
-                      <img
-                        src={post.urlImage ? `${post.urlImage}` : defaultAvatar}
-                        alt="Ảnh bài viết"
-                        className="w-[200px] h-[120px] md:w-40 md:h-28 rounded-lg object-cover"
-                      />
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-500 flex-wrap">
+
+                      <div className="flex gap-6">
+                        <div className="flex-1">
+                          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3 hover:text-green-600 transition-colors">
+                            {post.title}
+                          </h3>
+                          <p className="text-gray-600 dark:text-gray-300 line-clamp-3">
+                            {post.content}
+                          </p>
+                        </div>
+                        <img
+                          src={post.urlImage || defaultAvatar}
+                          alt="Ảnh bài viết"
+                          className="w-48 h-32 rounded-lg object-cover"
+                        />
+                      </div>
+
                       {post.tags && post.tags.trim() !== '' && (
-                        <>
+                        <div className="flex flex-wrap gap-2 mt-4">
                           {post.tags.split(',').map((tag, index) => (
                             <span
                               key={index}
-                              className="inline-block bg-blue-200 text-blue-800 px-2 py-1 rounded-full text-xs font-semibold"
+                              className="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-100 rounded-full text-sm font-medium"
                             >
                               {tag.trim()}
                             </span>
                           ))}
-                          <span className="text-gray-500">•</span>
-                        </>
+                        </div>
                       )}
-                      <p>{formatDate(post.createdAt)}</p>
                     </div>
                   </div>
                 ))
               ) : (
-                <p className="text-gray-500">Không có bài viết nào.</p>
+                <div className="text-center text-gray-500 dark:text-gray-400 py-12">
+                  <p className="text-xl">Chưa có bài viết nào.</p>
+                </div>
               )}
             </div>
 
-            <div className="hidden md:block ml-16">
-              <div className="sticky top-20 w-72 bg-purple-600 text-white p-4 rounded-lg shadow-lg">
-                <h4 className="font-bold text-lg text-center">Khóa học HTML CSS PRO</h4>
-                <ul className="text-sm text-left space-y-2 mt-2">
-                  <li>✔ Thực hành 8 dự án</li>
-                  <li>✔ Hơn 300 bài tập thử thách</li>
-                  <li>✔ Tặng ứng dụng Flashcards</li>
-                  <li>✔ Tặng 3 Games luyện HTML CSS</li>
-                  <li>✔ Tặng 20+ thiết kế trên Figma</li>
-                </ul>
-                <button className="mt-4 w-full px-4 py-2 bg-red-500 text-white rounded-full font-semibold">
-                  Tìm hiểu thêm →
-                </button>
+            <div className="hidden lg:block">
+              <div className="sticky top-24">
+                {/* Topics */}
+                <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-8">
+                  <h4 className="font-bold text-xl mb-4 text-gray-800 dark:text-white">
+                    Chủ đề nổi bật
+                  </h4>
+                  <div className="space-y-2">
+                    {topics.map((topic, index) => (
+                      <button
+                        key={index}
+                        className="w-full px-4 py-2 text-left bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-100 rounded-lg text-sm font-medium hover:bg-green-200 dark:hover:bg-green-800 transition-colors"
+                      >
+                        {topic}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Course Promotion */}
+                <div className="bg-gradient-to-r from-green-600 to-green-800 rounded-xl shadow-lg p-6 text-white">
+                  <h4 className="font-bold text-xl mb-4 text-center">Khóa học HTML CSS PRO</h4>
+                  <ul className="space-y-3">
+                    <li className="flex items-center gap-2">
+                      <span className="text-green-200">✦</span>
+                      <span>Thực hành 8 dự án thực tế</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="text-green-200">✦</span>
+                      <span>Hơn 300 bài tập thử thách</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="text-green-200">✦</span>
+                      <span>Tặng ứng dụng Flashcards</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="text-green-200">✦</span>
+                      <span>Tặng 3 Games luyện HTML CSS</span>
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <span className="text-green-200">✦</span>
+                      <span>Tặng 20+ thiết kế trên Figma</span>
+                    </li>
+                  </ul>
+                  <button className="mt-6 w-full px-6 py-3 bg-white text-green-700 rounded-lg font-bold hover:bg-green-50 transition-colors">
+                    Tìm hiểu thêm →
+                  </button>
+                </div>
               </div>
             </div>
           </div>

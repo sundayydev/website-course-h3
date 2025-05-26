@@ -192,10 +192,7 @@ const Contact = () => {
         </div>
 
         {/* Google Maps */}
-        <motion.div
-          variants={itemVariants}
-          className="mt-12"
-        >
+        <motion.div variants={itemVariants} className="mt-12">
           <h3 className="text-2xl font-semibold text-gray-900 dark:text-white mb-6">
             Ghé thăm chúng tôi
           </h3>
