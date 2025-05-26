@@ -1,8 +1,8 @@
 // src/routes/MainRoutes.jsx
 import MainLayout from '../layouts/MainLayout';
 import Home from '../pages/main/Home';
-import About from '../pages/main/About';
-import Contact from '../pages/main/Contact';
+import About from '../pages/main/info/About.jsx';
+import Contact from '../pages/main/info/Contact';
 import Post from '../pages/main/Post';
 import PaymentModal from '../pages/main/Payment';
 import PaymentPage from '../pages/main/PaymentDetail';
@@ -15,12 +15,17 @@ import PaymentFailure from '@/pages/main/PaymentFailure.jsx';
 import ProfilePage from '../pages/main/account/ProFile.jsx';
 import AccountSettings from '../pages/main/account/SettingAccount.jsx';
 import UserProfile from '../pages/main/UserProfile.jsx';
+import Terms from '../pages/main/info/Terms.jsx';
+import PrivacyPolicy from '../pages/main/info/PrivacyPolicy.jsx';
+
 const MainRoutes = {
   path: '/',
   element: <MainLayout />,
   children: [
     { index: true, element: <Home /> }, // /
     { path: 'about', element: <About /> }, // /about
+    { path: 'terms', element: <Terms /> },
+    { path: 'privacy', element: <PrivacyPolicy /> },
     { path: 'contact', element: <Contact /> },
     { path: 'post', element: <Post /> },
     { path: 'payment/:courseId', element: <PaymentModal /> },
@@ -33,7 +38,7 @@ const MainRoutes = {
     { path: 'payment-failure', element: <PaymentFailure /> },
     { path: 'profile', element: <ProfilePage /> },
     { path: 'setting', element: <AccountSettings /> },
-    { path: 'profile/:id', element: <UserProfile />}, // Đường dẫn cho trang chi tiết người dùng
+    { path: 'profile/:id', element: <UserProfile /> }, // Đường dẫn cho trang chi tiết người dùng
   ],
 };
 

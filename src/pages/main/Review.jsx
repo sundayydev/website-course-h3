@@ -8,11 +8,10 @@ import { getUserId, isAuthenticated } from '../../api/authUtils';
 import { Link } from 'react-router-dom';
 import defaultAvatar from '../../assets/imgs/default-avatar.jpg';
 import { formatDate } from '../../utils/formatDate';
+import { getEnrollmentByUserId } from '../../api/enrollmentApi'; // Giả định API kiểm tra đăng ký
 
 const getUserAvatar = (userProfileImage) => {
-  return userProfileImage
-    ? userProfileImage
-    : defaultAvatar;
+  return userProfileImage ? userProfileImage : defaultAvatar;
 };
 
 // Review Component
@@ -23,9 +22,10 @@ const Review = ({ courseId }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [editReviewId, setEditReviewId] = useState(null);
+  const [isEnrolled, setIsEnrolled] = useState(false); // Thêm trạng thái đăng ký
   const currentUserId = isAuthenticated() ? getUserId() : null;
 
-  // Fetch reviews data
+  // Fetch reviews and enrollment data
   const fetchReviews = useCallback(async () => {
     if (!courseId) {
       toast.error('Không có ID khóa học!');
@@ -35,6 +35,7 @@ const Review = ({ courseId }) => {
 
     try {
       setIsLoading(true);
+      // Lấy danh sách đánh giá
       const response = await getReviewsByCourseId(courseId);
       if (Array.isArray(response)) {
         setReviews(response);
@@ -48,8 +49,19 @@ const Review = ({ courseId }) => {
         setReviews([]);
         toast.error('Dữ liệu đánh giá không hợp lệ.');
       }
+
+      // Kiểm tra đăng ký
+      if (isAuthenticated()) {
+        const enrollmentResponse = await getEnrollmentByUserId();
+        if (Array.isArray(enrollmentResponse.data)) {
+          const isUserEnrolled = enrollmentResponse.data.some(
+            (enrollment) => enrollment.courseId === courseId
+          );
+          setIsEnrolled(isUserEnrolled);
+        }
+      }
     } catch (error) {
-      toast.error(error.message || 'Không thể tải đánh giá. Vui lòng thử lại!');
+      toast.error(error.message || 'Không thể tải dữ liệu. Vui lòng thử lại!');
       setReviews([]);
     } finally {
       setIsLoading(false);
@@ -62,11 +74,20 @@ const Review = ({ courseId }) => {
 
   // Handle star click
   const handleStarClick = (star) => {
+    if (!isEnrolled) {
+      toast.error('Bạn cần đăng ký khóa học để đánh giá!');
+      return;
+    }
     setRating(star);
   };
 
   // Handle submit review
   const handleSubmitReview = async () => {
+    if (!isEnrolled) {
+      toast.error('Bạn cần đăng ký khóa học để đánh giá!');
+      return;
+    }
+
     if (!rating || !reviewText.trim()) {
       toast.error('Bạn cần chọn số sao và nhập nội dung đánh giá!');
       return;
@@ -102,6 +123,11 @@ const Review = ({ courseId }) => {
 
   // Handle delete review
   const handleDeleteReview = async (reviewId) => {
+    if (!isEnrolled) {
+      toast.error('Bạn cần đăng ký khóa học để xóa đánh giá!');
+      return;
+    }
+
     if (!isAuthenticated()) {
       toast.error('Vui lòng đăng nhập để thực hiện hành động này!');
       return;
@@ -138,7 +164,7 @@ const Review = ({ courseId }) => {
           <img
             src={getUserAvatar(review.userProfileImage)}
             alt={review.userFullName || 'Ẩn danh'}
-            className="w-10 h-10 rounded-full object-cover border-2 border-pink-500"
+            className="w-10 h-10 rounded-full object-cover "
             onError={(e) => (e.target.src = defaultAvatar)}
           />
         </Link>
@@ -161,6 +187,10 @@ const Review = ({ courseId }) => {
               <div className="flex gap-2">
                 <button
                   onClick={() => {
+                    if (!isEnrolled) {
+                      toast.error('Bạn cần đăng ký khóa học để sửa đánh giá!');
+                      return;
+                    }
                     setEditReviewId(review.id);
                     setRating(review.rating);
                     setReviewText(review.comment || '');
@@ -188,8 +218,6 @@ const Review = ({ courseId }) => {
   // Main Render
   return (
     <div className="mt-8 p-4 bg-white rounded-xl shadow-md">
-      <h3 className="text-xl font-bold text-pink-500 mb-4">Đánh giá khóa học</h3>
-
       {isLoading ? (
         <p className="text-center text-gray-500">Đang tải đánh giá...</p>
       ) : (
@@ -208,14 +236,15 @@ const Review = ({ courseId }) => {
             value={reviewText}
             onChange={(e) => setReviewText(e.target.value)}
             placeholder="Viết đánh giá của bạn..."
-            className="w-full p-3 border rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-pink-500 resize-none"
+            className="w-full p-3 border rounded-lg mb-4 focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none"
             rows="4"
+            disabled={!isEnrolled}
           />
           <button
             onClick={handleSubmitReview}
-            className={`flex items-center ${editReviewId ? 'bg-pink-600 hover:bg-pink-700' : 'bg-blue-600 hover:bg-blue-700'
+            className={`flex items-center ${editReviewId ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-blue-600 hover:bg-blue-700'
               } text-white py-2 px-4 rounded-lg transition duration-200`}
-            disabled={isSubmitting}
+            disabled={isSubmitting || !isEnrolled}
           >
             {isSubmitting ? 'Đang xử lý...' : editReviewId ? 'Lưu chỉnh sửa' : 'Gửi đánh giá'}
             <Send className="ml-2" size={18} />
