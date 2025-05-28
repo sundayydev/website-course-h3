@@ -6,7 +6,7 @@ import AddCourse from '@/pages/instructor/Courses/AddCourse';
 import EditCourse from '@/pages/instructor/Courses/EditCourse';
 import AddContent from '@/pages/instructor/lessons/AddContent';
 import ManageLessons from '@/pages/instructor/lessons/ManageLessons';
-import OdersDetail from '@/pages/instructor/oders/OdersDetail';
+import OrdersDetail from '@/pages/instructor/orders/OrdersDetail';
 import { ProtectedRouteInstructor } from './ProtectedRoute';
 import Post from '../pages/instructor/post/Post';
 const InstructorRoutes = {
@@ -26,7 +26,7 @@ const InstructorRoutes = {
     { path: 'course/:courseId/edit', element: <EditCourse /> },
     { path: 'course/:courseId/content/add', element: <AddContent /> },
     { path: 'course/:courseId/lessons', element: <ManageLessons /> },
-    { path: 'orders', element: <OdersDetail /> },
+    { path: 'orders', element: <OrdersDetail /> },
     { path: 'post', element: <Post /> }
   ],
 };

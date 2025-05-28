@@ -28,7 +28,7 @@ import { formatDate } from '../../../utils/formatDate';
 import { getAllOrders, updateOrderStatus } from '@/api/orderApi';
 import { getCourseById } from '@/api/courseApi';
 
-const OdersDetail = () => {
+const OrdersDetail = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -241,16 +241,10 @@ const OdersDetail = () => {
                       <TableCell className="truncate max-w-[150px]" title={order.id}>
                         {order.id}
                       </TableCell>
-                      <TableCell
-                        className="truncate max-w-[200px]"
-                        title={order.fullName}
-                      >
+                      <TableCell className="truncate max-w-[200px]" title={order.fullName}>
                         {order.fullName}
                       </TableCell>
-                      <TableCell
-                        className="truncate max-w-[150px]"
-                        title={order.title}
-                      >
+                      <TableCell className="truncate max-w-[150px]" title={order.title}>
                         {order.title}
                       </TableCell>
                       <TableCell className="truncate max-w-[100px]">
@@ -387,4 +381,4 @@ const OdersDetail = () => {
   );
 };
 
-export default OdersDetail;
+export default OrdersDetail;
