@@ -48,7 +48,7 @@ const Header = () => {
   const [searchResults, setSearchResults] = useState({ courses: [], posts: [] });
   const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
-  
+
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const notificationRef = useRef(null);
 
@@ -321,7 +321,7 @@ const Header = () => {
     } catch (error) {
       console.error('Lỗi khi đánh dấu thông báo:', error.response?.data || error);
       toast.error(
-          error.response?.data?.message || error.message || 'Không thể đánh dấu thông báo!'
+        error.response?.data?.message || error.message || 'Không thể đánh dấu thông báo!'
       );
     }
   };
