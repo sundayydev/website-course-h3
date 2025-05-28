@@ -26,6 +26,7 @@ import {
     addNotification,
     deleteNotification,
 } from '@/api/notificationApi';
+import { getUserById } from '@/api/userApi'; // Import getUserById
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 
 const Notifications = () => {
@@ -33,6 +34,7 @@ const Notifications = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [isDialogOpen, setIsDialogOpen] = useState(false);
+    const [userNames, setUserNames] = useState({}); // State lưu tên người dùng
     const [formData, setFormData] = useState({
         type: 'LessonApproval',
         content: '',
@@ -41,21 +43,48 @@ const Notifications = () => {
         userIds: '',
     });
 
-    // Lấy danh sách thông báo
+    // Lấy danh sách thông báo và tên người dùng
     useEffect(() => {
         fetchNotifications();
     }, []);
 
     const fetchNotifications = async () => {
         try {
+            setLoading(true);
             const response = await getNotifications();
             console.log('Danh sách thông báo:', response);
             setNotifications(response);
+            // Lấy danh sách userIds duy nhất
+            const userIds = [...new Set(response.flatMap(n => n.userNotifications.map(un => un.userId)))];
+            await fetchUserNames(userIds);
         } catch (error) {
             toast.error('Không thể tải danh sách thông báo');
             console.error('Error:', error);
         } finally {
             setLoading(false);
+        }
+    };
+
+    // Hàm lấy tên người dùng bằng getUserById
+    const fetchUserNames = async (userIds) => {
+        try {
+            const nameMap = {};
+            await Promise.all(
+                userIds.map(async (userId) => {
+                    try {
+                        const response = await getUserById(userId);
+                        // Giả sử API trả về trường 'name' hoặc 'fullName'
+                        nameMap[userId] = response.data.fullName || response.data.name || 'Không có tên';
+                    } catch (error) {
+                        console.error(`Lỗi khi lấy tên người dùng ${userId}:`, error);
+                        nameMap[userId] = 'Không có tên';
+                    }
+                })
+            );
+            setUserNames(nameMap);
+        } catch (error) {
+            console.error('Lỗi khi lấy tên người dùng:', error);
+            toast.error('Không thể tải tên người dùng');
         }
     };
 
@@ -76,7 +105,6 @@ const Notifications = () => {
             toast.error('ID người dùng phải là định dạng Guid hợp lệ');
             return;
         }
-        // Kiểm tra relatedEntityId nếu có
         if (formData.relatedEntityId && !isValidGuid(formData.relatedEntityId)) {
             toast.error('RelatedEntityId phải là định dạng Guid hợp lệ (ví dụ: 123e4567-e89b-12d3-a456-426614174000)');
             return;
@@ -300,7 +328,7 @@ const Notifications = () => {
                                         <TableCell>
                                             {notification.userNotifications.map((un) => (
                                                 <div key={un.id}>
-                                                    User ID: {un.userId} ({un.isRead ? 'Đã đọc' : 'Chưa đọc'})
+                                                    {userNames[un.userId] || 'Đang tải...'} ({un.isRead ? 'Đã đọc' : 'Chưa đọc'})
                                                 </div>
                                             ))}
                                         </TableCell>

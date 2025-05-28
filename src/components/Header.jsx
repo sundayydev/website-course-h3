@@ -21,11 +21,12 @@ import CoursePopup from './CoursePopup';
 import { Bell, Trash2 } from 'lucide-react';
 import { getNotificationsByUser, deleteNotification, markNotificationAsRead } from '@/api/notificationApi';
 import { format, parse } from 'date-fns';
+import { setNotifications, markNotificationAsRead as markNotificationAsReadAction, deleteNotification as deleteNotificationAction } from '@/reducers/notificationReducer';
 const Header = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user, isLoggedIn } = useSelector((state) => state.auth);
-
+  const notifications = useSelector((state) => state.notifications.notifications);
   // State for form data
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [registerData, setRegisterData] = useState({ fullName: '', email: '', password: '' });
@@ -47,8 +48,7 @@ const Header = () => {
   const [searchResults, setSearchResults] = useState({ courses: [], posts: [] });
   const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
-
-  const [notifications, setNotifications] = useState([]);
+  
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const notificationRef = useRef(null);
 
@@ -106,8 +106,7 @@ const Header = () => {
       if (isLoggedIn && user?.id) {
         try {
           const response = await getNotificationsByUser(user.id);
-          console.log("Notifications từ backend:", response);
-          setNotifications(response);
+          dispatch(setNotifications(response)); // Lưu danh sách thông báo vào Redux
         } catch (error) {
           console.error('Lỗi khi lấy thông báo:', error);
           toast.error('Không thể tải thông báo!');
@@ -115,7 +114,7 @@ const Header = () => {
       }
     };
     fetchNotifications();
-  }, [isLoggedIn, user?.id]);
+  }, [isLoggedIn, user?.id, dispatch]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -302,7 +301,7 @@ const Header = () => {
   const handleDeleteNotification = async (notificationId) => {
     try {
       await deleteNotification(notificationId);
-      setNotifications(notifications.filter((n) => n.id !== notificationId));
+      dispatch(deleteNotificationAction(notificationId)); // Dispatch xóa vào Redux
       toast.success('Xóa thông báo thành công!');
     } catch (error) {
       console.error('Lỗi khi xóa thông báo:', error);
@@ -317,25 +316,12 @@ const Header = () => {
         throw new Error('Không tìm thấy ID người dùng');
       }
       await markNotificationAsRead(notificationId, userId);
-      setNotifications(
-        notifications.map((n) =>
-          n.id === notificationId
-            ? {
-              ...n,
-              userNotifications: n.userNotifications.map((un) =>
-                un.userId === userId ? { ...un, isRead: true } : un
-              ),
-            }
-            : n
-        )
-      );
+      dispatch(markNotificationAsReadAction({ notificationId, userId })); // Dispatch đánh dấu đã đọc
       toast.success('Đã đánh dấu thông báo là đã đọc!');
     } catch (error) {
       console.error('Lỗi khi đánh dấu thông báo:', error.response?.data || error);
       toast.error(
-        error.response?.data?.message ||
-        error.message ||
-        'Không thể đánh dấu thông báo!'
+          error.response?.data?.message || error.message || 'Không thể đánh dấu thông báo!'
       );
     }
   };
