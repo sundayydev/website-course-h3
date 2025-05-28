@@ -1,7 +1,7 @@
-// src/api/notificationApi.js
+
 import api from './axios';
 
-const API_URL = 'http://localhost:5221/api/notification'; // Cập nhật port backend
+const API_URL = '/notification';
 
 // Hàm kiểm tra định dạng Guid
 const isValidGuid = (id) => {
@@ -92,6 +92,16 @@ export const addNotification = async (notificationData) => {
         throw new Error('Dữ liệu thông báo không hợp lệ');
     }
 
+    // Kiểm tra định dạng Guid cho userIds
+    const isValidGuid = (id) => {
+        const guidRegex = /^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$/;
+        return typeof id === 'string' && guidRegex.test(id);
+    };
+
+    if (!notificationData.userIds.every(isValidGuid)) {
+        throw new Error('Một hoặc nhiều userId không đúng định dạng Guid');
+    }
+
     const data = {
         type: notificationData.type,
         content: notificationData.content,
@@ -101,6 +111,7 @@ export const addNotification = async (notificationData) => {
     };
 
     try {
+        console.log('Gửi dữ liệu thông báo:', data); // Log dữ liệu gửi đi
         const response = await api.post(`${API_URL}`, data, {
             headers: {
                 Authorization: `Bearer ${token}`,
@@ -109,7 +120,12 @@ export const addNotification = async (notificationData) => {
         });
         return response.data;
     } catch (error) {
-        console.error('Lỗi khi thêm thông báo:', error);
+        console.error('Lỗi khi thêm thông báo:', {
+            message: error.message,
+            response: error.response?.data,
+            status: error.response?.status,
+            headers: error.response?.headers,
+        });
         throw error;
     }
 };
