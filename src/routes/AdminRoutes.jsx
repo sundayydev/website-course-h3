@@ -10,6 +10,7 @@ import Comment from '../pages/admin/Comment';
 import PostManagement from '../pages/admin/PostManagement';
 import Notifications from '../pages/admin/Notifications';
 import { ProtectedRouteAdmin } from './ProtectedRoute';
+import CommentByPost from '../pages/admin/CommentByPost';
 const AdminRoutes = {
   path: '/admin',
   element: (
@@ -29,6 +30,7 @@ const AdminRoutes = {
     { path: 'comment', element: <Comment /> }, // /admin/comment
     { path: 'post-management', element: <PostManagement /> }, // /admin/post-management
     { path: 'Notifications', element: <Notifications /> }, // /admin/userNotification
+    { path: "comments/:postId", element: < CommentByPost /> }
   ],
 };
 

@@ -89,34 +89,30 @@ const Post = () => {
                         </div>
                       </div>
 
-                      <div className="flex gap-6">
+                      <div className="flex gap-4">
                         <div className="flex-1">
-                          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3 hover:text-green-600 transition-colors">
+                          <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-3 hover:text-green-600 transition-colors line-clamp-2 h-[3.5rem]">
                             {post.title}
                           </h3>
-                          <p className="text-gray-600 dark:text-gray-300 line-clamp-3">
-                            {post.content}
-                          </p>
+                          {post.tags && post.tags.trim() !== '' && (
+                            <div className="flex flex-wrap gap-2 mt-4">
+                              {post.tags.split(',').map((tag, index) => (
+                                <span
+                                  key={index}
+                                  className="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-100 rounded-full text-sm font-medium"
+                                >
+                                  {tag.trim()}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                         </div>
                         <img
                           src={post.urlImage || defaultAvatar}
                           alt="Ảnh bài viết"
-                          className="w-48 h-32 rounded-lg object-cover"
+                          className="w-52 h-24 rounded-lg object-cover"
                         />
                       </div>
-
-                      {post.tags && post.tags.trim() !== '' && (
-                        <div className="flex flex-wrap gap-2 mt-4">
-                          {post.tags.split(',').map((tag, index) => (
-                            <span
-                              key={index}
-                              className="px-3 py-1 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-100 rounded-full text-sm font-medium"
-                            >
-                              {tag.trim()}
-                            </span>
-                          ))}
-                        </div>
-                      )}
                     </div>
                   </div>
                 ))

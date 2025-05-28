@@ -7,7 +7,7 @@ import { getCourses } from '../../api/courseApi';
 import { getReviewsByCourseId } from '../../api/reviewApi';
 import { getEnrollmentsByCourseId, getEnrollmentByUserId } from '../../api/enrollmentApi';
 import { getLessonsByCourseId } from '../../api/lessonApi';
-import { getUserId, isAuthenticated } from '../../api/authUtils';
+import { getUserId } from '../../api/authUtils';
 
 const CourseForUser = () => {
   const [courses, setCourses] = useState([]);
