@@ -1,4 +1,3 @@
-
 import { getAuthToken, getUserId } from './authUtils';
 import api from './axios';
 
@@ -18,9 +17,22 @@ export const getCourses = async () => {
   }
 };
 
+export const getActiveCourses = async () => {
+  try {
+    const response = await api.get(`${API_URL}/active`, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi lấy danh sách khóa học đã kích hoạt:', error);
+    throw error;
+  }
+};
+
 export const getCourseById = async (courseId) => {
   try {
-
     const response = await api.get(`${API_URL}/${courseId}`, {
       headers: {
         'Content-Type': 'application/json',
@@ -34,8 +46,6 @@ export const getCourseById = async (courseId) => {
 };
 
 export const createCourse = async (data) => {
-
-
   const newData = {
     title: data.title,
     description: data.description,
@@ -45,7 +55,6 @@ export const createCourse = async (data) => {
     categoryId: data.categoryId,
     urlImage: data.urlImage
   };
-  console.log('New Data: ', newData);
   try {
     const response = await api.post(`${API_URL}`, newData, {
       headers: {
@@ -62,7 +71,6 @@ export const createCourse = async (data) => {
 
 export const updateCourse = async (id, data) => {
   const token = getAuthToken();
-
   const updatedData = {
     title: data.title,
     description: data.description,
@@ -86,8 +94,28 @@ export const updateCourse = async (id, data) => {
   }
 };
 
+export const approveCourse = async (id, status) => {
+  const token = getAuthToken();
+  if (!token) {
+    throw new Error('Không tìm thấy token');
+  }
+  try {
+    const response = await api.put(`${API_URL}/${id}/approve`, { Activate: status }, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi thay đổi trạng thái khóa học:', error);
+    throw error;
+  }
+};
+
+
 export const deleteCourse = async (id) => {
-  const token = localStorage.getItem('authToken');
+  const token = getAuthToken();
   if (!token) {
     throw new Error('Không tìm thấy token');
   }
@@ -109,7 +137,6 @@ export const uploadImage = async (urlImage) => {
   const token = getAuthToken();
   const formData = new FormData();
   formData.append("file", urlImage); // "file" phải trùng với tên trong controller
-  console.log("UrlImage", urlImage)
   try {
     const response = await api.post(`${API_URL}/upload-image`, formData, {
       headers: {
@@ -129,7 +156,6 @@ export const getCourseByInstructorId = async (instructorId) => {
   if (!token) {
     throw new Error('Không tìm thấy token');
   }
-
   try {
     const response = await api.get(`${API_URL}/instructor/${instructorId}`, {
       headers: {
@@ -140,6 +166,20 @@ export const getCourseByInstructorId = async (instructorId) => {
     return response.data;
   } catch (error) {
     console.error('Lỗi khi lấy khóa học theo instructorId:', error);
+    throw error;
+  }
+};
+
+export const getCoursesByCategoryId = async (categoryId) => {
+  try {
+    const response = await api.get(`${API_URL}/category/${categoryId}`, {
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi lấy khóa học theo categoryId:', error);
     throw error;
   }
 };

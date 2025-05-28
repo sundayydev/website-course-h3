@@ -1,9 +1,7 @@
-
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { FaSearch, FaEdit, FaTrash, FaPlus } from 'react-icons/fa';
-import { getAllPost, createPost, updatePost, uploadPostImage, deletePost } from '../../api/postApi';
+import { getPaginatedPosts, createPost, updatePost, uploadPostImage, deletePost } from '../../api/postApi';
 import { jwtDecode } from 'jwt-decode';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -20,11 +18,10 @@ import {
 } from '@/components/ui/table';
 import { toast } from 'react-toastify';
 import MDEditor from '@uiw/react-md-editor';
-import { Pagination } from '@mui/material';
+import { formatDate } from '../../utils/formatDate';
 
 function PostManagement() {
   const [posts, setPosts] = useState([]);
-  const [filteredPosts, setFilteredPosts] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentPost, setCurrentPost] = useState({
@@ -37,19 +34,30 @@ function PostManagement() {
   const [isEditing, setIsEditing] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [page, setPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const postsPerPage = 10;
+  const [pageSize] = useState(7);
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const pageNumberFromUrl = parseInt(searchParams.get('page') || 1, 10);
 
-  // Lấy tất cả bài viết
-  const fetchPosts = async () => {
+  // Cập nhật currentPage dựa trên URL
+  useEffect(() => {
+    const initialPage = pageNumberFromUrl >= 1 ? pageNumberFromUrl : 1;
+    setCurrentPage(initialPage);
+  }, [pageNumberFromUrl]);
+
+  // Lấy danh sách bài viết phân trang
+  const fetchPosts = async (page = 1) => {
     setLoading(true);
     try {
-      const response = await getAllPost();
-      setPosts(response.data);
-      setFilteredPosts(response.data);
-      setTotalPages(Math.ceil(response.data.length / postsPerPage));
+      const response = await getPaginatedPosts(page, pageSize);
+      if (response.data && response.data.data && Array.isArray(response.data.data)) {
+        setPosts(response.data.data);
+        setTotalPages(response.data.totalPages || 1);
+      } else {
+        setError('Không có bài viết nào.');
+      }
     } catch (err) {
       setError('Không thể tải danh sách bài viết');
       console.error('Lỗi khi lấy bài viết:', err);
@@ -59,19 +67,24 @@ function PostManagement() {
   };
 
   useEffect(() => {
-    fetchPosts();
-  }, []);
+    fetchPosts(currentPage);
+  }, [currentPage]);
 
+  // Xử lý tìm kiếm
   useEffect(() => {
-    const results = posts.filter(
-      (post) =>
-        post.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        post.content?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        post.tags?.toLowerCase().includes(searchTerm.toLowerCase())
-    );
-    setFilteredPosts(results);
-    setTotalPages(Math.ceil(results.length / postsPerPage));
-  }, [searchTerm, posts]);
+    if (searchTerm) {
+      const filtered = posts.filter(
+        (post) =>
+          post.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          post.content?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          post.tags?.toLowerCase().includes(searchTerm.toLowerCase())
+      );
+      setPosts(filtered);
+      setTotalPages(Math.ceil(filtered.length / pageSize));
+    } else {
+      fetchPosts(currentPage);
+    }
+  }, [searchTerm]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -91,6 +104,8 @@ function PostManagement() {
 
   const handleSearchChange = (e) => {
     setSearchTerm(e.target.value);
+    setCurrentPage(1); // Reset về trang 1 khi tìm kiếm
+    setSearchParams({ page: 1 });
   };
 
   const resetForm = () => {
@@ -116,7 +131,7 @@ function PostManagement() {
       title: post.title,
       content: post.content || '',
       tags: post.tags || '',
-      urlImage: post.urlImage || null, // Giữ nguyên urlImage hiện tại
+      urlImage: post.urlImage || null,
       userId: post.userId || '',
     });
     setIsEditing(true);
@@ -128,7 +143,7 @@ function PostManagement() {
       setLoading(true);
       try {
         await deletePost(postId);
-        fetchPosts();
+        fetchPosts(currentPage);
         toast.success('Xóa bài viết thành công');
       } catch (err) {
         toast.error('Không thể xóa bài viết');
@@ -144,7 +159,6 @@ function PostManagement() {
     const token = localStorage.getItem('authToken');
     const decoded = jwtDecode(token);
 
-    // Bao gồm urlImage trong formData
     const formData = {
       title: currentPost.title,
       content: currentPost.content,
@@ -155,15 +169,13 @@ function PostManagement() {
 
     if (isEditing) {
       try {
-        // Cập nhật bài viết với formData chứa urlImage hiện tại
         await updatePost(currentPost.id, formData);
-        // Chỉ tải ảnh lên nếu có file ảnh mới
         if (currentPost.urlImage instanceof File) {
           await uploadPostImage(currentPost.id, currentPost.urlImage);
         }
         toast.success('Cập nhật bài viết thành công');
         setIsModalOpen(false);
-        fetchPosts();
+        fetchPosts(currentPage);
         resetForm();
       } catch (error) {
         console.error('Lỗi khi cập nhật bài viết:', error);
@@ -177,7 +189,7 @@ function PostManagement() {
         }
         toast.success('Thêm bài viết thành công');
         setIsModalOpen(false);
-        fetchPosts();
+        fetchPosts(currentPage);
         resetForm();
       } catch (error) {
         console.error('Lỗi khi tạo bài viết:', error);
@@ -186,14 +198,27 @@ function PostManagement() {
     }
   };
 
-  const formatDate = (dateString) => {
-    return dateString ? new Date(dateString).toLocaleDateString() : 'N/A';
+  // Xử lý chuyển trang
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+      setSearchParams({ page: page });
+    }
   };
 
-  // Tính toán phân trang
-  const indexOfLastPost = page * postsPerPage;
-  const indexOfFirstPost = indexOfLastPost - postsPerPage;
-  const currentPosts = filteredPosts.slice(indexOfFirstPost, indexOfLastPost);
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+      setSearchParams({ page: currentPage - 1 });
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+      setSearchParams({ page: currentPage + 1 });
+    }
+  };
 
   return (
     <div className="container mx-auto px-4 py-8 w-full">
@@ -241,7 +266,7 @@ function PostManagement() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {currentPosts.map((post) => (
+                {posts.map((post) => (
                   <TableRow key={post.id}>
                     <TableCell>
                       <div className="flex items-center">
@@ -306,14 +331,34 @@ function PostManagement() {
         </Card>
       )}
 
-      <div className="mt-4 flex justify-center">
-        <Pagination
-          count={totalPages}
-          page={page}
-          onChange={(e, value) => setPage(value)}
-          color="primary"
-        />
+      <div className="flex justify-center items-center gap-2 mt-6">
+        <button
+          onClick={handlePreviousPage}
+          disabled={currentPage === 1}
+          className={`px-3 py-1 rounded-lg font-medium border ${currentPage === 1 ? 'text-gray-400 border-gray-300 cursor-not-allowed' : 'text-gray-700 hover:text-gray-900 border-gray-400'}`}
+        >
+          Trước
+        </button>
+
+        {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+          <button
+            key={page}
+            onClick={() => handlePageChange(page)}
+            className={`px-3 py-1 rounded-lg font-medium border ${currentPage === page ? 'bg-red-500 text-white border-red-500' : 'text-gray-700 hover:bg-gray-200 border-gray-300'}`}
+          >
+            {page}
+          </button>
+        ))}
+
+        <button
+          onClick={handleNextPage}
+          disabled={currentPage === totalPages}
+          className={`px-3 py-1 rounded-lg font-medium border ${currentPage === totalPages ? 'text-gray-400 border-gray-300 cursor-not-allowed' : 'text-gray-700 hover:text-gray-900 border-gray-400'}`}
+        >
+          Sau
+        </button>
       </div>
+
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="max-w-4xl">
@@ -323,7 +368,6 @@ function PostManagement() {
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="grid gap-6 md:grid-cols-[1fr_2fr]">
-            {/* Cột trái - nhỏ hơn */}
             <div className="space-y-4">
               <div>
                 <Label htmlFor="title">Tiêu đề</Label>
@@ -365,8 +409,6 @@ function PostManagement() {
                 />
               </div>
             </div>
-
-            {/* Cột phải - rộng hơn */}
             <div className="space-y-4">
               <div>
                 <Label htmlFor="content">Nội dung</Label>
@@ -375,8 +417,6 @@ function PostManagement() {
                 </div>
               </div>
             </div>
-
-            {/* Nút hành động */}
             <div className="md:col-span-2 flex justify-end space-x-2">
               <Button type="button" variant="outline" onClick={() => setIsModalOpen(false)}>
                 Hủy
@@ -388,8 +428,6 @@ function PostManagement() {
           </form>
         </DialogContent>
       </Dialog>
-
-
     </div>
   );
 }

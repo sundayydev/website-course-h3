@@ -23,7 +23,13 @@ import { Pencil, Trash2, Plus, Search, Loader2, BookOpen, Filter, FileVideo } fr
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
-import { getCourses, createCourse, updateCourse, uploadImage, deleteCourse } from '@/api/courseApi';
+import { getCourses, createCourse, updateCourse, uploadImage, deleteCourse, approveCourse } from '@/api/courseApi';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+} from '@/components/ui/select';
 
 const Courses = () => {
   const navigate = useNavigate();
@@ -48,10 +54,11 @@ const Courses = () => {
   const fetchCourses = async () => {
     try {
       const data = await getCourses();
+      console.log('Danh sách khóa học:', data); // Debug log
       setCourses(data);
     } catch (error) {
       toast.error('Không thể tải danh sách khóa học');
-      console.error('Error:', error);
+      console.error('Lỗi khi tải danh sách khóa học:', error.response?.data || error.message);
     } finally {
       setLoading(false);
     }
@@ -61,12 +68,8 @@ const Courses = () => {
     e.preventDefault();
     if (editingCourse) {
       try {
-        // Cập nhật khóa học nếu đang trong chế độ chỉnh sửa
         await updateCourse(editingCourse.id, formData);
-
-        console.log('formData: ', formData);
-        // Kiểm tra nếu có ảnh mới để tải lên
-        if (formData.urlImage && formData.urlImage instanceof File && formData.urlImage != '') {
+        if (formData.urlImage && formData.urlImage instanceof File && formData.urlImage !== '') {
           await uploadImage(editingCourse.id, formData.urlImage);
         }
         toast.success('Cập nhật khóa học thành công');
@@ -74,17 +77,13 @@ const Courses = () => {
         fetchCourses();
         resetForm();
       } catch (error) {
-        console.error('Error updating course:', error);
+        console.error('Lỗi khi cập nhật khóa học:', error);
         toast.error('Có lỗi xảy ra khi cập nhật khóa học');
-        // Xử lý lỗi nếu cần thiết, ví dụ: thông báo cho người dùng
       }
     } else {
       try {
-        // Tạo khóa học mới nếu không phải chỉnh sửa
         const response = await createCourse(formData);
-
-        // Kiểm tra nếu có ảnh mới để tải lên
-        if (formData.urlImage && formData.urlImage instanceof File && formData.urlImage != '') {
+        if (formData.urlImage && formData.urlImage instanceof File && formData.urlImage !== '') {
           await uploadImage(response.id, formData.urlImage);
         }
         toast.success('Thêm khóa học thành công');
@@ -92,9 +91,8 @@ const Courses = () => {
         fetchCourses();
         resetForm();
       } catch (error) {
-        console.error('Error creating course:', error);
+        console.error('Lỗi khi tạo khóa học:', error);
         toast.error('Có lỗi xảy ra khi tạo khóa học');
-        // Xử lý lỗi nếu cần thiết, ví dụ: thông báo cho người dùng
       }
     }
   };
@@ -107,13 +105,12 @@ const Courses = () => {
         fetchCourses();
       } catch (error) {
         toast.error('Có lỗi xảy ra khi xóa khóa học');
-        console.error('Error:', error);
+        console.error('Lỗi khi xóa khóa học:', error);
       }
     }
   };
 
   const handleEdit = (course) => {
-    console.log('course: ', course);
     setEditingCourse(course);
     setFormData({
       title: course.title,
@@ -123,9 +120,53 @@ const Courses = () => {
       instructorId: course.instructorId,
       contents: course.contents,
     });
-    console.log('formData: ', formData);
     setIsDialogOpen(true);
   };
+
+  const handleStatusChange = async (id, value) => {
+  if (!['Active', 'Inactive'].includes(value)) {
+    toast.error('Trạng thái không hợp lệ. Chỉ chấp nhận "Active" hoặc "Inactive".');
+    return;
+  }
+  try {
+    await approveCourse(id, value);
+    toast.success(`Khóa học đã được ${value === 'Active' ? 'kích hoạt' : 'hủy kích hoạt'}`);
+    fetchCourses();
+  } catch (error) {
+    const errorMessage = error.response?.data?.message || error.message || 'Không xác định';
+    toast.error(`Lỗi khi thay đổi trạng thái khóa học: ${errorMessage}`);
+    console.error('Lỗi khi thay đổi trạng thái khóa học:', {
+      id,
+      value,
+      error: errorMessage,
+      stack: error.stack,
+    });
+  }
+};
+
+  const getStatusBadge = (status) => {
+  let variant, bgClass, textClass, label;
+  switch (status) {
+    case 'Active':
+      variant = 'success';
+      bgClass = 'bg-green-100';
+      textClass = 'text-green-800';
+      label = 'Kích hoạt';
+      break;
+    case 'Inactive':
+    default:
+      variant = 'secondary';
+      bgClass = 'bg-gray-100';
+      textClass = 'text-gray-800';
+      label = 'Hủy kích hoạt';
+      break;
+  }
+  return (
+    <Badge variant={variant} className={`${bgClass} ${textClass}`}>
+      {label}
+    </Badge>
+  );
+};
 
   const resetForm = () => {
     setFormData({
@@ -364,10 +405,11 @@ const Courses = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[40%] text-pink-500">Thông tin khóa học</TableHead>
+                    <TableHead className="w-[35%] text-pink-500">Thông tin khóa học</TableHead>
                     <TableHead className="w-[15%] text-pink-500">Giá</TableHead>
+                    <TableHead className="w-[15%] text-pink-500">Trạng thái</TableHead>
                     <TableHead className="w-[15%] text-pink-500">Ngày tạo</TableHead>
-                    <TableHead className="w-[15%] text-pink-500 text-center">Bài học</TableHead>
+                    <TableHead className="w-[10%] text-pink-500 text-center">Bài học</TableHead>
                     <TableHead className="text-right w-[15%] text-pink-700">Thao tác</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -406,6 +448,20 @@ const Courses = () => {
                             }).format(course.price)}
                           </span>
                         )}
+                      </TableCell>
+                     <TableCell>
+                        <Select
+                          value={course.activate || 'Inactive'}
+                          onValueChange={(value) => handleStatusChange(course.id, value)}
+                        >
+                          <SelectTrigger className="w-[180px]">
+                            {getStatusBadge(course.activate || 'Inactive')}
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="Active">Kích hoạt</SelectItem>
+                            <SelectItem value="Inactive">Hủy kích hoạt</SelectItem>
+                          </SelectContent>
+                        </Select>
                       </TableCell>
                       <TableCell className="text-gray-600">{course.createdAt}</TableCell>
                       <TableCell>

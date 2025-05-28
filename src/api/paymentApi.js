@@ -4,17 +4,6 @@ import { getAuthToken } from './authUtils';
 
 const API_URL = process.env.VITE_API_URL || 'http://localhost:5221/api/Payment';
 
-/**
- * Lấy token từ localStorage
- * @returns {string} - Token xác thực
- * @throws {Error} - Nếu không tìm thấy token
- */
-
-/**
- * Giải mã token để lấy thông tin
- * @returns {Object} - Thông tin từ token
- * @throws {Error} - Nếu token không hợp lệ
- */
 export const getDecodedToken = () => {
   try {
     const token = getAuthToken();
@@ -25,11 +14,7 @@ export const getDecodedToken = () => {
   }
 };
 
-/**
- * Tạo URL thanh toán
- * @param {Object} orderData - Dữ liệu đơn hàng { userId, courseId, amount, couponId, discountAmount }
- * @returns {Promise<Object>} - Kết quả chứa paymentUrl hoặc thông báo
- */
+
 export const createPayment = async (orderData) => {
   try {
     const token = getAuthToken();
@@ -69,11 +54,7 @@ export const createPayment = async (orderData) => {
     throw new Error(error.response?.data?.message || 'Không thể tạo URL thanh toán');
   }
 };
-/**
- * Lấy danh sách thanh toán theo khóa học
- * @param {string} courseId - ID của khóa học
- * @returns {Promise<Object>} - Danh sách thanh toán
- */
+
 export const getPaymentsByCourseId = async (courseId) => {
   try {
     const token = getAuthToken();
@@ -90,12 +71,7 @@ export const getPaymentsByCourseId = async (courseId) => {
   }
 };
 
-/**
- * Cập nhật trạng thái thanh toán
- * @param {string} id - ID thanh toán
- * @param {string} status - Trạng thái mới
- * @returns {Promise<Object>} - Kết quả cập nhật
- */
+
 export const updatePaymentStatus = async (id, status) => {
   try {
     const token = getAuthToken();
@@ -117,11 +93,7 @@ export const updatePaymentStatus = async (id, status) => {
   }
 };
 
-/**
- * Xử lý callback thanh toán từ VnPay
- * @param {Object} queryParams - Tham số query từ callback
- * @returns {Promise<Object>} - Kết quả xử lý callback
- */
+
 export const paymentCallback = async (queryParams) => {
   try {
     const token = getAuthToken();
@@ -140,12 +112,7 @@ export const paymentCallback = async (queryParams) => {
   }
 };
 
-/**
- * Xuất báo cáo thanh toán
- * @param {string} startDate - Ngày bắt đầu
- * @param {string} endDate - Ngày kết thúc
- * @returns {Promise<Blob>} - File báo cáo dạng Blob
- */
+
 export const exportPaymentReport = async (startDate, endDate) => {
   try {
     const token = getAuthToken();

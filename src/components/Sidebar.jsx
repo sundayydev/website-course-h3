@@ -1,17 +1,13 @@
 import { NavLink } from 'react-router-dom';
 import { FaHome, FaEnvelope, FaNewspaper, FaInfoCircle } from 'react-icons/fa';
-import { AiOutlineClose } from 'react-icons/ai';
+
 // Danh sách sidebar items
 const sidebarItems = [
   {
     items: [
       { path: '/', icon: <FaHome size={25} />, text: 'Trang chủ' },
       { path: '/contact', icon: <FaEnvelope size={25} />, text: 'Liên hệ' },
-      {
-        path: '/post',
-        icon: <FaNewspaper size={25} />,
-        text: 'Bài viết',
-      },
+      { path: '/post?page=1', icon: <FaNewspaper size={25} />, text: 'Bài viết', },
       { path: '/about', icon: <FaInfoCircle size={25} />, text: 'Giới thiệu' },
     ],
   },
@@ -21,7 +17,7 @@ const Sidebar = () => {
   return (
     <aside
       className="bg-white md:p-4 flex flex-col 
-      md:w-[100px] md:min-h-screen md:relative 
+      md:w-[115px] md:min-h-screen md:relative 
       fixed bottom-0 w-full border-t md:border-0"
     >
       {/* Sidebar Items */}

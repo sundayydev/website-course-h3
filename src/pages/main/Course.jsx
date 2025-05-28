@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { FaClock, FaUser, FaStar, FaFilter } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import HashLoader from 'react-spinners/HashLoader';
-import { getCourses } from '../../api/courseApi';
+import { getCourses, getActiveCourses } from '../../api/courseApi';
 import { getReviewsByCourseId } from '../../api/reviewApi';
 import { getEnrollmentsByCourseId, getEnrollmentByUserId } from '../../api/enrollmentApi';
 import { getLessonsByCourseId } from '../../api/lessonApi';
@@ -143,7 +143,7 @@ const CourseList = () => {
       if (filterParams) {
         courseResponse = await filterCourses(filterParams); // Gọi API filterCourses
       } else {
-        courseResponse = await getCourses(); // Gọi API getCourses
+        courseResponse = await getActiveCourses(); // Gọi API getCourses
       }
       if (!Array.isArray(courseResponse)) {
         throw new Error('Dữ liệu khóa học không hợp lệ');
