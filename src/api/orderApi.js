@@ -2,9 +2,8 @@
 import { getAuthToken } from './authUtils';
 import api from './axios';
 
-const API_URL = '/order'; // Đổi thành /Order để tránh double /api/
+const API_URL = '/order';
 
-// Lấy tất cả đơn hàng
 export const getAllOrders = async ({ pageNumber = 1, pageSize = 5 }) => {
   const token = localStorage.getItem('authToken');
   if (!token) {
@@ -12,29 +11,20 @@ export const getAllOrders = async ({ pageNumber = 1, pageSize = 5 }) => {
   }
 
   try {
-    const decodedToken = getAuthToken(token);
-    if (decodedToken.exp * 1000 < Date.now()) {
-      throw new Error('Token đã hết hạn');
-    }
-
     const queryParams = new URLSearchParams();
     queryParams.append('pageNumber', pageNumber);
     queryParams.append('pageSize', pageSize);
-
-    console.log(`Gọi API: ${API_URL}?${queryParams.toString()}`); // Thêm log để debug
     const response = await api.get(`${API_URL}?${queryParams.toString()}`, {
       headers: {
         Authorization: `Bearer ${token}`,
       },
     });
-    console.log('All orders response:', response.data);
     return response.data;
   } catch (error) {
     const errorMessage =
       error.response?.status === 404
         ? 'Không tìm thấy endpoint /Order. Vui lòng kiểm tra backend.'
         : error.response?.data?.message || error.response?.data || error.message;
-    console.error('Lỗi khi lấy danh sách đơn hàng:', errorMessage);
     throw new Error(errorMessage);
   }
 };
@@ -128,7 +118,7 @@ export const createOrder = async (data) => {
   }
 
   try {
-    const decodedToken =getAuthToken(token);
+    const decodedToken = getAuthToken(token);
     if (decodedToken.exp * 1000 < Date.now()) {
       throw new Error('Token đã hết hạn');
     }

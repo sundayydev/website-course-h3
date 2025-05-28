@@ -6,6 +6,15 @@ export const getAllPost = () => {
   return api.get(`${API_URL}`);
 };
 
+export const getPaginatedPosts = (pageNumber = 1, pageSize = 5) => {
+  return api.get(`${API_URL}/paginated`, {
+    params: {
+      pageNumber,
+      pageSize,
+    },
+  });
+};
+
 export const getPostById = (id) => {
   return api.get(`${API_URL}/${id}`);
 };

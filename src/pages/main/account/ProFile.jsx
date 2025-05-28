@@ -1,4 +1,3 @@
-/* eslint-disable react/prop-types */
 import { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { FaEnvelope, FaPhone, FaTimes, FaBirthdayCake, FaCamera, FaCalendar, FaPlus, FaPen, FaAngleDown } from 'react-icons/fa';
@@ -12,6 +11,7 @@ import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 import { vi } from 'date-fns/locale';
 import HashLoader from 'react-spinners/HashLoader';
+
 const ProfileImage = ({ src, onClick, onImageChange }) => (
   <div className="relative inline-block">
     <img
@@ -174,14 +174,22 @@ const ProfilePage = () => {
       toast.error('Kích thước tệp không được vượt quá 5MB!');
       return;
     }
-    // Proceed with upload
     setIsLoading(true);
     try {
       const userId = getUserId();
-      const { data } = await uploadProfileImage(userId, file);
-      setUser(prev => ({ ...prev, profileImage: data.ImageUrl }));
+      const response = await uploadProfileImage(userId, file);
+      console.log('uploadProfileImage response:', response); // Debug response
+      // Handle possible response structures
+      const imageUrl = response?.imageUrl || response?.profileImage || response?.data?.imageUrl || response?.data?.profileImage;
+
+      if (!imageUrl) {
+        throw new Error('Không tìm thấy URL hình ảnh trong phản hồi API.');
+      }
+
+      setUser(prev => ({ ...prev, profileImage: imageUrl }));
       toast.success('Cập nhật ảnh thành công!');
     } catch (err) {
+      console.error('Error uploading image:', err);
       toast.error(err.message || 'Lỗi khi cập nhật ảnh!');
     } finally {
       setIsLoading(false);
@@ -230,7 +238,6 @@ const ProfilePage = () => {
     setIsDropdownOpen(prev => !prev);
   };
 
-
   if (isLoading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -238,8 +245,6 @@ const ProfilePage = () => {
       </div>
     );
   }
-
-
 
   if (error) return (
     <div className="min-h-screen flex items-center justify-center">
@@ -269,7 +274,6 @@ const ProfilePage = () => {
               <h1 className="text-2xl font-bold text-green-500">
                 {user.fullName || 'Không có tên'}
               </h1>
-
             </div>
             <span>
               <p className="text-gray-600 font-semibold">
@@ -281,7 +285,6 @@ const ProfilePage = () => {
                 ) : 'Không có thông tin'}
               </p>
             </span>
-            {/* Thông tin bài viết, khóa học, người theo dõi, đang theo dõi */}
             <div className="flex items-center gap-4 mb-4 mt-3">
               <button
                 onClick={() => setIsFollowersModalOpen(true)}
@@ -295,7 +298,6 @@ const ProfilePage = () => {
               >
                 {`0 khóa học`}
               </button>
-
               <button
                 onClick={() => setIsFollowersModalOpen(true)}
                 className="text-gray-600 hover:text-green-500"
@@ -308,10 +310,7 @@ const ProfilePage = () => {
               >
                 <span className="font-bold text-green-500">{followingCount}</span> đang theo dõi
               </button>
-
             </div>
-
-            {/* Các nút Thêm vào tin, Chỉnh sửa, và Dropdown */}
             <div className="flex items-center gap-2">
               <button
                 className="bg-blue-600 text-white px-3 py-1.5 rounded-md hover:bg-blue-700 transition-colors flex items-center gap-1.5"
@@ -382,7 +381,6 @@ const ProfilePage = () => {
           </Section>
         </div>
       </div>
-
 
       {isModalOpen && (
         <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-75 p-4 z-50">

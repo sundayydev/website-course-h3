@@ -3,7 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { FaClock, FaUser, FaStar, FaCheckCircle } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import HashLoader from 'react-spinners/HashLoader';
-import { getCourses } from '../../api/courseApi';
+import { getActiveCourses } from '../../api/courseApi';
 import { getReviewsByCourseId } from '../../api/reviewApi';
 import { getEnrollmentsByCourseId, getEnrollmentByUserId } from '../../api/enrollmentApi';
 import { getLessonsByCourseId } from '../../api/lessonApi';
@@ -32,7 +32,7 @@ const CourseForUser = () => {
       }
 
       // Lấy tất cả khóa học
-      const courseResponse = await getCourses();
+      const courseResponse = await getActiveCourses();
       if (!Array.isArray(courseResponse)) {
         throw new Error('Dữ liệu khóa học không hợp lệ');
       }
