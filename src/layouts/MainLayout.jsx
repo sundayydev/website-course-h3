@@ -44,7 +44,7 @@ const MainLayout = () => {
       <div className="flex flex-1 mb-2">
         {/* Sidebar (Desktop) - Chỉ hiển thị nếu không thuộc các route cần ẩn và không phải trang 404 */}
         {!shouldHideComponents && !isNotFoundPage && (
-          <div className="hidden md:block sticky top-16 left-0 h-[260px] w-64 bg-white overflow-x-hidden overflow-y-hidden">
+          <div className="hidden md:block sticky top-16 left-0 h-[300px] w-26 bg-white overflow-x-hidden overflow-y-hidden">
             <Sidebar />
           </div>
         )}

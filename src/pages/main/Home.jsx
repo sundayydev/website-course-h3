@@ -6,7 +6,7 @@ import CourseForUser from './CourseForUser';
 import CourseNew from './CourseNew';
 const Home = () => {
   return (
-    <div className="bg-gray-50 container mx-auto">
+    <div className="mx-auto px-4 py-8 bg-slate-50">
       <BannerShow />
       <CourseNew />
       <Course />
