@@ -341,7 +341,7 @@ const CommentPost = ({ postId }) => {
     return (
       <div key={reply.id} className="ml-24 pb-4">
         <div className="flex items-start space-x-3 mt-2">
-          <Link to={`/profile/${post.userId}`}>
+          <Link to={`/profile/${reply.userId}`}>
             <img
               src={getUserAvatar(reply.userProfileImage)}
               alt={reply.userFullName || 'Ẩn danh'}

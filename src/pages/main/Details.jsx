@@ -2,10 +2,8 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import {
-  PlayCircle,
   Plus,
   Minus,
-  X,
   BookOpen,
   Clock,
   CheckCircle,
@@ -30,9 +28,7 @@ const Details = () => {
   const [reviews, setReviews] = useState([]);
   const [expandedChapter, setExpandedChapter] = useState(null);
   const [expandedLesson, setExpandedLesson] = useState(null);
-  const [videoModalOpen, setVideoModalOpen] = useState(false);
   const [isPaymentModalOpen, setIsPaymentModalOpen] = useState(false);
-  const [selectedVideo, setSelectedVideo] = useState('');
   const [isEnrolled, setIsEnrolled] = useState(false);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
@@ -113,16 +109,6 @@ const Details = () => {
     setExpandedLesson(expandedLesson === lessonId ? null : lessonId);
   };
 
-  const openVideoModal = (videoUrl) => {
-    setSelectedVideo(videoUrl);
-    setVideoModalOpen(true);
-  };
-
-  const closeVideoModal = () => {
-    setVideoModalOpen(false);
-    setSelectedVideo('');
-  };
-
   const handleEnrollClick = async () => {
     try {
       if (isAuthenticated()) {
@@ -172,11 +158,6 @@ const Details = () => {
     }
   };
 
-  const getEmbedUrl = (url) => {
-    const match = url.match(/(?:youtu\.be\/|youtube\.com\/(?:.*v=|embed\/|v\/))([^&?]+)/);
-    return match ? `https://www.youtube.com/embed/${match[1]}` : '';
-  };
-
   const closePaymentModal = () => {
     setIsPaymentModalOpen(false);
   };
@@ -190,101 +171,90 @@ const Details = () => {
   }
 
   return (
-    <div className="max-w-7xl mx-auto p-4 bg-gray-50 grid grid-cols-1 lg:grid-cols-3 gap-8 mt-16">
+    <div className="w-full mx-auto p-4 bg-gray-50 grid grid-cols-1 lg:grid-cols-3 gap-8 mt-16">
       {/* Nội dung khóa học */}
       <div className="lg:col-span-2">
-        <h1 className="text-4xl font-bold">{course.title}</h1>
-        <p className="text-gray-600 mt-2">{course.description}</p>
+        <h1 className="text-4xl font-bold mt-5 ">{course.title}</h1>
+        <p className="text-gray-600 mt-2 ">{course.description}</p>
 
-        <div className="mt-6">
-          <h2 className="text-xl font-bold mb-4 text-gray-800">Bạn sẽ học được gì?</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3">
-            {course.contents &&
-              course.contents.map((content, index) => (
-                <div key={index} className="flex items-center space-x-3">
-                  <CheckCircle className="text-orange-500" size={20} />
-                  <span className="text-gray-700">{content}</span>
-                </div>
-              ))}
+        <div className="bg-white p-6 rounded-xl shadow-md mt-2">
+          <h2 className="text-xl font-semibold text-gray-800 mb-4">Bạn sẽ học được gì?</h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {course.contents?.map((content, index) => (
+              <div key={index} className="flex items-center space-x-3">
+                <CheckCircle className="text-orange-500 flex-shrink-0" size={20} />
+                <span className="text-gray-700">{content}</span>
+              </div>
+            ))}
           </div>
         </div>
+
 
         {/* Danh sách chương và bài học */}
-        <h2 className="text-xl font-bold mt-8 text-gray-800">Nội dung khóa học</h2>
-        <div className="text-gray-600 flex items-center space-x-6">
-          <div className="flex items-center space-x-2">
-            <BookOpen size={18} className="text-emerald-500" />
-            <span className="text-sm font-medium">
-              Tổng số <strong className="text-black">{chapters.length}</strong> chương,{' '}
-              <strong className="text-black">{lessons.length}</strong> bài học
-            </span>
-          </div>
-          <div className="flex items-center space-x-2">
-            <Clock size={18} className="text-blue-500" />
-            <span className="text-sm font-medium">{calculateTotalHours()}</span>
-          </div>
-        </div>
-        <ul className="list-none space-y-2 mt-4 w-full">
-          {chapters.map((chapter) => (
-            <div key={chapter.id} className="overflow-hidden w-full">
-              <div
-                className={`bg-gray-200 p-3 cursor-pointer flex justify-between items-center w-full h-16 ${expandedChapter === chapter.id ? 'rounded-t-2xl' : 'rounded-2xl'
-                  }`}
-                onClick={() => toggleChapterExpand(chapter.id)}
-              >
-                <div className="flex items-center space-x-2">
-                  {expandedChapter === chapter.id ? (
-                    <Minus className="text-emerald-500" size={16} />
-                  ) : (
-                    <Plus className="text-emerald-500" size={16} />
-                  )}
-                  <span className="text-base font-bold">{chapter.title}</span>
-                </div>
-              </div>
-              {expandedChapter === chapter.id && (
-                <div className="bg-white p-3 border-x border-b rounded-b-2xl w-full">
-                  <ul className="list-none space-y-2">
-                    {lessons
-                      .filter((lesson) => lesson.chapterId === chapter.id)
-                      .map((lesson) => (
-                        <div key={lesson.id} className="overflow-hidden w-full">
-                          <div
-                            className={`bg-gray-100 p-2 cursor-pointer flex justify-between items-center w-full h-14 ${expandedLesson === lesson.id ? 'rounded-t-xl' : 'rounded-xl'
-                              }`}
-                            onClick={() => toggleLessonExpand(lesson.id)}
-                          >
-                            <div className="flex items-center space-x-2">
-                              {expandedLesson === lesson.id ? (
-                                <Minus className="text-emerald-500" size={16} />
-                              ) : (
-                                <Plus className="text-emerald-500" size={16} />
-                              )}
-                              <span className="text-sm font-medium">{lesson.title}</span>
-                            </div>
-                          </div>
-                          {expandedLesson === chapter.id && (
-                            <div className="bg-white p-3 border-x border-b rounded-b-xl w-full">
-                              <p className="text-gray-600 text-sm">{lesson.description}</p>
-                              {lesson.videoUrl && (
-                                <button
-                                  disabled={!isEnrolled}
-                                  className="mt-2 flex items-center space-x-2 text-blue-500 disabled:text-gray-400"
-                                  onClick={() => openVideoModal(lesson.videoUrl)}
-                                >
-                                  <PlayCircle size={16} />
-                                  <span>Xem video</span>
-                                </button>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      ))}
-                  </ul>
-                </div>
-              )}
+        <div>
+          <h2 className="text-xl font-semibold text-gray-800 mb-4 mt-5">Nội dung khóa học</h2>
+          <div className="flex items-center space-x-6 text-gray-600 mb-4">
+            <div className="flex items-center space-x-2">
+              <BookOpen size={18} className="text-emerald-500" />
+              <span className="text-sm font-medium">
+                <strong>{chapters.length}</strong> chương, <strong>{lessons.length}</strong> bài học
+              </span>
             </div>
-          ))}
-        </ul>
+            <div className="flex items-center space-x-2">
+              <Clock size={18} className="text-blue-500" />
+              <span className="text-sm font-medium">{calculateTotalHours()}</span>
+            </div>
+          </div>
+          <ul className="space-y-3">
+            {chapters.map((chapter) => (
+              <li key={chapter.id} className="bg-white rounded-xl shadow-sm overflow-hidden">
+                <div
+                  className="p-4 cursor-pointer flex justify-between items-center bg-gray-100 hover:bg-gray-200 transition-colors duration-200"
+                  onClick={() => toggleChapterExpand(chapter.id)}
+                >
+                  <div className="flex items-center space-x-3">
+                    {expandedChapter === chapter.id ? (
+                      <Minus className="text-emerald-500" size={16} />
+                    ) : (
+                      <Plus className="text-emerald-500" size={16} />
+                    )}
+                    <span className="font-semibold text-gray-800">{chapter.title}</span>
+                  </div>
+                </div>
+                {expandedChapter === chapter.id && (
+                  <div className="p-4 bg-white transition-all duration-300">
+                    <ul className="space-y-2">
+                      {lessons
+                        .filter((lesson) => lesson.chapterId === chapter.id)
+                        .map((lesson) => (
+                          <li key={lesson.id} className="bg-gray-50 rounded-lg overflow-hidden">
+                            <div
+                              className="p-3 cursor-pointer flex justify-between items-center hover:bg-gray-100 transition-colors duration-200"
+                              onClick={() => toggleLessonExpand(lesson.id)}
+                            >
+                              <div className="flex items-center space-x-3">
+                                {expandedLesson === lesson.id ? (
+                                  <Minus className="text-emerald-500" size={16} />
+                                ) : (
+                                  <Plus className="text-emerald-500" size={16} />
+                                )}
+                                <span className="text-sm font-medium text-gray-700">{lesson.title}</span>
+                              </div>
+                            </div>
+                            {expandedLesson === lesson.id && (
+                              <div className="p-3 bg-white border-t border-gray-200">
+                                <p className="text-gray-600 text-sm">{lesson.description}</p>
+                              </div>
+                            )}
+                          </li>
+                        ))}
+                    </ul>
+                  </div>
+                )}
+              </li>
+            ))}
+          </ul>
+        </div>
 
         {/* Đánh giá khóa học */}
         <div className="mt-6">
@@ -298,19 +268,23 @@ const Details = () => {
         </div>
       </div>
 
-      {/* Thanh bên phải - Video bài học đầu tiên & Đăng ký */}
-      <div className="flex flex-col items-center space-y-4 p-4">
-        {lessons.length > 0 && course.urlImage && (
-          <div className="w-full max-w-md relative">
+      {/* Thanh bên phải - Hình ảnh khóa học & Đăng ký */}
+      <div className="flex flex-col items-center space-y-4 mt-5">
+        {course.urlImage && (
+          <div className="w-[300px] relative">
             <div className="relative pb-[56.25%] h-0">
               <img
                 src={course.urlImage}
                 className="absolute top-0 left-0 w-full h-full rounded-2xl object-cover"
                 alt="Course Image"
-                onError={(e) => (e.target.src = 'path/to/default-image.jpg')} // Thêm fallback image nếu cần
+                onError={(e) => {
+                  e.currentTarget.onerror = null;
+                  e.currentTarget.src = 'path/to/default-image.jpg';
+                }}
               />
             </div>
           </div>
+
         )}
         <div className="flex items-center text-lg font-bold text-rose-500">
           {course.price ? `${course.price.toLocaleString()} VND` : 'Miễn phí'}
@@ -322,7 +296,7 @@ const Details = () => {
         >
           {isEnrolled ? 'Vào học' : 'Đăng ký học'}
         </Button>
-        <ul className="mt-4 space-y-2 text-gray-600">
+        <ul className="space-y-2 text-gray-600">
           <li className="flex items-center">
             <BookOpen className="text-emerald-500 mr-2" size={15} />
             Tổng số <strong className="text-gray-600 mr-1 ml-1 font-semibold">{chapters.length}</strong>
@@ -344,36 +318,12 @@ const Details = () => {
         </ul>
       </div>
 
-      {videoModalOpen && (
-        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50">
-          <div className="relative bg-white rounded-2xl w-full max-w-4xl">
-            <div className="flex justify-between items-center p-4 border-b">
-              <h3 className="text-xl font-semibold">Video bài học</h3>
-              <button
-                onClick={closeVideoModal}
-                className="text-gray-500 hover:text-gray-700 focus:outline-none"
-              >
-                <X size={24} />
-              </button>
-            </div>
-            <div className="p-4">
-              <div className="relative pb-[56.25%] h-0">
-                <iframe
-                  src={getEmbedUrl(selectedVideo)}
-                  className="absolute top-0 left-0 w-full h-full rounded-2xl"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                  title="Lesson Video"
-                ></iframe>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
-      {isPaymentModalOpen && (
-        <PaymentModal onClose={closePaymentModal} courseId={courseId} />
-      )}
-    </div>
+      {
+        isPaymentModalOpen && (
+          <PaymentModal onClose={closePaymentModal} courseId={courseId} />
+        )
+      }
+    </div >
   );
 };
 

@@ -293,8 +293,8 @@ const DetailsPageCourse = () => {
   const completionPercentage = Math.min((completedLessons / totalLessons) * 100, 100);
 
   return (
-    <div className="flex flex-col h-screen overflow-hidden bg-gray-50">
-      <div className="bg-gray-800 text-white flex items-center justify-between p-4 h-[50px] mt-16">
+    <div className="flex flex-col h-screen overflow-hidden bg-gray-50 ">
+      <div className="bg-gray-800 text-white flex items-center justify-between p-4 h-[70px] mt-20">
         <div className="flex items-center">
           <ArrowLeft size={24} className="mr-3 cursor-pointer" onClick={() => navigate(-1)} />
           <span className="ml-3 font-semibold">Khóa học</span>

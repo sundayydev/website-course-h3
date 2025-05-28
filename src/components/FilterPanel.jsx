@@ -2,11 +2,21 @@ import React, { useState, useEffect } from 'react';
 import { getCategories } from '@/api/categoryApi';
 import { filterCourses } from '@/api/filterApi';
 import { getCourses } from '@/api/courseApi';
+import { Button } from '@/components/ui/button';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 const FilterPanel = ({ isOpen, onToggle, onFilterChange }) => {
     const [categories, setCategories] = useState([]);
     const [filterParams, setFilterParams] = useState({
-        category: '',
+        category: 'all',
         minPrice: '',
         maxPrice: '',
         minRating: '',
@@ -24,8 +34,7 @@ const FilterPanel = ({ isOpen, onToggle, onFilterChange }) => {
         fetchCategories();
     }, []);
 
-    const handleFilterChange = (e) => {
-        const { name, value } = e.target;
+    const handleFilterChange = (name, value) => {
         setFilterParams((prev) => ({
             ...prev,
             [name]: value,
@@ -34,9 +43,13 @@ const FilterPanel = ({ isOpen, onToggle, onFilterChange }) => {
 
     const applyFilters = async () => {
         try {
-            const filteredCourses = await filterCourses(filterParams);
+            const params = { ...filterParams };
+            if (params.category === 'all') {
+                params.category = '';
+            }
+            const filteredCourses = await filterCourses(params);
             onFilterChange(filteredCourses);
-            onToggle(); // Ẩn dropdown sau khi áp dụng
+            onToggle();
         } catch (error) {
             console.error('Lỗi khi áp dụng bộ lọc:', error);
             onFilterChange([]);
@@ -45,7 +58,7 @@ const FilterPanel = ({ isOpen, onToggle, onFilterChange }) => {
 
     const handleReset = async () => {
         setFilterParams({
-            category: '',
+            category: 'all',
             minPrice: '',
             maxPrice: '',
             minRating: '',
@@ -67,79 +80,79 @@ const FilterPanel = ({ isOpen, onToggle, onFilterChange }) => {
 
     return (
         <div
-            className={`absolute top-10 right-0 w-64 bg-gray-100 rounded-lg shadow-lg p-4 z-10 transition-all duration-300 ease-in-out ${
-                isOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'
-            }`}
+            className={`absolute top-10 right-0 w-64 bg-white rounded-lg shadow-lg p-4 z-10 transition-all duration-300 ease-in-out ${isOpen ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2 pointer-events-none'
+                }`}
         >
             <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-                <div>
-                    <label className="block text-sm font-medium text-gray-700">Danh mục</label>
-                    <select
+                <div className="space-y-2">
+                    <Label htmlFor="category">Danh mục</Label>
+                    <Select
                         name="category"
                         value={filterParams.category}
-                        onChange={handleFilterChange}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                        onValueChange={(value) => handleFilterChange('category', value)}
                     >
-                        <option value="">Tất cả danh mục</option>
-                        {categories.map((category) => (
-                            <option key={category.id} value={category.id}>
-                                {category.name}
-                            </option>
-                        ))}
-                    </select>
+                        <SelectTrigger id="category">
+                            <SelectValue placeholder="Tất cả danh mục" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Tất cả danh mục</SelectItem>
+                            {categories.map((category) => (
+                                <SelectItem key={category.id} value={category.id}>
+                                    {category.name}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
                 </div>
-                <div>
-                    <label className="block text-sm font-medium text-gray-700">Giá tối thiểu (VND)</label>
-                    <input
+                <div className="space-y-2">
+                    <Label htmlFor="minPrice">Giá tối thiểu (VND)</Label>
+                    <Input
+                        id="minPrice"
                         type="number"
                         name="minPrice"
                         value={filterParams.minPrice}
-                        onChange={handleFilterChange}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                        onChange={(e) => handleFilterChange('minPrice', e.target.value)}
                         placeholder="0"
                     />
                 </div>
-                <div>
-                    <label className="block text-sm font-medium text-gray-700">Giá tối đa (VND)</label>
-                    <input
+                <div className="space-y-2">
+                    <Label htmlFor="maxPrice">Giá tối đa (VND)</Label>
+                    <Input
+                        id="maxPrice"
                         type="number"
                         name="maxPrice"
                         value={filterParams.maxPrice}
-                        onChange={handleFilterChange}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                        onChange={(e) => handleFilterChange('maxPrice', e.target.value)}
                         placeholder="10000000"
                     />
                 </div>
-                <div>
-                    <label className="block text-sm font-medium text-gray-700">Xếp hạng tối thiểu</label>
-                    <select
+                <div className="space-y-2">
+                    <Label htmlFor="minRating">Xếp hạng tối thiểu</Label>
+                    <Select
                         name="minRating"
                         value={filterParams.minRating}
-                        onChange={handleFilterChange}
-                        className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-300 focus:ring focus:ring-indigo-200 focus:ring-opacity-50"
+                        onValueChange={(value) => handleFilterChange('minRating', value)}
                     >
-                        <option value="">Tất cả</option>
-                        <option value="1">1 sao</option>
-                        <option value="2">2 sao</option>
-                        <option value="3">3 sao</option>
-                        <option value="4">4 sao</option>
-                        <option value="5">5 sao</option>
-                    </select>
+                        <SelectTrigger id="minRating">
+                            <SelectValue placeholder="Tất cả" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Tất cả</SelectItem>
+                            <SelectItem value="1">1 sao</SelectItem>
+                            <SelectItem value="2">2 sao</SelectItem>
+                            <SelectItem value="3">3 sao</SelectItem>
+                            <SelectItem value="4">4 sao</SelectItem>
+                            <SelectItem value="5">5 sao</SelectItem>
+                        </SelectContent>
+                    </Select>
                 </div>
                 <div className="flex gap-2">
-                    <button
-                        type="submit"
-                        className="mt-2 bg-indigo-600 text-white px-4 py-2 rounded-md hover:bg-indigo-700"
-                    >
+                    <Button type="submit" className="w-full">
                         Áp dụng bộ lọc
-                    </button>
-                    <button
-                        type="button"
-                        onClick={handleReset}
-                        className="mt-2 bg-gray-500 text-white px-4 py-2 rounded-md hover:bg-gray-600"
-                    >
+                    </Button>
+                    <Button type="button" variant="secondary" onClick={handleReset} className="w-full">
                         Reset
-                    </button>
+                    </Button>
                 </div>
             </form>
         </div>

@@ -1,8 +1,8 @@
 
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import { FaSearch, FaEdit, FaTrash, FaPlus } from 'react-icons/fa';
-import { FileVideo } from 'lucide-react';
 import { getAllPost, createPost, updatePost, uploadPostImage, deletePost } from '../../api/postApi';
 import { jwtDecode } from 'jwt-decode';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -40,6 +40,7 @@ function PostManagement() {
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const postsPerPage = 10;
+  const navigate = useNavigate();
 
   // Lấy tất cả bài viết
   const fetchPosts = async () => {
@@ -287,6 +288,13 @@ function PostManagement() {
                           onClick={() => handleDelete(post.id)}
                         >
                           <FaTrash className="mr-1" /> Xóa
+                        </Button>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => navigate(`/admin/comments/${post.id}`)}
+                        >
+                          <FaSearch className="mr-1" /> Xem bình luận
                         </Button>
                       </div>
                     </TableCell>
