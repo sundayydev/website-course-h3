@@ -106,8 +106,10 @@ export const uploadVideoLesson = async (videoData, onProgress) => {
         onProgress && onProgress(percentCompleted);
       },
     });
+    console.log('Upload video response:', response.data); // Debug để kiểm tra dữ liệu
     return response.data;
   } catch (error) {
+    console.error('Upload video error:', error);
     throw new Error('Không thể tải lên video');
   }
 };

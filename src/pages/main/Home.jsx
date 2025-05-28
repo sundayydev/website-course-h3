@@ -8,9 +8,9 @@ const Home = () => {
   return (
     <div className="mx-auto px-4 py-8 bg-slate-50">
       <BannerShow />
+      <CourseForUser />
       <CourseNew />
       <Course />
-      <CourseForUser />
       <CardPost />
     </div>
   );

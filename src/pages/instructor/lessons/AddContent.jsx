@@ -124,7 +124,7 @@ export default function AddContent() {
       setLessonData((prev) => ({
         ...prev,
         duration: Math.round(preview.duration / 60), // Convert to minutes
-        videoName: file.name,
+        videoName: null,
       }));
     } catch (error) {
       toast.error('Không thể tạo preview video');
@@ -143,16 +143,21 @@ export default function AddContent() {
         setUploadProgress(progress);
       });
 
-      console.log('response', response);
+      // Kiểm tra cấu trúc phản hồi từ server
+      console.log('Upload response:', response); // Debug để kiểm tra dữ liệu trả về
 
+      // Cập nhật videoName vào lessonData
       setLessonData((prev) => ({
         ...prev,
-        videoName: response.url,
+        videoName: response.videoName, // Đảm bảo response.videoName tồn tại
       }));
 
       toast.success('Tải lên video thành công');
+      return response.videoName; // Trả về videoName để sử dụng trong handleLessonSubmit
     } catch (error) {
+      console.error('Upload error:', error);
       toast.error('Không thể tải lên video');
+      throw error; // Ném lỗi để xử lý trong handleLessonSubmit
     } finally {
       setIsUploading(false);
     }
@@ -170,27 +175,32 @@ export default function AddContent() {
         throw new Error('Vui lòng điền đầy đủ thông tin bắt buộc');
       }
 
-      // Upload video if exists
-      if (videoFile && !lessonData.videoName) {
-        await handleVideoUpload();
+      let videoName = lessonData.videoName;
+
+      // Upload video nếu có file và chưa có videoName
+      if (videoFile) {
+        videoName = await handleVideoUpload(); // Chờ upload hoàn tất và lấy videoName
       }
 
       // Prepare payload
       const payload = {
         ...lessonData,
+        videoName: videoName, // Sử dụng videoName từ kết quả upload hoặc lessonData
         duration: parseInt(lessonData.duration) || 0,
         orderNumber: parseInt(lessonData.orderNumber) || 0,
       };
 
-      console.log('payload', payload);
+      console.log('Payload gửi đi:', payload); // Debug payload
 
       // Call API to create lesson
       const response = await createLesson(payload);
+      toast.success('Tạo bài học thành công');
 
       // Navigate to course management page
-      // navigate(`/instructor/course/${courseId}/lessons`);
+      navigate(`/instructor/course/${courseId}/lessons`);
     } catch (err) {
       setError(err.message || 'Không thể tạo bài học');
+      console.error('Submit error:', err);
     } finally {
       setIsSubmitting(false);
     }
