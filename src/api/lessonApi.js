@@ -29,7 +29,6 @@ export const getLessonById = async (id) => {
 export const getLessonsByCourseId = async (courseId) => {
   try {
     const response = await api.get(`${API_URL}/course/${courseId}`);
-    console.log('API Response:', response);
     if (!Array.isArray(response.data)) {
       throw new Error('Dữ liệu bài học không phải mảng');
     }

@@ -10,14 +10,17 @@ import defaultAvatar from '../../assets/imgs/default-avatar.jpg';
 import { formatDate } from '../../utils/formatDate';
 import { useNavigate } from 'react-router-dom';
 import HashLoader from 'react-spinners/HashLoader';
+
 const ProfileImage = ({ src, onClick }) => (
-  <img
-    src={src || defaultAvatar}
-    alt="Profile"
-    className="w-24 h-24 rounded-full object-cover border-2 border-emerald-500 cursor-pointer"
-    onClick={onClick}
-    onError={(e) => (e.target.src = defaultAvatar)}
-  />
+  <div className="relative inline-block">
+    <img
+      src={src || defaultAvatar}
+      alt="Profile"
+      className="w-24 h-24 sm:w-40 sm:h-40 rounded-full mx-auto mb-4 border-4 border-green-500 transition-transform object-cover"
+      onClick={onClick}
+      onError={(e) => (e.target.src = defaultAvatar)}
+    />
+  </div>
 );
 
 const Section = ({ title, children }) => (

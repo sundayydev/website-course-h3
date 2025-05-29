@@ -33,22 +33,24 @@ const About = () => {
   // Dữ liệu cho phần Đội ngũ
   const teamMembers = [
     {
+      id: '64d8dce6-bf4f-4ece-bdcc-ef7db89e178f',
       name: 'Ngô Mạnh Hùng',
       role: 'Developer & CEO',
       image: 'https://asd.mediacdn.vn/adt/tuyendungvccorp/lap-trinh-vien-la-gi_1b33bae8-ab72-4134-bb77-8d9df3b29def.jpg',
       description: 'Với hơn 8 năm kinh nghiệm phát triển phần mềm và quản lý dự án.'
     },
     {
-      id: '9a1c466a-669d-4dbb-a943-1a6439121ea3',
+      id: '891580b3-4226-4f1f-ade9-195409165d14',
       name: 'Lê Hữu Duy Hoàng',
       role: 'Lead Designer',
-      image: `${import.meta.env.VITE_API_URL}/uploads/dfc467de-2039-41de-bf13-48030ee0ef46_ltrinh.png`,
+      image: `https://res.cloudinary.com/dybzjxgt4/image/upload/v1748438598/iiaihadh1ei9eemdk7dy.png`,
       description: 'Chuyên gia thiết kế UX/UI với nhiều năm kinh nghiệm trong lĩnh vực giáo dục trực tuyến.'
     },
     {
+      id: '4942876c-c54a-48c7-95eb-6146baa8c6a1',
       name: 'Lê Hoài Huân',
       role: 'Developer',
-      image: 'https://cdni.iconscout.com/illustration/premium/thumb/man-coder-programming-on-computer-7771249-6200255.png?f=webp',
+      image: 'https://res.cloudinary.com/dybzjxgt4/image/upload/v1748407977/duwbvopnkwxugjou568o.jpg',
       description: 'Full-stack developer với đam mê về công nghệ mới và giảng dạy.'
     },
   ];
@@ -121,8 +123,8 @@ const About = () => {
               className="lg:w-1/2"
             >
               <img
-                className="rounded-3xl shadow-2xl w-full object-cover"
-                src="https://watermark.lovepik.com/photo/20211201/large/lovepik-programmer-professional-image-picture_501301385.jpg"
+                className="rounded-3xl shadow-2xl w-full object-cover h-96"
+                src="./src/assets/imgs/about.jpg"
                 alt="About H3"
               />
             </motion.div>

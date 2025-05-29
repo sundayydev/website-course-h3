@@ -18,7 +18,11 @@ const CardPost = () => {
       try {
         const response = await getAllPost();
         if (Array.isArray(response.data) && response.data.length > 0) {
-          setPosts(response.data);
+          // Sắp xếp bài viết theo ngày tạo giảm dần và lấy 5 bài mới nhất
+          const sortedPosts = response.data
+            .sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
+            .slice(0, 4);
+          setPosts(sortedPosts);
         }
       } catch (error) {
         toast.error('Lỗi khi lấy bài viết');
@@ -40,26 +44,36 @@ const CardPost = () => {
 
   return (
     <div className="p-4 mx-auto">
-      <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-        <FaBookOpen className="text-gray-600 text-xl" />
-        Bài viết
-      </h2>
-      <div className="flex flex-wrap justify-start gap-10">
+      <div className="flex justify-between items-center mb-4">
+        <h2 className="text-2xl font-bold flex items-center gap-2">
+          <FaBookOpen className="text-gray-600 text-xl" />
+          Bài viết
+        </h2>
+        <button
+          onClick={() => navigate('/post')}
+          className="flex items-center gap-1 text-green-600 hover:text-red-600 hover:underline font-medium text-base transition-colors"
+        >
+          Xem tất cả <span>&gt;</span>
+        </button>
+      </div>
+      <div className="flex flex-wrap justify-start gap-5">
         {posts.map((post, index) => (
           <div
             key={index}
-            className="rounded-2xl shadow-lg overflow-hidden bg-white w-full md:w-1/3 lg:w-[325px] 
+            className="rounded-2xl shadow-lg overflow-hidden bg-white w-full md:w-1/3 lg:w-[335px] 
               transform transition-transform duration-300 hover:scale-105 flex flex-col cursor-pointer"
             onClick={() => navigate(`/detailspost/${post.id}`)}
           >
             <div className="flex-grow">
               <img
                 src={`${post.urlImage}`}
-                className="w-full h-40 object-cover rounded-t-2xl"
+                className="w-full h-32 object-cover rounded-t-2xl"
               />
             </div>
             <div className="bg-gray-50 text-black p-4">
-              <h3 className="text-lg font-semibold mb-2 min-h-[3rem]">{post.title}</h3>
+              <h3 className="text-lg font-semibold mb-2 min-h-[3rem] line-clamp-2 overflow-hidden text-ellipsis">
+                {post.title}
+              </h3>
               <div className="flex items-center justify-between text-xs text-gray-500">
                 <div className="flex items-center gap-2">
                   <img

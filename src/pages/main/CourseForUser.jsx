@@ -7,19 +7,44 @@ import { getActiveCourses } from '../../api/courseApi';
 import { getReviewsByCourseId } from '../../api/reviewApi';
 import { getEnrollmentsByCourseId, getEnrollmentByUserId } from '../../api/enrollmentApi';
 import { getLessonsByCourseId } from '../../api/lessonApi';
-import { getUserId } from '../../api/authUtils';
+import { getUserId, isAuthenticated } from '../../api/authUtils';
 
 const CourseForUser = () => {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [isLoggedIn, setIsLoggedIn] = useState(isAuthenticated()); // Khởi tạo với isAuthenticated
+  const coursesPerPage = 4;
   const navigate = useNavigate();
 
-  const fetchCourses = async () => {
+  // Hàm kiểm tra và cập nhật trạng thái đăng nhập
+  const checkAuthStatus = () => {
+    setIsLoggedIn(isAuthenticated());
+  };
 
+  // Lắng nghe sự thay đổi của localStorage (khi token được lưu hoặc xóa)
+  useEffect(() => {
+    checkAuthStatus(); // Kiểm tra trạng thái ban đầu
+    const handleStorageChange = () => {
+      checkAuthStatus(); // Cập nhật trạng thái khi localStorage thay đổi
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+    // Thêm sự kiện tùy chỉnh để xử lý khi setAuthToken được gọi
+    window.addEventListener('authTokenChanged', handleStorageChange);
+
+    return () => {
+      window.removeEventListener('storage', handleStorageChange);
+      window.removeEventListener('authTokenChanged', handleStorageChange);
+    };
+  }, []);
+
+  // Hàm lấy danh sách khóa học
+  const fetchCourses = async () => {
     try {
+      setLoading(true); // Đặt lại loading khi bắt đầu fetch
       const userId = getUserId();
-      // Lấy danh sách đăng ký của người dùng
       const enrollmentResponse = await getEnrollmentByUserId(userId);
       const enrolledCourseIds = Array.isArray(enrollmentResponse.data)
         ? enrollmentResponse.data.map((enrollment) => enrollment.courseId)
@@ -31,31 +56,26 @@ const CourseForUser = () => {
         return;
       }
 
-      // Lấy tất cả khóa học
       const courseResponse = await getActiveCourses();
       if (!Array.isArray(courseResponse)) {
         throw new Error('Dữ liệu khóa học không hợp lệ');
       }
 
-      // Lọc các khóa học mà người dùng đã đăng ký
       const enrolledCourses = courseResponse.filter((course) =>
         enrolledCourseIds.includes(course.id)
       );
 
-      // Lấy thông tin bổ sung cho các khóa học đã đăng ký
       const enrichedCourses = await Promise.all(
         enrolledCourses.map(async (course) => {
-          // Lấy số học viên
           let totalStudents = 0;
           try {
             const enrollmentResponse = await getEnrollmentsByCourseId(course.id);
             const uniqueUsers = new Set(enrollmentResponse.map((e) => e.userId));
             totalStudents = uniqueUsers.size;
           } catch (enrollmentError) {
-            console.warn(`Không thể lấy đăng ký cho khóa học ${course.id}:`, enrollmentError);
+            console.log(`Không thể lấy đăng ký cho khóa học ${course.id}:`, enrollmentError);
           }
 
-          // Lấy đánh giá
           let averageRating = 0;
           let totalReviews = 0;
           try {
@@ -66,10 +86,9 @@ const CourseForUser = () => {
                 ? reviewsResponse.reduce((sum, review) => sum + review.rating, 0) / totalReviews
                 : 0;
           } catch (reviewError) {
-            console.warn(`Không thể lấy đánh giá cho khóa học ${course.id}:`, reviewError);
+            console.log(`Không thể lấy đánh giá cho khóa học ${course.id}:`, reviewError);
           }
 
-          // Lấy tổng số giờ
           let totalHours = '0 phút';
           try {
             const lessons = await getLessonsByCourseId(course.id);
@@ -86,7 +105,7 @@ const CourseForUser = () => {
               }
             }
           } catch (lessonError) {
-            console.warn(`Không thể lấy bài học cho khóa học ${course.id}:`, lessonError);
+            console.log(`Không thể lấy bài học cho khóa học ${course.id}:`, lessonError);
           }
 
           return {
@@ -102,15 +121,43 @@ const CourseForUser = () => {
       setCourses(enrichedCourses);
     } catch (err) {
       console.error('Lỗi khi tải khóa học:', err);
-
+      setError('Lỗi khi tải khóa học. Vui lòng thử lại sau.');
     } finally {
       setLoading(false);
     }
   };
 
+  // Gọi fetchCourses khi isLoggedIn thay đổi thành true
   useEffect(() => {
-    fetchCourses();
-  }, []);
+    if (isLoggedIn) {
+      fetchCourses();
+    } else {
+      setLoading(false); // Tắt loading nếu không đăng nhập
+      setCourses([]); // Xóa danh sách khóa học nếu không đăng nhập
+    }
+  }, [isLoggedIn]);
+
+  // Tính toán các khóa học hiển thị trên trang hiện tại
+  const indexOfLastCourse = currentPage * coursesPerPage;
+  const indexOfFirstCourse = indexOfLastCourse - coursesPerPage;
+  const currentCourses = courses.slice(indexOfFirstCourse, indexOfLastCourse);
+
+  // Tính toán tổng số trang
+  const totalPages = Math.ceil(courses.length / coursesPerPage);
+
+  // Hàm chuyển trang
+  const handlePreviousPage = () => {
+    setCurrentPage((prev) => Math.max(prev - 1, 1));
+  };
+
+  const handleNextPage = () => {
+    setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+  };
+
+  // Nếu chưa đăng nhập, không hiển thị gì
+  if (!isLoggedIn) {
+    return null; // Hoặc: <p>Vui lòng đăng nhập để xem khóa học đã đăng ký.</p>
+  }
 
   if (loading) {
     return (
@@ -120,29 +167,43 @@ const CourseForUser = () => {
     );
   }
 
-  if (error) {
-    return (
-      <div className="p-4 text-red-500 text-center">
-        {error}
-      </div>
-    );
-  }
-
   return (
     <div className="p-4 mx-auto">
-      <h2 className="text-2xl font-bold mb-4 flex items-center gap-2">
-        <FaCheckCircle className="text-green-600 text-xl" />
-        Khóa học đã đăng ký
-      </h2>
+      <div className="flex justify-between items-center mb-4 flex-wrap gap-4">
+        <h2 className="text-2xl font-bold flex items-center gap-2">
+          <FaCheckCircle className="text-green-600 text-xl" />
+          Khóa học đã đăng ký
+        </h2>
 
+        {totalPages > 1 && (
+          <div className="flex items-center gap-2">
+            <button
+              onClick={handlePreviousPage}
+              disabled={currentPage === 1}
+              className={`px-4 py-1 rounded-lg font-semibold text-white 
+              ${currentPage === 1 ? 'bg-gray-400 cursor-not-allowed' : 'bg-emerald-500 hover:bg-emerald-600'}`}
+            >
+              Trước
+            </button>
+            <button
+              onClick={handleNextPage}
+              disabled={currentPage === totalPages}
+              className={`px-4 py-1 rounded-lg font-semibold text-white 
+              ${currentPage === totalPages ? 'bg-gray-400 cursor-not-allowed' : 'bg-emerald-500 hover:bg-emerald-600'}`}
+            >
+              Sau
+            </button>
+          </div>
+        )}
+      </div>
       {courses.length === 0 ? (
         <p className="text-gray-600 text-center font-bold">Bạn chưa đăng ký khóa học nào.</p>
       ) : (
-        <div className="flex flex-wrap justify-start gap-10">
-          {courses.map((course) => (
+        <div className="flex flex-wrap justify-start gap-5">
+          {currentCourses.map((course) => (
             <div
               key={course.id}
-              className="rounded-2xl shadow-lg overflow-hidden bg-white w-full md:w-1/3 lg:w-[325px] 
+              className="rounded-2xl shadow-lg overflow-hidden bg-white w-full md:w-1/3 lg:w-[335px] 
                 transform transition-transform duration-300 hover:scale-105 flex flex-col cursor-pointer"
               onClick={() => navigate(`/details/${course.id}`)}
             >

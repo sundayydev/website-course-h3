@@ -26,10 +26,6 @@ const MainLayout = () => {
 
     setIsNotFoundPage(isNotFound);
 
-    // Debug
-    console.log('Current path:', location.pathname);
-    console.log('Is NotFoundPage:', isNotFound);
-
     window.scrollTo(0, 0);
   }, [location.pathname]);
 

@@ -47,7 +47,7 @@ const PostDetails = () => {
               <img
                 src={post.user?.profileImage || defaultAvatar}
                 alt={post.user?.fullName || 'Tác giả'}
-                className="w-10 h-10 rounded-full"
+                className="w-10 h-10 rounded-full object-cover"
                 onError={(e) => (e.target.src = defaultAvatar)}
               />
             </Link>

@@ -45,7 +45,6 @@ const enrichCourses = async (courseResponse, enrollmentData, progressData) => {
   const enrichedCourses = await Promise.all(
     courseResponse.map(async (course) => {
       if (!course.id) {
-        console.warn('Khóa học thiếu id:', course);
         return null;
       }
 
@@ -69,7 +68,7 @@ const enrichCourses = async (courseResponse, enrollmentData, progressData) => {
             courseStatus = calculateCourseStatus(lessonStatuses);
           }
         } catch (lessonError) {
-          console.warn(`Không thể lấy bài học cho khóa học ${course.id}:`, lessonError);
+          console.log(`Không thể lấy bài học cho khóa học ${course.id}:`, lessonError);
         }
       }
 
@@ -79,7 +78,7 @@ const enrichCourses = async (courseResponse, enrollmentData, progressData) => {
         const uniqueUsers = new Set(enrollmentResponse.map((e) => e.userId));
         totalStudents = uniqueUsers.size;
       } catch (enrollmentError) {
-        console.warn(`Không thể lấy đăng ký cho khóa học ${course.id}:`, enrollmentError);
+        console.log(`Không thể lấy đăng ký cho khóa học ${course.id}:`, enrollmentError);
       }
 
       let averageRating = 0;
@@ -92,7 +91,7 @@ const enrichCourses = async (courseResponse, enrollmentData, progressData) => {
             ? reviewsResponse.reduce((sum, review) => sum + review.rating, 0) / totalReviews
             : 0;
       } catch (reviewError) {
-        console.warn(`Không thể lấy đánh giá cho khóa học ${course.id}:`, reviewError);
+        console.log(`Không thể lấy đánh giá cho khóa học ${course.id}:`, reviewError);
       }
 
       let totalHours = '0 phút';
@@ -111,7 +110,7 @@ const enrichCourses = async (courseResponse, enrollmentData, progressData) => {
           }
         }
       } catch (lessonError) {
-        console.warn(`Không thể lấy bài học cho khóa học ${course.id}:`, lessonError);
+        console.log(`Không thể lấy bài học cho khóa học ${course.id}:`, lessonError);
       }
 
       return {
@@ -149,8 +148,6 @@ const CourseList = () => {
         throw new Error('Dữ liệu khóa học không hợp lệ');
       }
 
-      console.log('Raw course data:', courseResponse);
-
       let enrollmentData = {};
       let progressData = {};
       if (isAuthenticated()) {
@@ -172,7 +169,7 @@ const CourseList = () => {
             });
           }
         } catch (enrollmentError) {
-          console.warn('Không thể lấy danh sách đăng ký hoặc tiến trình:', enrollmentError);
+          console.log('Không thể lấy danh sách đăng ký hoặc tiến trình:', enrollmentError);
         }
       }
 
@@ -213,7 +210,7 @@ const CourseList = () => {
             });
           }
         } catch (enrollmentError) {
-          console.warn('Không thể lấy danh sách đăng ký hoặc tiến trình:', enrollmentError);
+          console.log('Không thể lấy danh sách đăng ký hoặc tiến trình:', enrollmentError);
         }
       }
 
@@ -238,7 +235,7 @@ const CourseList = () => {
           <Button
             onClick={toggleFilter}
             variant="outline"
-            className="flex items-center gap-2 text-gray-600 hover:text-green-600 focus:outline-none transition-colors duration-200"
+            className="flex items-center gap-2 text-gray-600 hover:text-green-600 focus:outline-none transition-colors duration-200 "
             aria-label="Toggle filter panel"
           >
             <SlidersHorizontal className="h-5 w-5" />
@@ -260,7 +257,7 @@ const CourseList = () => {
           {courses.map((course) => (
             <div
               key={course.id}
-              className="rounded-2xl shadow-lg overflow-hidden bg-white w-full md:w-1/3 lg:w-[325px] 
+              className="rounded-2xl shadow-lg overflow-hidden bg-white w-full md:w-1/3 lg:w-[320px] 
               transform transition-transform duration-300 hover:scale-105 flex flex-col cursor-pointer"
               onClick={() => navigate(`/details/${course.id}`)}
             >
