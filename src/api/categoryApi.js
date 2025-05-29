@@ -8,8 +8,6 @@ export const getCategories = async () => {
   try {
     const response = await api.get(API_URL);
 
-    console.log('Danh sách danh mục:', response.data);
-
     return response.data;
   } catch (error) {
     console.error('Lỗi khi lấy danh sách danh mục:', error);

@@ -5,7 +5,7 @@ import { FaMapMarkerAlt, FaPhoneAlt, FaEnvelope } from 'react-icons/fa';
 import { sendContactEmail } from '../../../api/contactApi';
 import { ToastContainer, toast } from 'react-toastify';
 import 'react-toastify/dist/ReactToastify.css';
-import { motion } from 'framer-motion'; // Thêm framer-motion cho hiệu ứng
+import { motion } from 'framer-motion';
 
 const Contact = () => {
   const [formData, setFormData] = useState({
@@ -47,7 +47,6 @@ const Contact = () => {
     }
   };
 
-  // Cấu hình hiệu ứng động
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -84,15 +83,20 @@ const Contact = () => {
         animate="visible"
         className="max-w-5xl w-full px-6 lg:px-12"
       >
-        {/* Tiêu đề */}
-        <motion.div variants={itemVariants}>
-          <h2 className="text-4xl lg:text-5xl text-center text-emerald-600 dark:text-emerald-400 font-extrabold mb-4">
-            Liên hệ với chúng tôi
-          </h2>
-          <p className="text-lg lg:text-xl text-center text-gray-600 dark:text-gray-300 mb-12 leading-relaxed">
-            Bạn có thắc mắc? Gửi tin nhắn và chúng tôi sẽ phản hồi sớm nhất!
+        {/* Banner with Gradient Background */}
+        <motion.div
+          variants={itemVariants}
+          className="mb-12 bg-gradient-to-r from-emerald-500 to-teal-600 p-8 rounded-2xl shadow-lg text-white text-center "
+        >
+          <h1 className="text-3xl lg:text-4xl font-bold mb-2">
+            Kết Nối Với Chúng Tôi!
+          </h1>
+          <p className="text-lg lg:text-xl">
+            Hãy để lại lời nhắn, chúng tôi luôn sẵn sàng hỗ trợ bạn!
           </p>
         </motion.div>
+
+
 
         {/* Bố cục chính: Thông tin liên hệ và Form */}
         <div className="grid lg:grid-cols-2 gap-8">

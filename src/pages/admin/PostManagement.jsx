@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
-import { FaSearch, FaEdit, FaTrash, FaPlus } from 'react-icons/fa';
+import { FaComment, FaEdit, FaTrash, FaPlus, FaSearch } from 'react-icons/fa';
 import { getPaginatedPosts, createPost, updatePost, uploadPostImage, deletePost } from '../../api/postApi';
 import { jwtDecode } from 'jwt-decode';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -36,7 +36,7 @@ function PostManagement() {
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
-  const [pageSize] = useState(7);
+  const [pageSize] = useState(5);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const pageNumberFromUrl = parseInt(searchParams.get('page') || 1, 10);
@@ -258,68 +258,81 @@ function PostManagement() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Bài viết</TableHead>
-                  <TableHead>Tác giả</TableHead>
-                  <TableHead>Ngày tạo</TableHead>
-                  <TableHead>Tags</TableHead>
-                  <TableHead>Thao tác</TableHead>
+                  <TableHead className="w-[40%]">Bài viết</TableHead>
+                  <TableHead className="w-[20%]">Tác giả</TableHead>
+                  <TableHead className="w-[15%]">Ngày tạo</TableHead>
+                  <TableHead className="w-[15%]">Tags</TableHead>
+                  <TableHead className="w-[10%]">Thao tác</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {posts.map((post) => (
                   <TableRow key={post.id}>
                     <TableCell>
-                      <div className="flex items-center">
+                      <div className="flex items-center gap-3 line-clamp-1 ">
                         {post && (
                           <img
                             src={post.urlImage || ''}
                             alt={post.title}
-                            className="h-12 w-12 object-cover rounded-md mr-3"
+                            className="h-12 w-12 object-cover rounded-md"
                             onError={(e) => (e.target.src = '/placeholder-image.jpg')}
                           />
                         )}
-                        <div>
-                          <div className="font-medium text-gray-900">{post.title}</div>
-                          <div className="text-gray-500 truncate max-w-md">
+                        <div className="flex flex-col">
+                          <div className="font-medium text-gray-900 line-clamp-1">{post.title}</div>
+                          <div className="text-gray-500 line-clamp-1 text-sm">
                             {post.content || 'Không có nội dung'}
                           </div>
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell>{post.user?.fullName || 'Unknown'}</TableCell>
-                    <TableCell>{formatDate(post.createdAt)}</TableCell>
                     <TableCell>
-                      {post.tags ? (
-                        post.tags.split(',').map((tag, index) => (
-                          <span
-                            key={index}
-                            className="inline-block bg-gray-200 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 mr-2 mb-2"
-                          >
-                            {tag.trim()}
-                          </span>
-                        ))
-                      ) : (
-                        <span className="text-gray-500">Không có tags</span>
-                      )}
+                      <span className="font-medium">{post.user?.fullName || 'Unknown'}</span>
                     </TableCell>
                     <TableCell>
-                      <div className="flex space-x-2">
-                        <Button variant="outline" size="sm" onClick={() => openEditModal(post)}>
-                          <FaEdit className="mr-1" /> Sửa
+                      <span className="text-gray-600">{formatDate(post.createdAt)}</span>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-wrap gap-2">
+                        {post.tags ? (
+                          post.tags.split(',').slice(0, 2).map((tag, index) => (
+                            <span
+                              key={index}
+                              className="inline-block bg-gray-100 rounded-full px-2.5 py-0.5 text-xs font-medium text-gray-700"
+                            >
+                              {tag.trim()}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-gray-400 text-sm">Không có tags</span>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openEditModal(post)}
+                          className="h-8 px-2"
+                        >
+                          <FaEdit className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="destructive"
                           size="sm"
                           onClick={() => handleDelete(post.id)}
+                          className="h-8 px-2"
                         >
-                          <FaTrash className="mr-1" /> Xóa
+                          <FaTrash className="h-4 w-4" />
                         </Button>
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => navigate(`/admin/comments/${post.id}`)}
+                          className="h-8 px-2"
                         >
-                          <FaSearch className="mr-1" /> Xem bình luận
+                          <FaComment className="h-4 w-4" />
                         </Button>
                       </div>
                     </TableCell>

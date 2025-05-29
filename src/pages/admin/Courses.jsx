@@ -124,49 +124,49 @@ const Courses = () => {
   };
 
   const handleStatusChange = async (id, value) => {
-  if (!['Active', 'Inactive'].includes(value)) {
-    toast.error('Trạng thái không hợp lệ. Chỉ chấp nhận "Active" hoặc "Inactive".');
-    return;
-  }
-  try {
-    await approveCourse(id, value);
-    toast.success(`Khóa học đã được ${value === 'Active' ? 'kích hoạt' : 'hủy kích hoạt'}`);
-    fetchCourses();
-  } catch (error) {
-    const errorMessage = error.response?.data?.message || error.message || 'Không xác định';
-    toast.error(`Lỗi khi thay đổi trạng thái khóa học: ${errorMessage}`);
-    console.error('Lỗi khi thay đổi trạng thái khóa học:', {
-      id,
-      value,
-      error: errorMessage,
-      stack: error.stack,
-    });
-  }
-};
+    if (!['Active', 'Inactive'].includes(value)) {
+      toast.error('Trạng thái không hợp lệ. Chỉ chấp nhận "Active" hoặc "Inactive".');
+      return;
+    }
+    try {
+      await approveCourse(id, value);
+      toast.success(`Khóa học đã được ${value === 'Active' ? 'kích hoạt' : 'hủy kích hoạt'}`);
+      fetchCourses();
+    } catch (error) {
+      const errorMessage = error.response?.data?.message || error.message || 'Không xác định';
+      toast.error(`Lỗi khi thay đổi trạng thái khóa học: ${errorMessage}`);
+      console.error('Lỗi khi thay đổi trạng thái khóa học:', {
+        id,
+        value,
+        error: errorMessage,
+        stack: error.stack,
+      });
+    }
+  };
 
   const getStatusBadge = (status) => {
-  let variant, bgClass, textClass, label;
-  switch (status) {
-    case 'Active':
-      variant = 'success';
-      bgClass = 'bg-green-100';
-      textClass = 'text-green-800';
-      label = 'Kích hoạt';
-      break;
-    case 'Inactive':
-    default:
-      variant = 'secondary';
-      bgClass = 'bg-gray-100';
-      textClass = 'text-gray-800';
-      label = 'Hủy kích hoạt';
-      break;
-  }
-  return (
-    <Badge variant={variant} className={`${bgClass} ${textClass}`}>
-      {label}
-    </Badge>
-  );
-};
+    let variant, bgClass, textClass, label;
+    switch (status) {
+      case 'Active':
+        variant = 'success';
+        bgClass = 'bg-green-100';
+        textClass = 'text-green-800';
+        label = 'Kích hoạt';
+        break;
+      case 'Inactive':
+      default:
+        variant = 'secondary';
+        bgClass = 'bg-gray-100';
+        textClass = 'text-gray-800';
+        label = 'Hủy kích hoạt';
+        break;
+    }
+    return (
+      <Badge variant={variant} className={`${bgClass} ${textClass}`}>
+        {label}
+      </Badge>
+    );
+  };
 
   const resetForm = () => {
     setFormData({
@@ -405,37 +405,47 @@ const Courses = () => {
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-[35%] text-pink-500">Thông tin khóa học</TableHead>
-                    <TableHead className="w-[15%] text-pink-500">Giá</TableHead>
-                    <TableHead className="w-[15%] text-pink-500">Trạng thái</TableHead>
-                    <TableHead className="w-[15%] text-pink-500">Ngày tạo</TableHead>
-                    <TableHead className="w-[10%] text-pink-500 text-center">Bài học</TableHead>
-                    <TableHead className="text-right w-[15%] text-pink-700">Thao tác</TableHead>
+                    <TableHead className="w-[35%] text-pink-500 font-semibold">
+                      Thông tin khóa học
+                    </TableHead>
+                    <TableHead className="w-[15%] text-pink-500 font-semibold text-center">
+                      Giá
+                    </TableHead>
+                    <TableHead className="w-[15%] text-pink-500 font-semibold text-center">
+                      Trạng thái
+                    </TableHead>
+                    <TableHead className="w-[15%] text-pink-500 font-semibold text-center">
+                      Ngày tạo
+                    </TableHead>
+                    <TableHead className="w-[10%] text-pink-500 font-semibold text-center">
+                      Bài học
+                    </TableHead>
+                    <TableHead className="w-[10%] text-pink-700 font-semibold text-center">
+                      Thao tác
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {filteredCourses.map((course) => (
-                    <TableRow key={course.id} className="hover:bg-gray-50">
-                      <TableCell className="flex items-center gap-3">
+                    <TableRow key={course.id} className="hover:bg-gray-100 transition-colors">
+                      <TableCell className="flex items-center gap-4 py-3">
                         <img
-                          src={
-                            course.urlImage
-                              ? course.urlImage
-                              : ""
-                          }
+                          src={course.urlImage ? course.urlImage : ""}
                           alt={course.title}
-                          className="h-12 w-12 rounded-lg object-cover border"
+                          className="h-12 w-12 rounded-lg object-cover border border-gray-200"
                         />
                         <div>
-                          <div className="font-medium text-gray-900">{course.title}</div>
-                          <div className="text-sm text-gray-500 truncate max-w-[400px]">
+                          <div className="font-medium text-gray-900 line-clamp-1">
+                            {course.title}
+                          </div>
+                          <div className="text-sm text-gray-500 line-clamp-1 max-w-[350px]">
                             {course.description}
                           </div>
                         </div>
                       </TableCell>
-                      <TableCell>
+                      <TableCell className="text-center">
                         {course.price === 0 ? (
-                          <Badge variant="success" className="bg-green-100 text-green-800">
+                          <Badge variant="success" className="bg-green-100 text-green-800 text-xs px-2 py-1">
                             Miễn phí
                           </Badge>
                         ) : (
@@ -449,12 +459,13 @@ const Courses = () => {
                           </span>
                         )}
                       </TableCell>
-                     <TableCell>
+                      <TableCell className="text-center">
                         <Select
                           value={course.activate || 'Inactive'}
                           onValueChange={(value) => handleStatusChange(course.id, value)}
+                          className="w-[140px] mx-auto"
                         >
-                          <SelectTrigger className="w-[180px]">
+                          <SelectTrigger className="w-full text-center">
                             {getStatusBadge(course.activate || 'Inactive')}
                           </SelectTrigger>
                           <SelectContent>
@@ -463,19 +474,21 @@ const Courses = () => {
                           </SelectContent>
                         </Select>
                       </TableCell>
-                      <TableCell className="text-gray-600">{course.createdAt}</TableCell>
-                      <TableCell>
+                      <TableCell className="text-gray-600 text-center">
+                        {course.createdAt}
+                      </TableCell>
+                      <TableCell className="text-center">
                         <Button
                           variant="ghost"
-                          className="gap-2 hover:bg-pink-50 hover:text-pink-600"
+                          className="gap-2 hover:bg-pink-50 hover:text-pink-600 text-sm"
                           onClick={() => handleViewLessons(course.id)}
                         >
                           <FileVideo className="h-4 w-4" />
                           Xem bài học
                         </Button>
                       </TableCell>
-                      <TableCell className="text-right">
-                        <div className="flex justify-end gap-2">
+                      <TableCell className="text-center">
+                        <div className="flex justify-center gap-2">
                           <Button
                             variant="ghost"
                             size="icon"

@@ -17,7 +17,7 @@ const ProfileImage = ({ src, onClick, onImageChange }) => (
     <img
       src={src || defaultAvatar}
       alt="Profile"
-      className="w-32 h-32 sm:w-48 sm:h-48 rounded-full mx-auto mb-4 border-4 border-green-500 hover:scale-105 transition-transform"
+      className="w-32 h-32 sm:w-48 sm:h-48 rounded-full mx-auto mb-4 border-4 border-green-500 hover:scale-105 transition-transform object-cover"
       onClick={onClick}
       loading="lazy"
     />
@@ -89,9 +89,7 @@ const ProfilePage = () => {
         getFollowingByUser(userId).then(res => res.data),
       ]);
       setUser(userData);
-      console.log("userData:", userData);
-      console.log('followersData:', followersData);
-      console.log('followingData:', followingData);
+
       setInfoForm({
         fullName: userData.fullName || '',
         email: userData.email || '',

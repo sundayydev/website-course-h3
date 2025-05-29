@@ -73,7 +73,7 @@ const BannerShow = () => {
   return (
     <div className="p-4 mx-auto">
       {/* Container cho slideshow */}
-      <div className="relative w-full h-[270px] overflow-hidden rounded-2xl mt-16">
+      <div className="relative w-full h-[270px] overflow-hidden rounded-2xl mt-11">
         {banners.map((banner, index) => (
           <div
             key={index}
