@@ -1,123 +1,142 @@
+import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { logout } from '@/api/authApi';
+import { removeAuthToken } from '@/api/authUtils';
+import { toast } from 'react-toastify';
 import {
   LayoutDashboard,
-  CreditCard,
   Users,
   GraduationCap,
   BookOpenText,
-  Settings,
-  Shield,
-  HelpCircle,
-  ChevronDown,
-  DollarSign,
+  MessageSquare,
   BookOpen,
+  Settings,
+  LogOut,
+  ChevronDown,
+  ChevronRight,
 } from 'lucide-react';
-import { FaComment, FaUserTie } from 'react-icons/fa'
 import LogoH3 from '@/assets/LogoH3.png';
-import { NavLink, useLocation } from 'react-router-dom';
 
-// Danh sách sidebar items
 const sidebarItems = [
   {
-    section: 'Tổng quan',
+    section: 'Overview',
     items: [
       { icon: <LayoutDashboard size={16} />, text: 'Dashboard', path: '/admin/dashboard' },
-      {
-        icon: <DollarSign size={16} />,
-        text: 'Quản lý thanh toán',
-        path: '/admin/payment-management',
-      },
-      { icon: <Users size={16} />, text: 'Quản lý học viên', path: '/admin/students' },
-      { icon: <FaUserTie size={16} />, text: 'Quản lý Giảng viên', path: '/admin/instructors' },
+      { icon: <Users size={16} />, text: 'Students', path: '/admin/students' },
+      { icon: <Users size={16} />, text: 'Instructors', path: '/admin/instructors' },
     ],
   },
   {
-    section: 'Quản lý khóa học & bài viết & thông báo',
+    section: 'Content Management',
     items: [
-      { icon: <GraduationCap size={16} />, text: 'Khóa học', path: '/admin/courses' },
-      { icon: <BookOpenText size={16} />, text: 'Bài viết', path: '/admin/post-management?page=1' },
-
-      { icon: <FaComment size={16} />, text: 'Bình luận bài viết', path: '/admin/comment' },
-      { icon: <CreditCard size={16} />, text: 'Quản lý khóa học', path: '/admin/course-management', badge: 'NEW', badgeType: 'beta' },
-      { icon: <BookOpen size={16} />, text: 'Thông báo hệ thống', path: '/admin/Notifications' },
+      { icon: <GraduationCap size={16} />, text: 'Courses', path: '/admin/courses' },
+      { icon: <BookOpenText size={16} />, text: 'Posts', path: '/admin/post-management?page=1' },
+      { icon: <MessageSquare size={16} />, text: 'Comments', path: '/admin/comment' },
+      { icon: <BookOpen size={16} />, text: 'Notifications', path: '/admin/Notifications' },
     ],
   },
   {
-    section: 'Cài đặt & Hỗ trợ',
+    section: 'Settings',
     items: [
-      { icon: <Settings size={16} />, text: 'Cài đặt hệ thống' },
-      { icon: <Shield size={16} />, text: 'Bảo mật' },
-      { icon: <HelpCircle size={16} />, text: 'Trợ giúp' },
+      { icon: <Settings size={16} />, text: 'System Settings', path: '/admin/settings' },
     ],
   },
 ];
 
-export default function AdminSidebar() {
-  const location = useLocation();
+export default function AdminSidebar({ className }) {
+  const navigate = useNavigate();
+  const [expandedSections, setExpandedSections] = useState(
+    sidebarItems.reduce((acc, group) => ({ ...acc, [group.section]: true }), {})
+  );
+
+  const toggleSection = (section) => {
+    setExpandedSections((prev) => ({ ...prev, [section]: !prev[section] }));
+  };
+
+  const handleLogout = async () => {
+    if (window.confirm('Are you sure you want to logout?')) {
+      try {
+        await logout();
+        removeAuthToken();
+        toast.success('Logged out successfully');
+        navigate('/login');
+      } catch (err) {
+        console.error('Logout error:', err);
+        toast.error('Logout failed');
+      }
+    }
+  };
 
   return (
-    <aside className="w-64 min-h-screen bg-white shadow-md p-4 flex flex-col">
+    <aside className={`flex flex-col h-screen p-4 ${className}`}>
       {/* Logo */}
-      <h1 className="flex items-center space-x-2">
-        <a href="/admin" className="rounded-lg">
-          <img className="rounded-lg" src={LogoH3} alt="Logo H3" width={38} height={38} />
-        </a>
-        <a className="font-semibold text-base text-black hover:text-pink-600" href="/admin">
+      <div className="flex items-center space-x-2 mb-6">
+        <NavLink to="/admin" className="rounded-lg">
+          <img src={LogoH3} alt="H3 Academy" className="w-10 h-10 rounded-lg" />
+        </NavLink>
+        <NavLink to="/admin" className="text-lg font-semibold text-gray-800 dark:text-gray-200 hover:text-pink-600">
           H3 Admin
-        </a>
-      </h1>
+        </NavLink>
+      </div>
 
-      {/* Sidebar Items */}
-      <nav className="mt-6 flex flex-col space-y-4">
-        {sidebarItems.map((group, index) => (
-          <div key={index}>
-            <div className="text-gray-500 uppercase text-xs font-bold mb-2">{group.section}</div>
-            {group.items.map((item, idx) => {
-              item.active = item.path && location.pathname === item.path;
-              return <SidebarItem key={idx} {...item} />;
-            })}
-            {index < sidebarItems.length - 1 && <Separator className="my-4" />}
+      {/* Navigation */}
+      <nav className="flex-1 space-y-2">
+        {sidebarItems.map((group) => (
+          <div key={group.section}>
+            <button
+              className="flex items-center w-full text-sm font-medium text-gray-500 dark:text-gray-300 uppercase py-2"
+              onClick={() => toggleSection(group.section)}
+            >
+              {expandedSections[group.section] ? (
+                <ChevronDown size={16} className="mr-2" />
+              ) : (
+                <ChevronRight size={16} className="mr-2" />
+              )}
+              {group.section}
+            </button>
+            {expandedSections[group.section] && (
+              <div className="space-y-1 ml-4">
+                {group.items.map((item) => (
+                  <NavLink
+                    key={item.text}
+                    to={item.path}
+                    className={({ isActive }) =>
+                      `flex items-center p-2 rounded-lg text-gray-600 dark:text-gray-200 hover:bg-pink-50 hover:text-pink-600 ${isActive ? 'bg-pink-50 text-pink-600' : ''
+                      }`
+                    }
+                  >
+                    {item.icon}
+                    <span className="ml-3 text-sm font-medium">{item.text}</span>
+                  </NavLink>
+                ))}
+              </div>
+            )}
           </div>
         ))}
       </nav>
 
-      {/* Footer */}
-      <div className="mt-auto">
-        <Card className="p-3 flex items-center justify-between bg-gray-50 hover:bg-gray-100 transition-colors cursor-pointer">
+      {/* User Info & Logout */}
+      <div className="mt-auto space-y-4">
+        <div className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
           <div>
-            <div className="text-sm font-semibold">Tài khoản</div>
-            <div className="text-gray-600 text-sm">Admin</div>
+            <div className="text-sm font-semibold text-gray-800 dark:text-gray-200">Admin</div>
+            <div className="text-xs text-gray-600 dark:text-gray-400">System Administrator</div>
           </div>
-          <ChevronDown size={16} className="text-gray-500" />
-        </Card>
+          <ChevronDown size={16} className="text-gray-500 dark:text-gray-300" />
+        </div>
+        <Button
+          variant="outline"
+          className="w-full flex items-center justify-center text-gray-600 dark:text-gray-200 hover:bg-pink-50 hover:text-pink-600 dark:hover:bg-pink-900"
+          onClick={handleLogout}
+        >
+          <LogOut size={16} className="mr-2" />
+          Logout
+        </Button>
+        <div className="text-center text-xs text-gray-500 dark:text-gray-400">
+          © 2025 H3 Academy
+        </div>
       </div>
-
-      <div className="text-center text-gray-500 text-xs mt-4">© 2024 H3 Academy</div>
     </aside>
-  );
-}
-
-// eslint-disable-next-line react/prop-types
-function SidebarItem({ icon, text, badge, badgeType, active, path }) {
-  return (
-    <NavLink to={path || '#'}>
-      <div
-        className={`flex items-center p-2.5 rounded-lg transition-colors ${active ? 'bg-pink-50 text-pink-600' : 'text-gray-600 hover:bg-gray-50 hover:text-pink-600'
-          }`}
-      >
-        {icon}
-        <span className="ml-3 font-medium">{text}</span>
-        {badge && (
-          <span
-            className={`ml-auto px-2 py-0.5 text-xs rounded-full font-semibold ${badgeType === 'beta' ? 'bg-pink-100 text-pink-600' : 'bg-red-100 text-red-600'
-              }`}
-          >
-            {badge}
-          </span>
-        )}
-      </div>
-    </NavLink>
   );
 }

@@ -43,7 +43,7 @@ const Header = () => {
   const [loading, setLoading] = useState(false);
   const [isPopupOpen, setPopupOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const [searcher, setSearchResults] = useState({ courses: [], posts: [] });
+  const [searchResults, setSearchResults] = useState({ courses: [], posts: [] });
   const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [commentPostIds, setCommentPostIds] = useState({});
@@ -108,7 +108,6 @@ const Header = () => {
   };
 
   useEffect(() => {
-    console.log('fetchNotifications triggered with notificationTrigger:', notificationTrigger);
     fetchNotifications();
 
     const intervalId = setInterval(() => {
@@ -168,8 +167,6 @@ const Header = () => {
       });
       setIsSearchDropdownOpen(true);
     } catch (error) {
-      console.error('Search Error:', error);
-      toast.error('Không thể tìm kiếm, vui lòng thử lại!');
       setSearchResults({ courses: [], posts: [] });
       setIsSearchDropdownOpen(true);
     } finally {
@@ -382,45 +379,47 @@ const Header = () => {
               <p className="p-4 text-gray-500">Không tìm thấy kết quả</p>
             ) : (
               <>
-                {/* Courses */}
+                {/* Courses Section */}
                 {searchResults.courses.length > 0 && (
-                  <div className="p-2">
-                    <h4 className="font-semibold text-gray-700">KHÓA HỌC</h4>
+                  <div className="p-4 border-b">
+                    <h4 className="font-semibold text-gray-700 mb-3">KHÓA HỌC</h4>
                     {searchResults.courses.map((course) => (
                       <div
                         key={course.id}
-                        className="p-2 hover:bg-gray-100 cursor-pointer"
+                        className="p-3 hover:bg-gray-100 cursor-pointer rounded-md transition-colors duration-200"
                         onClick={() => {
                           navigate(`/details/${course.id}`);
                           setIsSearchDropdownOpen(false);
                         }}
                       >
-                        <div className="flex justify-between">
-                          <span>{course.title}</span>
+                        <div className="flex justify-between items-center">
+                          <span className="text-gray-800">{course.title}</span>
                         </div>
                       </div>
                     ))}
                   </div>
                 )}
-                {/* Posts */}
+
+                {/* Posts Section */}
                 {searchResults.posts.length > 0 && (
-                  <div className="p-2">
-                    <h4 className="font-semibold text-gray-700">BÀI VIẾT</h4>
+                  <div className="p-4">
+                    <h4 className="font-semibold text-gray-700 mb-3">BÀI VIẾT</h4>
                     {searchResults.posts.map((post) => (
                       <div
                         key={post.id}
-                        className="p-2 hover:bg-gray-100 cursor-pointer"
+                        className="p-3 hover:bg-gray-100 cursor-pointer rounded-md transition-colors duration-200"
                         onClick={() => {
                           navigate(`/detailspost/${post.id}`);
                           setIsSearchDropdownOpen(false);
                         }}
                       >
-                        <div className="flex justify-between">
-                          <span>{post.title}</span>
-                          <span className="text-gray-500">{post.user?.fullName || 'Ẩn danh'}</span>
+                        <div className="grid grid-cols-2 gap-4 items-center">
+                          <span className="truncate text-gray-800">{post.title}</span>
+                          <span className="text-sm text-gray-500 text-right">{post.user?.fullName || 'Ẩn danh'}</span>
                         </div>
                       </div>
                     ))}
+
                   </div>
                 )}
               </>
@@ -447,6 +446,7 @@ const Header = () => {
                 <span className="absolute top-0 right-0 h-2 w-2 bg-red-500 rounded-full"></span>
               )}
             </button>
+
             {isNotificationsOpen && (
               <div className="absolute right-0 mt-2 w-80 bg-white shadow-lg rounded-lg z-50 max-h-96 overflow-y-auto">
                 {notifications.length === 0 ? (
