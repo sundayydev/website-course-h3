@@ -1,9 +1,9 @@
 import { createSlice } from '@reduxjs/toolkit';
-
 const notificationSlice = createSlice({
     name: 'notifications',
     initialState: {
         notifications: [],
+        notificationTrigger: 0,
     },
     reducers: {
         setNotifications: (state, action) => {
@@ -30,8 +30,17 @@ const notificationSlice = createSlice({
                 (notification) => notification.id !== action.payload
             );
         },
+        triggerNotificationReload: (state) => {
+            state.notificationTrigger = (state.notificationTrigger || 0) + 1; // Đảm bảo không NaN
+        },
     },
 });
 
-export const { setNotifications, addNotification, markNotificationAsRead, deleteNotification } = notificationSlice.actions;
+export const {
+    setNotifications,
+    addNotification,
+    markNotificationAsRead,
+    deleteNotification,
+    triggerNotificationReload,
+} = notificationSlice.actions;
 export default notificationSlice.reducer;

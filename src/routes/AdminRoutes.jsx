@@ -11,6 +11,7 @@ import PostManagement from '../pages/admin/PostManagement';
 import Notifications from '../pages/admin/Notifications';
 import { ProtectedRouteAdmin } from './ProtectedRoute';
 import CommentByPost from '../pages/admin/CommentByPost';
+import Instructors from '../pages/admin/Instructors.jsx';
 const AdminRoutes = {
   path: '/admin',
   element: (
@@ -22,6 +23,7 @@ const AdminRoutes = {
     { index: true, element: <Dashboard /> }, // /admin (mặc định)
     { path: 'dashboard', element: <Dashboard /> }, // /admin/dashboard
     { path: 'students', element: <Students /> }, // /admin/students
+    { path: 'instructors', element: <Instructors /> },
     { path: 'contact', element: <Contact /> }, // /admin/contact
     { path: 'courses', element: <Courses /> }, // /admin/courses
     { path: 'course-detail/:courseId', element: <CourseDetail /> }, // /admin/course-detail/:courseId

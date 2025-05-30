@@ -317,18 +317,14 @@ const Courses = () => {
                       src={
                         formData.urlImage instanceof Blob || formData.urlImage instanceof File
                           ? URL.createObjectURL(formData.urlImage)
-                          : import.meta.env.VITE_API_URL + editingCourse.urlImage
+                          : editingCourse.urlImage
                       }
                       alt="Preview"
                       className="w-full h-full object-cover"
                     />
                   ) : editingCourse?.urlImage ? (
                     <img
-                      src={
-                        editingCourse?.urlImage
-                          ? editingCourse.urlImage
-                          : ""
-                      }
+                      src={editingCourse.urlImage}
                       alt="Preview"
                       className="w-full h-full object-cover"
                     />

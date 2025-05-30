@@ -286,7 +286,7 @@ function Post() {
                         <Button
                           variant="outline"
                           size="sm"
-                          onClick={() => navigate(`/admin/comments/${post.id}`)}
+                          onClick={() => navigate(`/instructor/comments/${post.id}`)}
                         >
                           <FaSearch className="mr-1" /> Xem bình luận
                         </Button>
@@ -341,22 +341,31 @@ function Post() {
               </div>
               <div>
                 <Label htmlFor="image">Hình ảnh</Label>
-                {isEditing && currentPost.urlImage && typeof currentPost.urlImage === 'string' && (
-                  <div className="mb-2">
-                    <img
-                      src={currentPost.urlImage}
-                      alt="Ảnh hiện tại"
-                      className="h-24 w-24 object-cover rounded-md"
-                    />
-                    <p className="text-sm text-gray-500">Ảnh hiện tại</p>
-                  </div>
-                )}
-                <Input
-                  id="image"
-                  type="file"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                />
+                <div className="space-y-2">
+                  <Input
+                    id="image"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageChange}
+                  />
+                  {(isEditing || currentPost.urlImage) && (
+                    <div className="mt-2">
+                      <img
+                        src={
+                          currentPost.urlImage instanceof File
+                            ? URL.createObjectURL(currentPost.urlImage)
+                            : currentPost.urlImage || '/placeholder-image.jpg'
+                        }
+                        alt="Preview"
+                        className="h-50 w-50 object-cover rounded-md"
+                        onError={(e) => (e.target.src = '/placeholder-image.jpg')}
+                      />
+                      <p className="text-sm text-gray-500">
+                        {currentPost.urlImage instanceof File ? 'Ảnh xem trước' : 'Ảnh hiện tại'}
+                      </p>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
 

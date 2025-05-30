@@ -7,7 +7,7 @@ import { getUserId, isAuthenticated } from '../../api/authUtils';
 import defaultAvatar from '../../assets/imgs/default-avatar.jpg';
 import { formatDate } from '../../utils/formatDate';
 import alertify from 'alertifyjs';
-//import 'alertifyjs/build/css/alertify.css';
+import { addNotification } from '../../api/notificationApi';
 import '../../lib/alertify.css';
 const countAllReplies = (comment) => {
   let count = (comment.replies || []).length;
@@ -64,10 +64,6 @@ const CommentPost = ({ postId }) => {
         comment.level = 2;
       }
 
-      if (comment.level === 2) {
-        console.log(`Bình luận đạt level 2 - ID: ${comment.id}, Content: ${comment.content}, ParentCommentId: ${comment.parentCommentId}`);
-      }
-
       const replies = commentsData.filter(c => c.parentCommentId === commentId);
       replies.forEach(reply => {
         setLevel(reply.id, comment.level + 1);
@@ -120,7 +116,6 @@ const CommentPost = ({ postId }) => {
       });
     });
 
-    console.log('Cây bình luận chi tiết:', JSON.stringify(rootComments, null, 2));
     return rootComments;
   }, [assignCommentLevels]);
 
@@ -135,7 +130,6 @@ const CommentPost = ({ postId }) => {
     try {
       setIsLoading(true);
       const postComments = await getCommentsByPostId(postId);
-      console.log('Dữ liệu API:', JSON.stringify(postComments, null, 2));
       if (!Array.isArray(postComments)) {
         setComments([]);
         return;
@@ -250,7 +244,6 @@ const CommentPost = ({ postId }) => {
         }
       },
       () => {
-        // Người dùng nhấp "Cancel" (Hủy)
         toast.info('Đã hủy xóa bình luận.');
       }
     );
@@ -288,11 +281,35 @@ const CommentPost = ({ postId }) => {
       const response = await createComment(replyData);
       const newCommentLevel = currentLevel < 2 ? currentLevel + 1 : 2;
 
-      if (newCommentLevel === 2) {
-        console.log(`Bình luận mới đạt level 2 - ID: ${response.id}, Content: ${response.content}, ParentCommentId: ${parentCommentId}`);
+      updateCommentsCallback(response, newCommentLevel);
+
+      var parentComment = null;
+      for (const comment of comments) {
+        if (comment.id === parentCommentId) {
+          parentComment = comment;
+          break;
+        }
+        if (comment.replies) {
+          parentComment = comment.replies.find(reply => reply.id === parentCommentId);
+          if (parentComment) break;
+        }
       }
 
-      updateCommentsCallback(response, newCommentLevel);
+      if (parentComment && parentComment.userId && parentComment.userId !== currentUserId) {
+        const notificationData = {
+          type: 'NewMessage',
+          content: `${response.userFullName || 'Một người dùng'} đã trả lời bình luận của bạn: "${replyContent}"`,
+          relatedEntityId: response.id.toString(),
+          relatedEntityType: 'Comment',
+          userIds: [parentComment.userId]
+        };
+
+        try {
+          await addNotification(notificationData);
+        } catch (error) {
+          console.error('Lỗi khi gửi thông báo:', error);
+        }
+      }
 
       toast.success('Trả lời đã được gửi thành công!');
       return true;
