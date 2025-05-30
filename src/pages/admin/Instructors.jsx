@@ -19,57 +19,51 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'react-toastify';
 import { Pencil, Trash2, Plus, Search, Loader2, Users, Filter, Eye, EyeOff } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
-  getStudents,
-  getStudentById,
-  addStudent,
-  updateStudent,
+  getInstructors,
+  getInstructorById,
+  createInstructor,
+  updateInstructor,
   uploadAvatar,
-  deleteStudent,
-} from '@/api/studentApi';
-
+  deleteInstructor,
+} from '@/api/instructorApi';
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { format } from 'date-fns';
+import { cn } from '@/lib/utils';
 import { CalendarIcon } from 'lucide-react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
 
-
-const Students = () => {
-  const [students, setStudents] = useState([]);
+const Instructors = () => {
+  const [instructors, setInstructors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-  const [editingStudent, setEditingStudent] = useState(null);
+  const [editingInstructor, setEditingInstructor] = useState(null);
   const [formData, setFormData] = useState({
     fullName: '',
     email: '',
     password: '',
     birthDate: null,
     avatar: null,
-    role: 'student',
-    status: 'Enrolled', // Thêm trường status mặc định
+    role: 'Instructor',
   });
 
-  // Fetch students data
+  // Fetch instructors data
   useEffect(() => {
-    fetchStudents();
+    fetchInstructors();
   }, []);
 
-  const fetchStudents = async () => {
+  const fetchInstructors = async () => {
     try {
-      const response = await getStudents();
-      console.log('Danh sách học viên: ', response);
-      // Nếu status không tồn tại, thêm mặc định 'Enrolled' cho các học viên mới
-      const updatedStudents = response.map((student) => ({
-        ...student,
-        status: student.status || 'Enrolled', // Thêm status nếu chưa có
-      }));
-      setStudents(updatedStudents);
+      const response = await getInstructors();
+      console.log(response);
+      setInstructors(response);
     } catch (error) {
-      toast.error('Không thể tải danh sách học viên');
-      console.error('Error:', error);
+      toast.error('Không thể tải danh sách giảng viên');
     } finally {
       setLoading(false);
     }
@@ -79,54 +73,55 @@ const Students = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      if (editingStudent) {
-        await updateStudent(editingStudent.id, formData);
-        if (formData.avatar) {
-          await uploadAvatar(editingStudent.id, formData.avatar);
+      if (editingInstructor) {
+        await updateInstructor(editingInstructor.id, formData);
+        if (formData.avatar instanceof File) {
+          await uploadAvatar(editingInstructor.id, formData.avatar);
         }
-        toast.success('Cập nhật học viên thành công');
+        toast.success('Cập nhật giảng viên thành công');
       } else {
-        const data = await addStudent(formData);
-        if (formData.avatar) {
+        const data = await createInstructor(formData);
+        if (formData.avatar instanceof File) {
           await uploadAvatar(data.id, formData.avatar);
         }
-        toast.success('Thêm học viên thành công');
+        toast.success('Thêm giảng viên thành công');
       }
       setIsDialogOpen(false);
-      fetchStudents();
+      fetchInstructors();
       resetForm();
     } catch (error) {
       toast.error('Có lỗi xảy ra');
-      console.error('Error:', error);
     }
   };
 
-  // Handle delete student
+  // Handle delete instructor
   const handleDelete = async (id) => {
-    if (window.confirm('Bạn có chắc chắn muốn xóa học viên này?')) {
-      await deleteStudent(id);
-      toast.success('Xóa học viên thành công');
-      fetchStudents();
+    if (window.confirm('Bạn có chắc chắn muốn xóa giảng viên này?')) {
+      try {
+        await deleteInstructor(id);
+        toast.success('Xóa giảng viên thành công');
+        fetchInstructors();
+      } catch (error) {
+        toast.error('Không thể xóa giảng viên');
+      }
     }
   };
 
-  // Handle edit student
-  const handleEdit = async (studentId) => {
+  // Handle edit instructor
+  const handleEdit = async (instructorId) => {
     try {
-      const response = await getStudentById(studentId);
-      setEditingStudent(response);
+      const response = await getInstructorById(instructorId);
+      setEditingInstructor(response);
       setFormData({
-        fullName: response.fullName,
-        email: response.email,
-        birthDate: response.birthDate,
-        avatar: response.profileImage,
-        status: response.status || 'Enrolled', // Lấy status từ dữ liệu, nếu không có thì mặc định 'Enrolled'
+        fullName: response.fullName || '',
+        email: response.email || '',
+        birthDate: response.birthDate ? new Date(response.birthDate) : null,
+        avatar: response.profileImage || null,
+        role: 'Instructor',
       });
-      console.log('Thông tin học viên: ', response);
       setIsDialogOpen(true);
     } catch (error) {
-      toast.error('Không thể tải thông tin học viên');
-      console.error('Lỗi:', error);
+      toast.error('Không thể tải thông tin giảng viên');
     }
   };
 
@@ -138,18 +133,17 @@ const Students = () => {
       password: '',
       birthDate: null,
       avatar: null,
-      role: 'student',
-      status: 'Enrolled', // Đặt lại status mặc định
+      role: 'Instructor',
     });
-    setEditingStudent(null);
+    setEditingInstructor(null);
   };
 
-  // Filter students based on search term
-  const filteredStudents = students.filter(
-    (student) =>
-      student.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      student.birthDate?.includes(searchTerm)
+  // Filter instructors based on search term
+  const filteredInstructors = instructors.filter(
+    (instructor) =>
+      instructor.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      instructor.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      instructor.birthDate?.includes(searchTerm)
   );
 
   if (loading) {
@@ -162,42 +156,37 @@ const Students = () => {
 
   return (
     <div className="p-6 space-y-6 w-full">
-      {/* Header Section */}
       <div className="flex justify-between items-center">
         <div className="space-y-1">
-          <h1 className="text-2xl font-bold tracking-tight text-pink-500">Quản lý học viên</h1>
-          <p className="text-muted-foreground">Quản lý và theo dõi thông tin học viên của bạn</p>
+          <h1 className="text-2xl font-bold tracking-tight text-pink-500">Quản lý giảng viên</h1>
+          <p className="text-muted-foreground">Quản lý và theo dõi thông tin giảng viên của bạn</p>
         </div>
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
           <DialogTrigger asChild>
             <Button onClick={resetForm} className="bg-pink-500 hover:bg-pink-600 flex items-center">
               <Plus className="h-4 w-4 mr-2" />
-              Thêm học viên
+              Thêm giảng viên
             </Button>
           </DialogTrigger>
           <DialogContent className="sm:max-w-[425px]">
             <DialogHeader>
               <DialogTitle>
-                {editingStudent ? 'Chỉnh sửa học viên' : 'Thêm học viên mới'}
+                {editingInstructor ? 'Chỉnh sửa giảng viên' : 'Thêm giảng viên mới'}
               </DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-6" encType="multipart/form-data">
-              {/* Full Name Field */}
+            <form onSubmit={handleSubmit} className="space-y-4" encType="multipart/form-data">
               <div className="space-y-2">
-                <Label htmlFor="fullName" className="text-sm font-medium">Họ và tên</Label>
+                <Label htmlFor="fullName">Họ và tên</Label>
                 <Input
                   id="fullName"
                   value={formData.fullName}
                   onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                   required
-                  placeholder="Nhập họ và tên học viên"
-                  className="w-full"
+                  placeholder="Nhập họ và tên giảng viên"
                 />
               </div>
-
-              {/* Email Field */}
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-sm font-medium">Email</Label>
+                <Label htmlFor="email">Email</Label>
                 <Input
                   id="email"
                   type="email"
@@ -205,42 +194,47 @@ const Students = () => {
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   required
                   placeholder="example@email.com"
-                  className="w-full"
                 />
               </div>
-
-              {/* Password Field */}
               <div className="space-y-2">
-                <Label htmlFor="password" className="text-sm font-medium">Mật khẩu</Label>
+                <Label htmlFor="password">Mật khẩu</Label>
                 <div className="flex gap-2">
-                  <div className="relative flex-1">
+                  <div className="relative">
                     <Input
                       id="password"
                       type={formData.showPassword ? 'text' : 'password'}
                       value={formData.password}
                       onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                       placeholder="Nhập mật khẩu"
-                      disabled={editingStudent}
-                      className={`w-full ${editingStudent ? 'bg-gray-100 text-gray-500' : ''}`}
-                      required={!editingStudent}
+                      disabled={editingInstructor}
+                      className={editingInstructor ? 'bg-gray-100 text-gray-500 w-[250px]' : ''}
+                      required={!editingInstructor}
                     />
                     <Button
                       type="button"
                       variant="ghost"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0 hover:bg-transparent"
-                      onClick={() => setFormData((prev) => ({ ...prev, showPassword: !prev.showPassword }))}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0"
+                      onClick={() =>
+                        setFormData((prev) => ({ ...prev, showPassword: !prev.showPassword }))
+                      }
                     >
-                      {formData.showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                      {formData.showPassword ? (
+                        <EyeOff className="h-4 w-4" />
+                      ) : (
+                        <Eye className="h-4 w-4" />
+                      )}
                     </Button>
                   </div>
                   <Button
                     type="button"
-                    className="bg-pink-500 hover:bg-pink-600 whitespace-nowrap"
+                    className="bg-pink-500 hover:bg-pink-600"
                     onClick={() => {
-                      const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-                      const randomPassword = Array.from({ length: 8 }, () =>
-                        chars.charAt(Math.floor(Math.random() * chars.length))
-                      ).join('');
+                      const chars =
+                        'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+                      let randomPassword = '';
+                      for (let i = 0; i < 8; i++) {
+                        randomPassword += chars.charAt(Math.floor(Math.random() * chars.length));
+                      }
                       setFormData({ ...formData, password: randomPassword });
                     }}
                   >
@@ -248,7 +242,6 @@ const Students = () => {
                   </Button>
                 </div>
               </div>
-
               {/* Birth Date Field */}
               <div className="space-y-2">
                 <Label htmlFor="birthDate" className="text-sm font-medium">Ngày sinh</Label>
@@ -269,12 +262,10 @@ const Students = () => {
                   <CalendarIcon className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
                 </div>
               </div>
-
-              {/* Avatar Field */}
               <div className="space-y-2">
-                <Label htmlFor="avatar" className="text-sm font-medium">Ảnh đại diện</Label>
+                <Label htmlFor="avatar">Ảnh đại diện</Label>
                 <div className="flex items-center gap-4">
-                  <div className="relative flex-1">
+                  <div className="relative">
                     <Input
                       id="avatar"
                       type="file"
@@ -303,12 +294,12 @@ const Students = () => {
                       </div>
                     </div>
                   </div>
-                  {(editingStudent || formData.avatar) && (
+                  {(editingInstructor || formData.avatar) && (
                     <div className="flex-shrink-0">
                       <img
                         src={
-                          editingStudent?.profileImage
-                            ? editingStudent.profileImage
+                          editingInstructor?.profileImage
+                            ? editingInstructor.profileImage
                             : formData.avatar instanceof File
                               ? URL.createObjectURL(formData.avatar)
                               : formData.avatar
@@ -320,61 +311,31 @@ const Students = () => {
                   )}
                 </div>
               </div>
-
-              {/* Submit Button */}
               <Button
                 type="submit"
-                className={`w-full ${editingStudent ? 'bg-blue-500 hover:bg-blue-600' : 'bg-pink-500 hover:bg-pink-600'}`}
+                className={`w-full ${editingInstructor ? 'bg-blue-500 hover:bg-blue-600' : 'bg-pink-500 hover:bg-pink-600'}`}
               >
-                {editingStudent ? 'Cập nhật' : 'Thêm mới'}
+                {editingInstructor ? 'Cập nhật' : 'Thêm mới'}
               </Button>
             </form>
           </DialogContent>
         </Dialog>
       </div>
-
-      {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 w-[calc(1420px-250px)]">
         <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-200 border-l-4 border-pink-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-lg font-medium">Tổng số học viên</CardTitle>
+            <CardTitle className="text-lg font-medium">Tổng số giảng viên</CardTitle>
             <Users className="h-6 w-6 text-pink-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-pink-500">{students.length}</div>
-            <p className="text-sm text-gray-500 mt-1">Tổng số học viên đã đăng ký</p>
+            <div className="text-2xl font-bold text-pink-500">{instructors.length}</div>
+            <p className="text-sm text-gray-500 mt-1">Tổng số giảng viên đã đăng ký</p>
             <div className="mt-2 flex items-center text-sm text-green-500">
-              <span className="font-medium">+12%</span>
+              <span className="font-medium">+5%</span>
               <span className="ml-1">so với tháng trước</span>
             </div>
           </CardContent>
         </Card>
-
-        <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-200 border-l-4 border-green-500">
-          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-lg font-medium">Đang học</CardTitle>
-            <Users className="h-6 w-6 text-green-500" />
-          </CardHeader>
-          <CardContent>
-            <div className="text-2xl font-bold text-green-500">
-              {students.filter((s) => s.status === 'Enrolled').length}
-            </div>
-            <p className="text-sm text-gray-500 mt-1">Học viên đang theo học</p>
-            <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
-              <div
-                className="bg-green-500 h-2.5 rounded-full"
-                style={{
-                  width: `${students.length > 0
-                    ? (students.filter((s) => s.status === 'Enrolled').length / students.length) *
-                    100
-                    : 0
-                    }%`,
-                }}
-              ></div>
-            </div>
-          </CardContent>
-        </Card>
-
         <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-200 border-l-4 border-blue-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-lg font-medium">Online</CardTitle>
@@ -385,24 +346,22 @@ const Students = () => {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-blue-500">0</div>
-            <p className="text-sm text-gray-500 mt-1">Học viên đang trực tuyến</p>
+            <p className="text-sm text-gray-500 mt-1">Giảng viên đang trực tuyến</p>
             <div className="mt-2 flex items-center space-x-2">
-              <span className="text-sm text-gray-500">Không có học viên trực tuyến</span>
+              <span className="text-sm text-gray-500">Không có giảng viên trực tuyến</span>
             </div>
           </CardContent>
         </Card>
       </div>
-
-      {/* Main Content */}
       <Card className="bg-white shadow-sm">
         <CardHeader className="pb-3">
           <div className="flex items-center justify-between">
-            <CardTitle className="text-lg font-medium">Danh sách học viên</CardTitle>
+            <CardTitle className="text-lg font-medium">Danh sách giảng viên</CardTitle>
             <div className="flex items-center gap-4">
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                 <Input
-                  placeholder="Tìm kiếm học viên..."
+                  placeholder="Tìm kiếm giảng viên..."
                   value={searchTerm}
                   onChange={(e) => setSearchTerm(e.target.value)}
                   className="pl-10 w-[300px]"
@@ -417,64 +376,56 @@ const Students = () => {
         </CardHeader>
         <CardContent>
           <div className="rounded-md border">
-            <Table>
+            <Table className="w-full">
               <TableHeader>
-                <TableRow>
-                  <TableHead className="text-pink-500">Học viên</TableHead>
-                  <TableHead className="text-pink-500">Email</TableHead>
-                  <TableHead className="text-pink-500">Ngày sinh</TableHead>
-                  <TableHead className="text-pink-500">Trạng thái</TableHead>
-                  <TableHead className="text-pink-500">Thao tác</TableHead>
+                <TableRow className="hover:bg-gray-50">
+                  <TableHead className="text-pink-500 font-semibold w-[100px] text-center">Ảnh</TableHead>
+                  <TableHead className="text-pink-500 font-semibold w-[200px] text-left">Giảng viên</TableHead>
+                  <TableHead className="text-pink-500 font-semibold w-[250px] text-left">Email</TableHead>
+                  <TableHead className="text-pink-500 font-semibold w-[150px] text-center">Ngày sinh</TableHead>
+                  <TableHead className="text-pink-500 font-semibold w-[120px] text-center">Thao tác</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredStudents.map((student) => (
-                  <TableRow key={student.id}>
-                    <TableCell className="flex items-center gap-3">
-                      <Avatar>
-                        <AvatarImage src={student.profileImage ? `${student.profileImage}` : null} />
-                        <AvatarFallback>
-                          {student.fullName?.charAt(0).toUpperCase() || '?'}
+                {filteredInstructors.map((instructor) => (
+                  <TableRow key={instructor.id} className="hover:bg-gray-50 transition-colors">
+                    <TableCell className="py-4 text-center">
+                      <Avatar className="h-10 w-10 border-2 border-pink-100 mx-auto">
+                        <AvatarImage
+                          src={instructor.profileImage || undefined}
+                          className="object-cover"
+                        />
+                        <AvatarFallback className="bg-pink-100 text-pink-500">
+                          {instructor.fullName?.charAt(0).toUpperCase() || '?'}
                         </AvatarFallback>
                       </Avatar>
-                      <span>{student.fullName}</span>
                     </TableCell>
-                    <TableCell>{student.email}</TableCell>
-                    <TableCell>{student.birthDate}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          student.status === 'Enrolled'
-                            ? 'success'
-                            : student.status === 'inactive'
-                              ? 'destructive'
-                              : 'secondary'
-                        }
-                      >
-                        {student.status === 'Enrolled'
-                          ? 'Đang học'
-                          : student.status === 'inactive'
-                            ? 'Đã nghỉ'
-                            : 'Đã tốt nghiệp'}
-                      </Badge>
+                    <TableCell className="py-4 font-medium text-left">{instructor.fullName || 'N/A'}</TableCell>
+                    <TableCell className="py-4 text-left">{instructor.email || 'N/A'}</TableCell>
+                    <TableCell className="py-4 text-center">
+                      {instructor.birthDate
+                        ? format(new Date(instructor.birthDate), 'dd/MM/yyyy')
+                        : 'N/A'}
                     </TableCell>
-                    <TableCell className="text-right">
+                    <TableCell className="py-4 text-right">
                       <div className="flex justify-end gap-2">
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => handleEdit(student.id)}
-                          className="hover:bg-green-200"
+                          onClick={() => handleEdit(instructor.id)}
+                          className="hover:bg-green-100 transition-colors"
+                          title="Chỉnh sửa"
                         >
-                          <Pencil className="h-6 w-6" />
+                          <Pencil className="h-5 w-5 text-green-600" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="icon"
-                          onClick={() => handleDelete(student.id)}
-                          className="text-red-500 hover:text-red-700 hover:bg-red-100"
+                          onClick={() => handleDelete(instructor.id)}
+                          className="hover:bg-red-100 transition-colors"
+                          title="Xóa"
                         >
-                          <Trash2 className="h-6 w-6" />
+                          <Trash2 className="h-5 w-5 text-red-500" />
                         </Button>
                       </div>
                     </TableCell>
@@ -489,4 +440,4 @@ const Students = () => {
   );
 };
 
-export default Students;
+export default Instructors;

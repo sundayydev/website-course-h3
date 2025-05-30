@@ -9,6 +9,8 @@ import ManageLessons from '@/pages/instructor/lessons/ManageLessons';
 import OrdersDetail from '@/pages/instructor/orders/OrdersDetail';
 import { ProtectedRouteInstructor } from './ProtectedRoute';
 import Post from '../pages/instructor/post/Post';
+import CommentByPost from '../pages/instructor/post/CommentByPost';
+
 const InstructorRoutes = {
   path: '/instructor', // Đường dẫn chính cho Instructor
   element: (
@@ -27,7 +29,8 @@ const InstructorRoutes = {
     { path: 'course/:courseId/content/add', element: <AddContent /> },
     { path: 'course/:courseId/lessons', element: <ManageLessons /> },
     { path: 'orders', element: <OrdersDetail /> },
-    { path: 'post', element: <Post /> }
+    { path: 'post', element: <Post /> },
+    { path: "comments/:postId", element: < CommentByPost /> }
   ],
 };
 

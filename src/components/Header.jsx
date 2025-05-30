@@ -22,18 +22,18 @@ import { Bell, Trash2 } from 'lucide-react';
 import { getNotificationsByUser, deleteNotification, markNotificationAsRead } from '@/api/notificationApi';
 import { format, parse } from 'date-fns';
 import { setNotifications, markNotificationAsRead as markNotificationAsReadAction, deleteNotification as deleteNotificationAction } from '@/reducers/notificationReducer';
+import { getCommentById } from '@/api/commentApi';
+
 const Header = () => {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user, isLoggedIn } = useSelector((state) => state.auth);
   const notifications = useSelector((state) => state.notifications.notifications);
-  // State for form data
+  const notificationTrigger = useSelector((state) => state.notifications.notificationTrigger || 0); // Fallback về 0
   const [loginData, setLoginData] = useState({ email: '', password: '' });
   const [registerData, setRegisterData] = useState({ fullName: '', email: '', password: '' });
   const [resetPasswordData, setResetPasswordData] = useState({ email: '', resetCode: '', newPassword: '' });
   const [forgotEmail, setForgotEmail] = useState('');
-
-  // UI state
   const [showPassword, setShowPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [isLoginOpen, setIsLoginOpen] = useState(false);
@@ -42,26 +42,21 @@ const Header = () => {
   const [isResetPasswordOpen, setIsResetPasswordOpen] = useState(false);
   const [loading, setLoading] = useState(false);
   const [isPopupOpen, setPopupOpen] = useState(false);
-
-  // Search state
   const [searchQuery, setSearchQuery] = useState('');
-  const [searchResults, setSearchResults] = useState({ courses: [], posts: [] });
+  const [searcher, setSearchResults] = useState({ courses: [], posts: [] });
   const [isSearchDropdownOpen, setIsSearchDropdownOpen] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
-
+  const [commentPostIds, setCommentPostIds] = useState({});
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const notificationRef = useRef(null);
-
-  // User loading state
   const [isUserLoading, setIsUserLoading] = useState(false);
-
   const togglePopup = () => setPopupOpen(!isPopupOpen);
   const loginRef = useRef(null);
   const registerRef = useRef(null);
   const forgotPasswordRef = useRef(null);
   const searchRef = useRef(null);
 
-  // Fetch user data on mount
+  // Lấy thông tin người dùng khi component mount
   useEffect(() => {
     const fetchUserData = async () => {
       const token = localStorage.getItem('authToken');
@@ -88,7 +83,6 @@ const Header = () => {
     fetchUserData();
   }, [dispatch]);
 
-  // Axios interceptor for auth token
   useEffect(() => {
     const interceptor = axios.interceptors.request.use(
       (config) => {
@@ -101,21 +95,33 @@ const Header = () => {
     return () => axios.interceptors.request.eject(interceptor);
   }, []);
 
-  useEffect(() => {
-    const fetchNotifications = async () => {
-      if (isLoggedIn && user?.id) {
-        try {
-          const response = await getNotificationsByUser(user.id);
-          dispatch(setNotifications(response)); // Lưu danh sách thông báo vào Redux
-        } catch (error) {
-          console.error('Lỗi khi lấy thông báo:', error);
-          toast.error('Không thể tải thông báo!');
-        }
+  const fetchNotifications = async () => {
+    if (isLoggedIn && user?.id) {
+      try {
+        const response = await getNotificationsByUser(user.id);
+        console.log('Notifications fetched:', response);
+        dispatch(setNotifications(response));
+      } catch (error) {
+        console.error('Lỗi khi lấy thông báo:', error);
       }
-    };
-    fetchNotifications();
-  }, [isLoggedIn, user?.id, dispatch]);
+    }
+  };
 
+  useEffect(() => {
+    console.log('fetchNotifications triggered with notificationTrigger:', notificationTrigger);
+    fetchNotifications();
+
+    const intervalId = setInterval(() => {
+      if (isLoggedIn && user?.id) {
+        console.log('Polling fetchNotifications');
+        fetchNotifications();
+      }
+    }, 30000);
+
+    return () => clearInterval(intervalId);
+  }, [isLoggedIn, user?.id, notificationTrigger, dispatch]);
+
+  // Xử lý click ngoài để đóng các popup
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (loginRef.current && !loginRef.current.contains(event.target))
@@ -138,19 +144,8 @@ const Header = () => {
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
-  // Handle click outside to close modals
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (loginRef.current && !loginRef.current.contains(event.target)) setIsLoginOpen(false);
-      if (registerRef.current && !registerRef.current.contains(event.target)) setIsRegisterOpen(false);
-      if (forgotPasswordRef.current && !forgotPasswordRef.current.contains(event.target)) setIsForgotPasswordOpen(false);
-      if (searchRef.current && !searchRef.current.contains(event.target)) setIsSearchDropdownOpen(false);
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
 
-  // Search function
+  // Tìm kiếm
   const handleSearch = async () => {
     if (!searchQuery.trim()) {
       setSearchResults({ courses: [], posts: [] });
@@ -182,7 +177,7 @@ const Header = () => {
     }
   };
 
-  // Debounce search with 0.5-second delay
+  // Debounce search với độ trễ 0.5 giây
   useEffect(() => {
     const delayDebounceFn = setTimeout(() => {
       if (searchQuery.trim()) {
@@ -195,7 +190,34 @@ const Header = () => {
     return () => clearTimeout(delayDebounceFn);
   }, [searchQuery]);
 
-  // Handle login
+  const handleNotificationClick = async (notification) => {
+    const entityId = notification.relatedEntityId;
+    const entityType = notification.relatedEntityType;
+
+    try {
+      if (entityType === 'Comment' && entityId) {
+        const commentResponse = await getCommentById(entityId);
+        const postId = commentResponse?.postId;
+
+        if (postId) {
+          navigate(`/detailspost/${postId}`);
+        } else {
+          toast.error('Không thể điều hướng: Không tìm thấy bài viết!');
+        }
+      } else if (entityType === 'Course' && entityId) {
+        navigate(`/details/${entityId}`);
+      } else if (entityType === 'Review' && entityId) {
+        navigate(`/details/${entityId}`);
+      } else {
+        toast.error('Không thể điều hướng: Thông tin không hợp lệ!');
+      }
+    } catch (error) {
+      toast.error('Không thể điều hướng: Lỗi khi lấy dữ liệu!');
+    }
+    setIsNotificationsOpen(false);
+  };
+
+  // Xử lý đăng nhập
   const handleLogin = async () => {
     if (!loginData.email || !loginData.password) {
       toast.error('Vui lòng nhập đầy đủ email và mật khẩu!');
@@ -223,7 +245,7 @@ const Header = () => {
     }
   };
 
-  // Handle register
+  // Xử lý đăng ký
   const handleRegister = async () => {
     if (!registerData.fullName || !registerData.email || !registerData.password) {
       toast.error('Vui lòng nhập đầy đủ thông tin!');
@@ -240,7 +262,7 @@ const Header = () => {
     }
   };
 
-  // Handle forgot password
+  // Xử lý quên mật khẩu
   const handleForgotPassword = async () => {
     if (!forgotEmail) {
       toast.error('Vui lòng nhập email!');
@@ -258,7 +280,7 @@ const Header = () => {
     }
   };
 
-  // Handle reset password
+  // Xử lý đặt lại mật khẩu
   const handleResetPassword = async () => {
     if (!resetPasswordData.email || !resetPasswordData.resetCode || !resetPasswordData.newPassword) {
       toast.error('Vui lòng nhập đầy đủ thông tin!');
@@ -280,7 +302,7 @@ const Header = () => {
     }
   };
 
-  // Handle logout
+  // Xử lý đăng xuất
   const handleLogout = async () => {
     try {
       await logoutApi();
@@ -301,7 +323,7 @@ const Header = () => {
   const handleDeleteNotification = async (notificationId) => {
     try {
       await deleteNotification(notificationId);
-      dispatch(deleteNotificationAction(notificationId)); // Dispatch xóa vào Redux
+      dispatch(deleteNotificationAction(notificationId));
       toast.success('Xóa thông báo thành công!');
     } catch (error) {
       console.error('Lỗi khi xóa thông báo:', error);
@@ -316,7 +338,7 @@ const Header = () => {
         throw new Error('Không tìm thấy ID người dùng');
       }
       await markNotificationAsRead(notificationId, userId);
-      dispatch(markNotificationAsReadAction({ notificationId, userId })); // Dispatch đánh dấu đã đọc
+      dispatch(markNotificationAsReadAction({ notificationId, userId }));
       toast.success('Đã đánh dấu thông báo là đã đọc!');
     } catch (error) {
       console.error('Lỗi khi đánh dấu thông báo:', error.response?.data || error);
@@ -407,7 +429,6 @@ const Header = () => {
         )}
       </div>
 
-
       {/* User Actions */}
       <div className="flex items-center justify-between space-x-4">
         <div>
@@ -431,60 +452,96 @@ const Header = () => {
                 {notifications.length === 0 ? (
                   <p className="p-4 text-gray-500 text-center">Không có thông báo</p>
                 ) : (
-                  notifications.map((notification) => {
-                    const userNotification = notification.userNotifications.find(un => un.userId === user.id);
-                    if (!userNotification) return null; // Bỏ qua nếu không có userNotification phù hợp
-                    return (
-                      <div
-                        key={notification.id}
-                        className={`p-3 border-b flex justify-between items-center ${!userNotification.isRead ? 'bg-gray-50' : ''
-                          }`}
-                      >
-                        <div>
-                          <p className="text-sm font-semibold">{notification.content}</p>
-                          <p className="text-xs text-gray-500">
-                            {notification.createdAt
-                              ? (() => {
-                                try {
-                                  const parsedDate = parse(notification.createdAt, "dd-MM-yyyy HH:mm:ss", new Date());
-                                  if (isNaN(parsedDate.getTime())) {
-                                    return "Ngày không hợp lệ";
-                                  }
-                                  return format(parsedDate, "dd/MM/yyyy HH:mm:ss");
-                                } catch (error) {
-                                  return "Ngày không hợp lệ";
-                                }
-                              })()
-                              : "Ngày không hợp lệ"}
-                          </p>
-                          <p className="text-xs text-gray-500">
-                            {userNotification.isRead ? 'Đã đọc' : 'Chưa đọc'}
-                          </p>
-                          {!userNotification.isRead && (
-                            <button
-                              className="text-blue-500 hover:text-blue-700 text-xs"
-                              onClick={() => handleMarkAsRead(notification.id)}
-                            >
-                              Đánh dấu đã đọc
-                            </button>
-                          )}
-                        </div>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDeleteNotification(notification.id)}
-                          className="text-red-500 hover:text-red-700"
+                  [...notifications]
+                    .sort((a, b) => {
+                      const dateA = a.createdAt
+                        ? parse(a.createdAt, "dd-MM-yyyy HH:mm:ss", new Date())
+                        : new Date(0);
+                      const dateB = b.createdAt
+                        ? parse(b.createdAt, "dd-MM-yyyy HH:mm:ss", new Date())
+                        : new Date(0);
+                      return dateB.getTime() - dateA.getTime();
+                    })
+                    .map((notification) => {
+                      const userNotification = notification.userNotifications.find(un => un.userId === user.id);
+                      if (!userNotification) return null;
+
+                      return (
+                        <div
+                          key={notification.id}
+                          className={`p-3 border-b flex justify-between items-center ${!userNotification.isRead ? 'bg-gray-50' : ''
+                            } cursor-pointer hover:bg-gray-100`}
+                          onClick={() => handleNotificationClick(notification)}
                         >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    );
-                  })
+                          <div className="flex-1">
+                            <p
+                              className="text-sm font-semibold overflow-hidden"
+                              style={{
+                                display: '-webkit-box',
+                                WebkitLineClamp: 2,
+                                WebkitBoxOrient: 'vertical',
+                              }}
+                            >
+                              {notification.content}
+                            </p>
+
+                            <div className="flex justify-between items-center text-xs text-gray-500 gap-2 mt-1">
+                              <span>
+                                {notification.createdAt
+                                  ? (() => {
+                                    try {
+                                      const parsedDate = parse(
+                                        notification.createdAt,
+                                        "dd-MM-yyyy HH:mm:ss",
+                                        new Date()
+                                      );
+                                      return isNaN(parsedDate.getTime())
+                                        ? "Ngày không hợp lệ"
+                                        : format(parsedDate, "dd/MM/yyyy HH:mm:ss");
+                                    } catch (error) {
+                                      return "Ngày không hợp lệ";
+                                    }
+                                  })()
+                                  : "Ngày không hợp lệ"}
+                              </span>
+                              <span>{userNotification.isRead ? 'Đã đọc' : 'Chưa đọc'}</span>
+                            </div>
+
+                            {!userNotification.isRead && (
+                              <button
+                                className="text-blue-500 hover:text-blue-700 text-xs mt-1"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleMarkAsRead(notification.id);
+                                }}
+                              >
+                                Đánh dấu đã đọc
+                              </button>
+                            )}
+                          </div>
+
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleDeleteNotification(notification.id);
+                            }}
+                            className="text-red-500 hover:text-red-700 ml-2"
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      );
+                    })
+                    .filter(Boolean) // Loại bỏ null (userNotification không tồn tại)
                 )}
               </div>
             )}
           </div>
         )}
+
+
         <div className="flex items-center space-x-4">
           {!isLoggedIn && (
             <>
@@ -584,12 +641,8 @@ const Header = () => {
         </div>
       </div>
 
-
-
       {/* Popup khóa học */}
       <CoursePopup isOpen={isPopupOpen} onClose={togglePopup} />
-
-
 
       {/* Popup Login */}
       {isLoginOpen && (

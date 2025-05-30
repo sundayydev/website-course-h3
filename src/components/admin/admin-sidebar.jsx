@@ -14,6 +14,7 @@ import {
   DollarSign,
   BookOpen,
 } from 'lucide-react';
+import { FaComment, FaUserTie } from 'react-icons/fa'
 import LogoH3 from '@/assets/LogoH3.png';
 import { NavLink, useLocation } from 'react-router-dom';
 
@@ -29,6 +30,7 @@ const sidebarItems = [
         path: '/admin/payment-management',
       },
       { icon: <Users size={16} />, text: 'Quản lý học viên', path: '/admin/students' },
+      { icon: <FaUserTie size={16} />, text: 'Quản lý Giảng viên', path: '/admin/instructors' },
     ],
   },
   {
@@ -37,7 +39,7 @@ const sidebarItems = [
       { icon: <GraduationCap size={16} />, text: 'Khóa học', path: '/admin/courses' },
       { icon: <BookOpenText size={16} />, text: 'Bài viết', path: '/admin/post-management?page=1' },
 
-      { icon: <BookOpen size={16} />, text: 'Bình luận bài viết', path: '/admin/comment' },
+      { icon: <FaComment size={16} />, text: 'Bình luận bài viết', path: '/admin/comment' },
       { icon: <CreditCard size={16} />, text: 'Quản lý khóa học', path: '/admin/course-management', badge: 'NEW', badgeType: 'beta' },
       { icon: <BookOpen size={16} />, text: 'Thông báo hệ thống', path: '/admin/Notifications' },
     ],

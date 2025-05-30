@@ -12,7 +12,7 @@ const AdminLayout = () => {
         {/* Main content area - takes remaining space */}
         <main className="flex-1 overflow-y-auto scrollbar-none [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           <div className="p-0">
-            <SidebarTrigger className="lg:hidden p-4" /> {/* Nút toggle sidebar trên mobile */}
+            <SidebarTrigger className="lg:hidden p-4" />
             <Outlet />
           </div>
         </main>
