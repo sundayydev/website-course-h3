@@ -232,10 +232,6 @@ export default function CoursesPage() {
               </CardHeader>
 
               <CardContent className="flex-grow">
-                {/*<div className="flex items-center text-sm text-gray-500 mb-2">*/}
-                {/*  <User size={14} className="mr-1" />*/}
-                {/*  <span>{course.user.name}</span>*/}
-                {/*</div>*/}
 
                 <div className="flex items-start text-sm text-gray-500">
                   <BookOpen size={14} className="mr-1 mt-1 flex-shrink-0" />

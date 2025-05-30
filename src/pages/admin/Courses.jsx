@@ -23,6 +23,7 @@ import { Pencil, Trash2, Plus, Search, Loader2, BookOpen, Filter, FileVideo } fr
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
+import { FaArrowLeft, FaComment } from 'react-icons/fa';
 import { getCourses, createCourse, updateCourse, uploadImage, deleteCourse, approveCourse } from '@/api/courseApi';
 import {
   Select,
@@ -502,6 +503,14 @@ const Courses = () => {
                             title="Xóa"
                           >
                             <Trash2 className="h-4 w-4" />
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => navigate(`/admin/reviews/${course.id}`)}
+                            className="h-8 px-2"
+                          >
+                            <FaComment className="h-4 w-4" />
                           </Button>
                         </div>
                       </TableCell>
