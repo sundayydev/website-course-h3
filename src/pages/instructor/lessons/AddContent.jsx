@@ -32,7 +32,7 @@ export default function AddContent() {
   const navigate = useNavigate();
   const { courseId } = useParams();
 
-  // Lesson form state
+  // State management
   const [lessonData, setLessonData] = useState({
     courseId: courseId,
     chapterId: '',
@@ -42,10 +42,8 @@ export default function AddContent() {
     videoName: '',
     duration: '',
     orderNumber: '',
-    status: 'Pending',
   });
 
-  // Chapter form state
   const [chapterData, setChapterData] = useState({
     courseId: courseId,
     title: '',
@@ -64,7 +62,32 @@ export default function AddContent() {
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef(null);
 
-  // Fetch course and chapters
+  // Reset state khi thay đổi tab
+  useEffect(() => {
+    if (activeTab === 'lesson') {
+      setLessonData({
+        courseId: courseId,
+        chapterId: '',
+        title: '',
+        description: '',
+        content: '',
+        videoName: '',
+        duration: '',
+        orderNumber: '',
+      });
+      setVideoFile(null);
+      setVideoPreview(null);
+    } else if (activeTab === 'chapter') {
+      setChapterData({
+        courseId: courseId,
+        title: '',
+        description: '',
+        orderNumber: '',
+      });
+    }
+  }, [activeTab, courseId]);
+
+  // Fetch data
   useEffect(() => {
     const fetchData = async () => {
       try {
@@ -80,50 +103,39 @@ export default function AddContent() {
     fetchData();
   }, [courseId]);
 
-  // Handle input changes for lesson form
+  // Handle input changes
   const handleLessonInputChange = (e) => {
     const { name, value } = e.target;
     setLessonData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Handle select changes for lesson form
   const handleLessonSelectChange = (name, value) => {
-    setLessonData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
+    setLessonData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Handle input changes for chapter form
   const handleChapterInputChange = (e) => {
     const { name, value } = e.target;
     setChapterData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Handle video file selection
   const handleVideoChange = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
-
-    // Validate file type
     if (!file.type.startsWith('video/')) {
       toast.error('Vui lòng chọn file video hợp lệ');
       return;
     }
-
-    // Validate file size (max 500MB)
     if (file.size > 500 * 1024 * 1024) {
       toast.error('Kích thước video không được vượt quá 500MB');
       return;
     }
-
     setVideoFile(file);
     try {
       const preview = await getVideoPreviewUrl(file);
       setVideoPreview(preview);
       setLessonData((prev) => ({
         ...prev,
-        duration: Math.round(preview.duration / 60), // Convert to minutes
+        duration: Math.round(preview.duration / 60),
         videoName: null,
       }));
     } catch (error) {
@@ -131,103 +143,67 @@ export default function AddContent() {
     }
   };
 
-  // Handle video upload
   const handleVideoUpload = async () => {
     if (!videoFile) return;
-
     setIsUploading(true);
     setUploadProgress(0);
-
     try {
       const response = await uploadVideoLesson(videoFile, (progress) => {
         setUploadProgress(progress);
       });
-
-      // Kiểm tra cấu trúc phản hồi từ server
-      console.log('Upload response:', response); // Debug để kiểm tra dữ liệu trả về
-
-      // Cập nhật videoName vào lessonData
-      setLessonData((prev) => ({
-        ...prev,
-        videoName: response.videoName, // Đảm bảo response.videoName tồn tại
-      }));
-
+      setLessonData((prev) => ({ ...prev, videoName: response.videoName }));
       toast.success('Tải lên video thành công');
-      return response.videoName; // Trả về videoName để sử dụng trong handleLessonSubmit
+      return response.videoName;
     } catch (error) {
       console.error('Upload error:', error);
       toast.error('Không thể tải lên video');
-      throw error; // Ném lỗi để xử lý trong handleLessonSubmit
+      throw error;
     } finally {
       setIsUploading(false);
     }
   };
 
-  // Handle lesson form submission
   const handleLessonSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     setError(null);
-
     try {
-      // Validate required fields
       if (!lessonData.chapterId || !lessonData.title || !lessonData.description) {
         throw new Error('Vui lòng điền đầy đủ thông tin bắt buộc');
       }
-
       let videoName = lessonData.videoName;
-
-      // Upload video nếu có file và chưa có videoName
       if (videoFile) {
-        videoName = await handleVideoUpload(); // Chờ upload hoàn tất và lấy videoName
+        videoName = await handleVideoUpload();
       }
-
-      // Prepare payload
       const payload = {
         ...lessonData,
-        videoName: videoName, // Sử dụng videoName từ kết quả upload hoặc lessonData
+        videoName: videoName,
         duration: parseInt(lessonData.duration) || 0,
         orderNumber: parseInt(lessonData.orderNumber) || 0,
       };
-
-      console.log('Payload gửi đi:', payload); // Debug payload
-
-      // Call API to create lesson
-      const response = await createLesson(payload);
+      await createLesson(payload);
       toast.success('Tạo bài học thành công');
-
-      // Navigate to course management page
       navigate(`/instructor/course/${courseId}/lessons`);
     } catch (err) {
       setError(err.message || 'Không thể tạo bài học');
-      console.error('Submit error:', err);
     } finally {
       setIsSubmitting(false);
     }
   };
 
-  // Handle chapter form submission
   const handleChapterSubmit = async (e) => {
     e.preventDefault();
     setIsSubmitting(true);
     setError(null);
-
     try {
-      // Validate required fields
       if (!chapterData.title) {
         throw new Error('Vui lòng điền đầy đủ thông tin bắt buộc');
       }
-
-      // Prepare payload
       const payload = {
         ...chapterData,
         orderNumber: parseInt(chapterData.orderNumber) || 0,
       };
-
-      // Call API to create chapter
-      const response = await createChapter(payload);
-
-      // Navigate to course management page
+      await createChapter(payload);
       navigate(`/instructor/courses/${courseId}/lessons`);
     } catch (err) {
       setError(err.message || 'Không thể tạo chương');
@@ -237,12 +213,12 @@ export default function AddContent() {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4 md:px-6 overflow-scroll">
+    <div className="container mx-auto py-8 px-4 md:px-6 h-screen overflow-y-auto ">
       <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="flex items-center gap-4">
           <Button
             variant="outline"
-            onClick={() => navigate(`/instructor/courses/${courseId}/lessons`)}
+            onClick={() => navigate(`/instructor/course/${courseId}`)}
           >
             Quay lại
           </Button>
@@ -250,15 +226,15 @@ export default function AddContent() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 h-full">
         {/* Main content - 2/3 width */}
-        <div className="lg:col-span-2">
-          <Card>
+        <div className="lg:col-span-2 h-full">
+          <Card className="h-full flex flex-col">
             <CardHeader>
               <CardTitle>Thông tin nội dung</CardTitle>
               <CardDescription>Thêm bài học hoặc chương mới cho khóa học</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="flex-1 overflow-y-auto">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="grid w-full grid-cols-2">
                   <TabsTrigger value="lesson">Thêm bài học</TabsTrigger>
@@ -266,7 +242,7 @@ export default function AddContent() {
                 </TabsList>
 
                 {/* Lesson Form */}
-                <TabsContent value="lesson">
+                <TabsContent value="lesson" className="space-y-6">
                   <form onSubmit={handleLessonSubmit} className="space-y-6">
                     <div className="space-y-2">
                       <Label htmlFor="chapterId">Chương *</Label>
@@ -309,7 +285,6 @@ export default function AddContent() {
                         onChange={handleLessonInputChange}
                         placeholder="Mô tả chi tiết về bài học"
                         rows={3}
-                        required
                       />
                     </div>
 
@@ -321,7 +296,7 @@ export default function AddContent() {
                           onChange={(value) =>
                             setLessonData((prev) => ({ ...prev, content: value }))
                           }
-                          height={400}
+                          height={150}
                         />
                       </div>
                     </div>
@@ -330,10 +305,10 @@ export default function AddContent() {
                       <Label>Video bài học</Label>
                       <div
                         className={`
-                          border-2 border-dashed rounded-lg p-6
-                          ${isUploading ? 'border-gray-300' : 'border-gray-300 hover:border-pink-500'}
-                          transition-colors cursor-pointer
-                        `}
+          border-2 border-dashed rounded-lg p-6
+          ${isUploading ? 'border-gray-300' : 'border-gray-300 hover:border-pink-500'}
+          transition-colors cursor-pointer
+        `}
                         onClick={() => !isUploading && fileInputRef.current?.click()}
                       >
                         <input
@@ -344,7 +319,6 @@ export default function AddContent() {
                           onChange={handleVideoChange}
                           disabled={isUploading}
                         />
-
                         <div className="flex flex-col items-center gap-2">
                           <Upload className="h-8 w-8 text-gray-400" />
                           <div className="text-center">
@@ -356,7 +330,6 @@ export default function AddContent() {
                             <p className="text-xs text-gray-500">MP4, WebM, MOV (tối đa 500MB)</p>
                           </div>
                         </div>
-
                         {isUploading && (
                           <div className="mt-4 space-y-2">
                             <Progress value={uploadProgress} className="h-2" />
@@ -366,10 +339,9 @@ export default function AddContent() {
                           </div>
                         )}
                       </div>
-
                       {videoPreview && (
                         <div className="mt-4 space-y-2">
-                          <div className="relative rounded-lg overflow-hidden border">
+                          <div className="relative rounded-lg border">
                             <video
                               src={videoPreview.url}
                               controls
@@ -411,7 +383,6 @@ export default function AddContent() {
                           placeholder="0"
                         />
                       </div>
-
                       <div className="space-y-2">
                         <Label htmlFor="orderNumber">Thứ tự</Label>
                         <Input
@@ -425,29 +396,12 @@ export default function AddContent() {
                       </div>
                     </div>
 
-                    <div className="space-y-2">
-                      <Label htmlFor="status">Trạng thái</Label>
-                      <Select
-                        value={lessonData.status}
-                        onValueChange={(value) => handleLessonSelectChange('status', value)}
-                      >
-                        <SelectTrigger>
-                          <SelectValue placeholder="Chọn trạng thái" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="Pending">Chờ duyệt</SelectItem>
-                          <SelectItem value="Approved">Đã duyệt</SelectItem>
-                          <SelectItem value="Rejected">Bị từ chối</SelectItem>
-                        </SelectContent>
-                      </Select>
-                    </div>
-
                     {error && <div className="text-red-600 text-sm">{error}</div>}
                   </form>
                 </TabsContent>
 
                 {/* Chapter Form */}
-                <TabsContent value="chapter">
+                <TabsContent value="chapter" className="space-y-6">
                   <form onSubmit={handleChapterSubmit} className="space-y-6">
                     <div className="space-y-2">
                       <Label htmlFor="title">Tiêu đề chương *</Label>
@@ -460,7 +414,6 @@ export default function AddContent() {
                         required
                       />
                     </div>
-
                     <div className="space-y-2">
                       <Label htmlFor="description">Mô tả chương</Label>
                       <Textarea
@@ -472,7 +425,6 @@ export default function AddContent() {
                         rows={3}
                       />
                     </div>
-
                     <div className="space-y-2">
                       <Label htmlFor="orderNumber">Thứ tự</Label>
                       <Input
@@ -484,12 +436,12 @@ export default function AddContent() {
                         placeholder="0"
                       />
                     </div>
-
                     {error && <div className="text-red-600 text-sm">{error}</div>}
                   </form>
                 </TabsContent>
               </Tabs>
             </CardContent>
+
             <CardFooter className="flex justify-end gap-4">
               <Button
                 variant="outline"
@@ -520,13 +472,13 @@ export default function AddContent() {
         </div>
 
         {/* Sidebar - 1/3 width */}
-        <div className="lg:col-span-1">
-          <Card>
+        <div className="lg:col-span-1 h-full">
+          <Card className="h-full flex flex-col">
             <CardHeader>
               <CardTitle>Cài đặt nội dung</CardTitle>
               <CardDescription>Thiết lập các tùy chọn bổ sung</CardDescription>
             </CardHeader>
-            <CardContent className="space-y-6">
+            <CardContent className="flex-1">
               <div className="space-y-2">
                 <Label>Loại nội dung</Label>
                 <p className="text-sm text-gray-600">

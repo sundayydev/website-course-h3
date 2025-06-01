@@ -107,7 +107,7 @@ const Sidebar = () => {
               className={`flex items-center p-3 text-gray-400 hover:bg-gray-800 rounded-lg ${pathname === '/students' ? 'bg-blue-700 text-white' : ''}`}
             >
               <Users size={20} />
-              {sidebarOpen && <span className="ml-4">Sinh viên</span>}
+              {sidebarOpen && <span className="ml-4">Học viên</span>}
             </NavLink>
             <NavLink
               to="/instructor/reports"
