@@ -22,24 +22,24 @@ const sidebarItems = [
   {
     section: 'Overview',
     items: [
-      { icon: <LayoutDashboard size={16} />, text: 'Dashboard', path: '/admin/dashboard' },
-      { icon: <Users size={16} />, text: 'Students', path: '/admin/students' },
-      { icon: <Users size={16} />, text: 'Instructors', path: '/admin/instructors' },
+      { icon: <LayoutDashboard size={16} />, text: 'Trang Chủ', path: '/admin/dashboard' },
+      { icon: <Users size={16} />, text: 'Học viên', path: '/admin/students' },
+      { icon: <Users size={16} />, text: 'Giảng viên', path: '/admin/instructors' },
     ],
   },
   {
     section: 'Content Management',
     items: [
-      { icon: <GraduationCap size={16} />, text: 'Courses', path: '/admin/courses' },
-      { icon: <BookOpenText size={16} />, text: 'Posts', path: '/admin/post-management?page=1' },
-      { icon: <MessageSquare size={16} />, text: 'Comments', path: '/admin/comment' },
-      { icon: <BookOpen size={16} />, text: 'Notifications', path: '/admin/Notifications' },
+      { icon: <GraduationCap size={16} />, text: 'Khóa học', path: '/admin/courses' },
+      { icon: <BookOpenText size={16} />, text: 'Bài viết', path: '/admin/post-management?page=1' },
+      { icon: <MessageSquare size={16} />, text: 'Bình luận', path: '/admin/comment' },
+      { icon: <BookOpen size={16} />, text: 'Thông báo', path: '/admin/Notifications' },
     ],
   },
   {
     section: 'Settings',
     items: [
-      { icon: <Settings size={16} />, text: 'System Settings', path: '/admin/settings' },
+      { icon: <Settings size={16} />, text: 'Cài đặt', path: '/admin/settings' },
     ],
   },
 ];
@@ -55,12 +55,12 @@ export default function AdminSidebar({ className }) {
   };
 
   const handleLogout = async () => {
-    if (window.confirm('Are you sure you want to logout?')) {
+    if (window.confirm('bạn có muốn đăng xuất?')) {
       try {
         await logout();
         removeAuthToken();
-        toast.success('Logged out successfully');
-        navigate('/login');
+        toast.success('đăng xuất thành công');
+        navigate('/');
       } catch (err) {
         console.error('Logout error:', err);
         toast.error('Logout failed');

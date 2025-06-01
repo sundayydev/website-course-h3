@@ -103,7 +103,7 @@ export default function ManageLessons() {
   };
 
   return (
-    <div className="container mx-auto py-8 px-4 overflow-scroll">
+    <div className="container mx-auto py-8 px-4 md:px-6 h-screen overflow-y-auto ">
       <div className="flex justify-between items-center mb-8">
         <div className="flex items-center gap-4">
           <Button variant="outline" onClick={() => navigate('/instructor/courses')}>
