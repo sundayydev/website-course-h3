@@ -445,6 +445,12 @@ export default function AddContent() {
             <CardFooter className="flex justify-end gap-4">
               <Button
                 variant="outline"
+                onClick={() => navigate(`/instructor/course/${courseId}/add-quiz`)}
+              >
+                Thêm câu hỏi
+              </Button>
+              <Button
+                variant="outline"
                 onClick={() => navigate(`/instructor/courses/${courseId}/lessons`)}
                 disabled={isSubmitting}
               >

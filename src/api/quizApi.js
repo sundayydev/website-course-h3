@@ -114,10 +114,10 @@ export const getQuizzesByLessonId = async (lessonId) => {
 export const createQuiz = async (quizData) => {
   if (!isAuthenticated()) throw new Error('Người dùng chưa xác thực');
   if (
-      !quizData?.Question ||
-      !quizData?.Options ||
-      quizData.Options.length < 2 ||
-      !quizData?.CorrectAnswer
+    !quizData?.Question ||
+    !quizData?.Options ||
+    quizData.Options.length < 2 ||
+    !quizData?.CorrectAnswer
   ) {
     throw new Error('Dữ liệu câu hỏi không hợp lệ');
   }
@@ -128,12 +128,7 @@ export const createQuiz = async (quizData) => {
     const response = await api.post(API_URL, quizData);
     return response.data;
   } catch (error) {
-    if (error.response?.status === 400) {
-      throw new Error(error.response.data?.message || 'Dữ liệu đầu vào không hợp lệ');
-    }
-    if (error.response?.status === 404) {
-      throw new Error('Không tìm thấy bài học');
-    }
+    console.error('Lỗi từ API:', error.response?.data);
     throw new Error(error.response?.data?.message || 'Không thể tạo câu hỏi mới');
   }
 };
@@ -142,10 +137,10 @@ export const updateQuiz = async (id, quizData) => {
   if (!isAuthenticated()) throw new Error('Người dùng chưa xác thực');
   if (!id) throw new Error('ID câu hỏi không được để trống');
   if (
-      !quizData?.Question ||
-      !quizData?.Options ||
-      quizData.Options.length < 2 ||
-      !quizData?.CorrectAnswer
+    !quizData?.Question ||
+    !quizData?.Options ||
+    quizData.Options.length < 2 ||
+    !quizData?.CorrectAnswer
   ) {
     throw new Error('Dữ liệu câu hỏi không hợp lệ');
   }

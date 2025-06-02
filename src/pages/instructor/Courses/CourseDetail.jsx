@@ -544,7 +544,7 @@ export default function CourseDetail() {
                                         size="icon"
                                         onClick={() =>
                                           navigate(
-                                            `/instructor/course/${courseId}/lessons/edit/${lesson.id}`
+                                            `/instructor/course/${courseId}/lesson/${lesson.id}`
                                           )
                                         }
                                       >
@@ -674,13 +674,12 @@ export default function CourseDetail() {
                               <div className="space-y-2">
                                 <div className="w-full bg-muted rounded-full h-2 overflow-hidden">
                                   <div
-                                    className={`h-full transition-all duration-300 ${
-                                      enrollment.completionPercentage >= 80
-                                        ? 'bg-green-500'
-                                        : enrollment.completionPercentage >= 40
-                                          ? 'bg-amber-500'
-                                          : 'bg-red-500'
-                                    }`}
+                                    className={`h-full transition-all duration-300 ${enrollment.completionPercentage >= 80
+                                      ? 'bg-green-500'
+                                      : enrollment.completionPercentage >= 40
+                                        ? 'bg-amber-500'
+                                        : 'bg-red-500'
+                                      }`}
                                     style={{
                                       width: `${enrollment.completionPercentage}%`,
                                     }}
@@ -825,11 +824,10 @@ export default function CourseDetail() {
                                     {[1, 2, 3, 4, 5].map((star) => (
                                       <Star
                                         key={star}
-                                        className={`h-4 w-4 ${
-                                          star <= review.rating
-                                            ? 'text-yellow-400 fill-yellow-400'
-                                            : 'text-gray-300'
-                                        }`}
+                                        className={`h-4 w-4 ${star <= review.rating
+                                          ? 'text-yellow-400 fill-yellow-400'
+                                          : 'text-gray-300'
+                                          }`}
                                       />
                                     ))}
                                   </div>
@@ -986,7 +984,7 @@ export default function CourseDetail() {
                               {Math.round(
                                 (enrollments.filter((e) => e.status === 'completed').length /
                                   enrollments.length) *
-                                  100
+                                100
                               )}
                               %
                             </div>
