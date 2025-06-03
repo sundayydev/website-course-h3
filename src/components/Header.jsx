@@ -583,9 +583,9 @@ const Header = () => {
                   <div className="p-3 text-center text-gray-500">Đang tải...</div>
                 ) : (
                   <>
-                    <div className="flex items-center gap-3 p-3">
-                      <Avatar className="w-10 h-10">
-                        <AvatarImage src={user?.profileImage || LogoH3} alt="User Avatar" />
+                    <div className="flex items-center gap-3 p-3 ">
+                      <Avatar>
+                        <AvatarImage src={user?.profileImage || LogoH3} alt="User Avatar" className="object-cover" />
                         <AvatarFallback className="bg-blue-500 text-white font-bold">
                           {user?.fullName?.charAt(0).toUpperCase() || 'U'}
                         </AvatarFallback>
@@ -645,309 +645,317 @@ const Header = () => {
       <CoursePopup isOpen={isPopupOpen} onClose={togglePopup} />
 
       {/* Popup Login */}
-      {isLoginOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white shadow-lg rounded-lg p-6 w-full mx-4 md:max-w-xl max-w-sm relative h-[500px] md:h-[550px]" ref={loginRef}>
-            <div className="flex justify-center mb-4 mt-4">
-              <img src={LogoH3} alt="Logo H3" className="h-10 rounded-lg" />
-            </div>
-            <button
-              className="absolute top-2 right-2 text-gray-600 hover:text-red-500"
-              onClick={() => setIsLoginOpen(false)}
-            >
-              <FaTimes size={20} />
-            </button>
-            <div className="mx-4 md:mx-10">
-              <h3 className="text-center text-lg md:text-2xl font-bold text-gray-700 mb-3">
-                Đăng nhập vào H3
-              </h3>
-              <div className="relative mb-3">
-                <FaEnvelope className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <input
-                  type="email"
-                  placeholder="Email"
-                  value={loginData.email}
-                  onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
-                  className="w-full px-9 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm md:text-base"
-                />
+      {
+        isLoginOpen && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+            <div className="bg-white shadow-lg rounded-lg p-6 w-full mx-4 md:max-w-xl max-w-sm relative h-[500px] md:h-[550px]" ref={loginRef}>
+              <div className="flex justify-center mb-4 mt-4">
+                <img src={LogoH3} alt="Logo H3" className="h-10 rounded-lg" />
               </div>
-              <div className="relative mb-3">
-                <FaLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="Mật khẩu"
-                  value={loginData.password}
-                  onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
-                  className="w-full px-9 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm md:text-base"
-                />
-                <button
-                  type="button"
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
-                  onClick={() => setShowPassword(!showPassword)}
-                >
-                  {showPassword ? <AiFillEyeInvisible /> : <AiFillEye />}
-                </button>
-              </div>
-              <div className="flex justify-between items-center mb-4 text-xs md:text-sm">
-                <div className="flex items-center">
-                  <input type="checkbox" id="remember" className="mr-1" />
-                  <label htmlFor="remember" className="text-gray-900">
-                    Ghi nhớ đăng nhập
-                  </label>
-                </div>
-                <button
-                  className="text-blue-500 hover:text-red-500"
-                  onClick={() => {
-                    setIsForgotPasswordOpen(true);
-                    setIsLoginOpen(false);
-                  }}
-                >
-                  Quên mật khẩu?
-                </button>
-              </div>
-              <Button
-                className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-2 rounded-lg font-semibold"
-                onClick={handleLogin}
+              <button
+                className="absolute top-2 right-2 text-gray-600 hover:text-red-500"
+                onClick={() => setIsLoginOpen(false)}
               >
-                Đăng nhập
-              </Button>
-              <div className="my-3 text-center text-gray-500 text-xs md:text-sm">HOẶC</div>
-              <div className="flex flex-col gap-2">
-                <button className="bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold rounded-lg py-2 flex items-center justify-center text-sm md:text-base">
-                  <FcGoogle className="w-5 h-5 mr-2" />
-                  Tiếp tục với Google
-                </button>
-                <button className="bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg py-2 flex items-center justify-center text-sm md:text-base">
-                  <FaFacebook className="w-5 h-5 mr-2" />
-                  Tiếp tục với Facebook
-                </button>
-              </div>
-              <div className="mt-3 text-center mb-3">
-                <span className="text-gray-600 text-xs md:text-sm">Chưa có tài khoản?</span>
-                <button
-                  className="text-blue-500 hover:text-green-500 text-xs md:text-sm ml-1"
-                  onClick={() => {
-                    setIsRegisterOpen(true);
-                    setIsLoginOpen(false);
-                  }}
+                <FaTimes size={20} />
+              </button>
+              <div className="mx-4 md:mx-10">
+                <h3 className="text-center text-lg md:text-2xl font-bold text-gray-700 mb-3">
+                  Đăng nhập vào H3
+                </h3>
+                <div className="relative mb-3">
+                  <FaEnvelope className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="email"
+                    placeholder="Email"
+                    value={loginData.email}
+                    onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
+                    className="w-full px-9 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm md:text-base"
+                  />
+                </div>
+                <div className="relative mb-3">
+                  <FaLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Mật khẩu"
+                    value={loginData.password}
+                    onChange={(e) => setLoginData({ ...loginData, password: e.target.value })}
+                    className="w-full px-9 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm md:text-base"
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <AiFillEyeInvisible /> : <AiFillEye />}
+                  </button>
+                </div>
+                <div className="flex justify-between items-center mb-4 text-xs md:text-sm">
+                  <div className="flex items-center">
+                    <input type="checkbox" id="remember" className="mr-1" />
+                    <label htmlFor="remember" className="text-gray-900">
+                      Ghi nhớ đăng nhập
+                    </label>
+                  </div>
+                  <button
+                    className="text-blue-500 hover:text-red-500"
+                    onClick={() => {
+                      setIsForgotPasswordOpen(true);
+                      setIsLoginOpen(false);
+                    }}
+                  >
+                    Quên mật khẩu?
+                  </button>
+                </div>
+                <Button
+                  className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-2 rounded-lg font-semibold"
+                  onClick={handleLogin}
                 >
-                  Đăng ký ngay
-                </button>
+                  Đăng nhập
+                </Button>
+                <div className="my-3 text-center text-gray-500 text-xs md:text-sm">HOẶC</div>
+                <div className="flex flex-col gap-2">
+                  <button className="bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold rounded-lg py-2 flex items-center justify-center text-sm md:text-base">
+                    <FcGoogle className="w-5 h-5 mr-2" />
+                    Tiếp tục với Google
+                  </button>
+                  <button className="bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg py-2 flex items-center justify-center text-sm md:text-base">
+                    <FaFacebook className="w-5 h-5 mr-2" />
+                    Tiếp tục với Facebook
+                  </button>
+                </div>
+                <div className="mt-3 text-center mb-3">
+                  <span className="text-gray-600 text-xs md:text-sm">Chưa có tài khoản?</span>
+                  <button
+                    className="text-blue-500 hover:text-green-500 text-xs md:text-sm ml-1"
+                    onClick={() => {
+                      setIsRegisterOpen(true);
+                      setIsLoginOpen(false);
+                    }}
+                  >
+                    Đăng ký ngay
+                  </button>
+                </div>
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )
+      }
 
       {/* Popup Register */}
-      {isRegisterOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white shadow-lg rounded-lg p-6 w-full mx-4 md:max-w-xl max-w-sm relative h-[500px] md:h-[550px]" ref={registerRef}>
-            <div className="flex justify-center mb-4 mt-4">
-              <img src={LogoH3} alt="Logo H3" className="h-10 rounded-lg" />
-            </div>
-            <button
-              className="absolute top-2 right-2 text-gray-600 hover:text-red-500"
-              onClick={() => setIsRegisterOpen(false)}
-            >
-              <FaTimes size={20} />
-            </button>
-            <div className="mx-4 md:mx-10">
-              <h3 className="text-center text-lg md:text-2xl font-bold text-gray-700 mb-3">
-                Đăng ký Tài Khoản
-              </h3>
-              <div className="relative mb-3">
-                <FaUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-                <input
-                  type="text"
-                  name="fullName"
-                  value={registerData.fullName}
-                  required
-                  placeholder="Nhập họ và tên"
-                  onChange={(e) => setRegisterData({ ...registerData, fullName: e.target.value })}
-                  className="w-full px-9 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm md:text-base"
-                />
+      {
+        isRegisterOpen && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+            <div className="bg-white shadow-lg rounded-lg p-6 w-full mx-4 md:max-w-xl max-w-sm relative h-[500px] md:h-[550px]" ref={registerRef}>
+              <div className="flex justify-center mb-4 mt-4">
+                <img src={LogoH3} alt="Logo H3" className="h-10 rounded-lg" />
               </div>
+              <button
+                className="absolute top-2 right-2 text-gray-600 hover:text-red-500"
+                onClick={() => setIsRegisterOpen(false)}
+              >
+                <FaTimes size={20} />
+              </button>
+              <div className="mx-4 md:mx-10">
+                <h3 className="text-center text-lg md:text-2xl font-bold text-gray-700 mb-3">
+                  Đăng ký Tài Khoản
+                </h3>
+                <div className="relative mb-3">
+                  <FaUser className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="text"
+                    name="fullName"
+                    value={registerData.fullName}
+                    required
+                    placeholder="Nhập họ và tên"
+                    onChange={(e) => setRegisterData({ ...registerData, fullName: e.target.value })}
+                    className="w-full px-9 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm md:text-base"
+                  />
+                </div>
+                <div className="relative mb-3">
+                  <FaEnvelope className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <input
+                    type="email"
+                    placeholder="Email"
+                    value={registerData.email}
+                    onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
+                    className="w-full px-9 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm md:text-base"
+                  />
+                </div>
+                <div className="relative mb-3">
+                  <FaLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
+                  <input
+                    type={showPassword ? 'text' : 'password'}
+                    placeholder="Mật khẩu"
+                    value={registerData.password}
+                    onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
+                    className="w-full px-9 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm md:text-base"
+                  />
+                  <button
+                    type="button"
+                    className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
+                    onClick={() => setShowPassword(!showPassword)}
+                  >
+                    {showPassword ? <AiFillEyeInvisible /> : <AiFillEye />}
+                  </button>
+                </div>
+                <Button
+                  className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-2 rounded-lg font-semibold"
+                  onClick={handleRegister}
+                >
+                  Đăng Ký
+                </Button>
+                <div className="my-3 text-center text-gray-500 text-xs md:text-sm">HOẶC</div>
+                <div className="flex flex-col gap-2">
+                  <button className="bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold rounded-lg py-2 flex items-center justify-center text-sm md:text-base">
+                    <FcGoogle className="w-5 h-5 mr-2" />
+                    Tiếp tục với Google
+                  </button>
+                  <button className="bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg py-2 flex items-center justify-center text-sm md:text-base">
+                    <FaFacebook className="w-5 h-5 mr-2" />
+                    Tiếp tục với Facebook
+                  </button>
+                </div>
+                <div className="mt-3 text-center mb-3">
+                  <span className="text-gray-600 text-xs md:text-sm">Đã có tài khoản?</span>
+                  <button
+                    className="text-blue-500 hover:text-green-500 text-xs md:text-sm ml-1"
+                    onClick={() => {
+                      setIsRegisterOpen(false);
+                      setIsLoginOpen(true);
+                    }}
+                  >
+                    Đăng nhập ngay
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )
+      }
+
+      {/* Popup Forgot Password */}
+      {
+        isForgotPasswordOpen && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+            <div ref={forgotPasswordRef} className="bg-white shadow-lg rounded-lg p-6 w-full mx-4 md:max-w-xl max-w-sm relative">
+              <button
+                className="absolute top-2 right-2 text-gray-600 hover:text-red-500"
+                onClick={() => setIsForgotPasswordOpen(false)}
+              >
+                <FaTimes size={20} />
+              </button>
+              <h3 className="text-center text-lg font-bold text-gray-700 mb-3">Quên Mật Khẩu</h3>
               <div className="relative mb-3">
                 <FaEnvelope className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <input
                   type="email"
-                  placeholder="Email"
-                  value={registerData.email}
-                  onChange={(e) => setRegisterData({ ...registerData, email: e.target.value })}
-                  className="w-full px-9 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm md:text-base"
+                  placeholder="Nhập email"
+                  value={forgotEmail}
+                  onChange={(e) => setForgotEmail(e.target.value)}
+                  className="w-full px-9 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500"
                 />
               </div>
-              <div className="relative mb-3">
+              <Button
+                className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-2 rounded-lg"
+                onClick={handleForgotPassword}
+              >
+                Gửi Yêu Cầu
+              </Button>
+            </div>
+          </div>
+        )
+      }
+
+      {
+        isResetPasswordOpen && (
+          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+            <div className="bg-white shadow-lg rounded-lg p-6 w-full mx-4 md:max-w-xl max-w-sm relative">
+              <div className="flex justify-center mb-4 mt-4">
+                <img src={LogoH3} alt="Logo H3" className="h-10 rounded-lg" />
+              </div>
+              <button
+                className="absolute top-2 right-2 text-gray-600 hover:text-red-500"
+                onClick={() => setIsResetPasswordOpen(false)}
+              >
+                <FaTimes size={20} />
+              </button>
+              <h3 className="text-center text-lg md:text-2xl font-bold text-gray-700 mb-3">Xác thực mã OTP</h3>
+              <p className="text-center text-sm text-gray-600 mb-4">
+                Mã xác thực đã được gửi qua email: {resetPasswordData.email ? (
+                  <strong className="text-gray-800 font-semibold">
+                    {`${resetPasswordData.email.substring(0, 3)}****${resetPasswordData.email.substring(resetPasswordData.email.indexOf('@') - 1)}`}
+                  </strong>
+                ) : (
+                  <strong className="text-red-500">Email không xác định</strong>
+                )}
+              </p>
+
+              <div className="relative mb-3 flex flex-col items-center">
+                <label className="text-lg md:text-xl font-bold text-red-600 mb-3 text-center w-full">Nhập mã OTP</label>
+                <div className="flex justify-center gap-2">
+                  {Array(6)
+                    .fill()
+                    .map((_, index) => (
+                      <input
+                        key={index}
+                        type="text"
+                        maxLength="1"
+                        value={resetPasswordData.resetCode[index] || ''}
+                        onChange={(e) => {
+                          const newCode = e.target.value;
+                          if (/^[0-9]$/.test(newCode) || newCode === '') {
+                            const newResetCode = resetPasswordData.resetCode.split('');
+                            newResetCode[index] = newCode;
+                            setResetPasswordData({
+                              ...resetPasswordData,
+                              resetCode: newResetCode.join(''),
+                            });
+                            if (newCode && index < 5) {
+                              document.querySelectorAll('.otp-input')[index + 1].focus();
+                            }
+                          }
+                        }}
+                        onKeyDown={(e) => {
+                          if (e.key === 'Backspace' && !resetPasswordData.resetCode[index] && index > 0) {
+                            document.querySelectorAll('.otp-input')[index - 1].focus();
+                          }
+                        }}
+                        className="otp-input w-10 h-10 text-center border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-lg font-semibold"
+                      />
+                    ))}
+                </div>
+              </div>
+
+              <div className="relative mb-5 ml-16 mt-5">
                 <FaLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
                 <input
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder="Mật khẩu"
-                  value={registerData.password}
-                  onChange={(e) => setRegisterData({ ...registerData, password: e.target.value })}
-                  className="w-full px-9 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 text-sm md:text-base"
+                  type={showNewPassword ? 'text' : 'password'}
+                  placeholder="Nhập mật khẩu mới"
+                  value={resetPasswordData.newPassword}
+                  onChange={(e) => setResetPasswordData({ ...resetPasswordData, newPassword: e.target.value })}
+                  className="w-[400px] px-9 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 text-sm md:text-base"
                 />
                 <button
                   type="button"
-                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500"
-                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 mr-16"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
                 >
-                  {showPassword ? <AiFillEyeInvisible /> : <AiFillEye />}
+                  {showNewPassword ? <AiFillEyeInvisible /> : <AiFillEye />}
                 </button>
               </div>
+
               <Button
-                className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-2 rounded-lg font-semibold"
-                onClick={handleRegister}
+                className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-2 rounded-lg font-semibold text-sm md:text-base"
+                onClick={handleResetPassword}
+                disabled={loading}
               >
-                Đăng Ký
+                {loading ? 'Đang xử lý...' : 'Xác nhận đặt lại mật khẩu'}
               </Button>
-              <div className="my-3 text-center text-gray-500 text-xs md:text-sm">HOẶC</div>
-              <div className="flex flex-col gap-2">
-                <button className="bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold rounded-lg py-2 flex items-center justify-center text-sm md:text-base">
-                  <FcGoogle className="w-5 h-5 mr-2" />
-                  Tiếp tục với Google
-                </button>
-                <button className="bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg py-2 flex items-center justify-center text-sm md:text-base">
-                  <FaFacebook className="w-5 h-5 mr-2" />
-                  Tiếp tục với Facebook
-                </button>
-              </div>
-              <div className="mt-3 text-center mb-3">
-                <span className="text-gray-600 text-xs md:text-sm">Đã có tài khoản?</span>
-                <button
-                  className="text-blue-500 hover:text-green-500 text-xs md:text-sm ml-1"
-                  onClick={() => {
-                    setIsRegisterOpen(false);
-                    setIsLoginOpen(true);
-                  }}
-                >
-                  Đăng nhập ngay
-                </button>
-              </div>
             </div>
           </div>
-        </div>
-      )}
-
-      {/* Popup Forgot Password */}
-      {isForgotPasswordOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div ref={forgotPasswordRef} className="bg-white shadow-lg rounded-lg p-6 w-full mx-4 md:max-w-xl max-w-sm relative">
-            <button
-              className="absolute top-2 right-2 text-gray-600 hover:text-red-500"
-              onClick={() => setIsForgotPasswordOpen(false)}
-            >
-              <FaTimes size={20} />
-            </button>
-            <h3 className="text-center text-lg font-bold text-gray-700 mb-3">Quên Mật Khẩu</h3>
-            <div className="relative mb-3">
-              <FaEnvelope className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <input
-                type="email"
-                placeholder="Nhập email"
-                value={forgotEmail}
-                onChange={(e) => setForgotEmail(e.target.value)}
-                className="w-full px-9 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500"
-              />
-            </div>
-            <Button
-              className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-2 rounded-lg"
-              onClick={handleForgotPassword}
-            >
-              Gửi Yêu Cầu
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {isResetPasswordOpen && (
-        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
-          <div className="bg-white shadow-lg rounded-lg p-6 w-full mx-4 md:max-w-xl max-w-sm relative">
-            <div className="flex justify-center mb-4 mt-4">
-              <img src={LogoH3} alt="Logo H3" className="h-10 rounded-lg" />
-            </div>
-            <button
-              className="absolute top-2 right-2 text-gray-600 hover:text-red-500"
-              onClick={() => setIsResetPasswordOpen(false)}
-            >
-              <FaTimes size={20} />
-            </button>
-            <h3 className="text-center text-lg md:text-2xl font-bold text-gray-700 mb-3">Xác thực mã OTP</h3>
-            <p className="text-center text-sm text-gray-600 mb-4">
-              Mã xác thực đã được gửi qua email: {resetPasswordData.email ? (
-                <strong className="text-gray-800 font-semibold">
-                  {`${resetPasswordData.email.substring(0, 3)}****${resetPasswordData.email.substring(resetPasswordData.email.indexOf('@') - 1)}`}
-                </strong>
-              ) : (
-                <strong className="text-red-500">Email không xác định</strong>
-              )}
-            </p>
-
-            <div className="relative mb-3 flex flex-col items-center">
-              <label className="text-lg md:text-xl font-bold text-red-600 mb-3 text-center w-full">Nhập mã OTP</label>
-              <div className="flex justify-center gap-2">
-                {Array(6)
-                  .fill()
-                  .map((_, index) => (
-                    <input
-                      key={index}
-                      type="text"
-                      maxLength="1"
-                      value={resetPasswordData.resetCode[index] || ''}
-                      onChange={(e) => {
-                        const newCode = e.target.value;
-                        if (/^[0-9]$/.test(newCode) || newCode === '') {
-                          const newResetCode = resetPasswordData.resetCode.split('');
-                          newResetCode[index] = newCode;
-                          setResetPasswordData({
-                            ...resetPasswordData,
-                            resetCode: newResetCode.join(''),
-                          });
-                          if (newCode && index < 5) {
-                            document.querySelectorAll('.otp-input')[index + 1].focus();
-                          }
-                        }
-                      }}
-                      onKeyDown={(e) => {
-                        if (e.key === 'Backspace' && !resetPasswordData.resetCode[index] && index > 0) {
-                          document.querySelectorAll('.otp-input')[index - 1].focus();
-                        }
-                      }}
-                      className="otp-input w-10 h-10 text-center border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-transparent text-lg font-semibold"
-                    />
-                  ))}
-              </div>
-            </div>
-
-            <div className="relative mb-5 ml-16 mt-5">
-              <FaLock className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" />
-              <input
-                type={showNewPassword ? 'text' : 'password'}
-                placeholder="Nhập mật khẩu mới"
-                value={resetPasswordData.newPassword}
-                onChange={(e) => setResetPasswordData({ ...resetPasswordData, newPassword: e.target.value })}
-                className="w-[400px] px-9 py-2 border rounded-lg focus:ring-2 focus:ring-emerald-500 text-sm md:text-base"
-              />
-              <button
-                type="button"
-                className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500 mr-16"
-                onClick={() => setShowNewPassword(!showNewPassword)}
-              >
-                {showNewPassword ? <AiFillEyeInvisible /> : <AiFillEye />}
-              </button>
-            </div>
-
-            <Button
-              className="w-full bg-emerald-500 hover:bg-emerald-600 text-white py-2 rounded-lg font-semibold text-sm md:text-base"
-              onClick={handleResetPassword}
-              disabled={loading}
-            >
-              {loading ? 'Đang xử lý...' : 'Xác nhận đặt lại mật khẩu'}
-            </Button>
-          </div>
-        </div>
-      )}
-    </header>
+        )
+      }
+    </header >
   );
 };
 

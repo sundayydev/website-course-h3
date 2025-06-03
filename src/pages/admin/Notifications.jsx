@@ -1,4 +1,3 @@
-// src/pages/Notifications.jsx
 import { useState, useEffect } from 'react';
 import {
     Table,
@@ -19,22 +18,42 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { toast } from 'react-toastify';
-import { Bell, Trash2, Plus, Search, Loader2, Filter } from 'lucide-react';
+import { Bell, Trash2, Plus, Search, Loader2, Eye } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
     getNotifications,
     addNotification,
     deleteNotification,
 } from '@/api/notificationApi';
-import { getUserById } from '@/api/userApi'; // Import getUserById
+import { getUserById } from '@/api/userApi';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { parse, isSameDay, isWithinInterval, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
+import { FaArrowLeft } from 'react-icons/fa';
+import { formatDate } from '../../utils/formatDate';
+import { useNavigate } from 'react-router-dom';
+
+// Ánh xạ giữa type tiếng Anh và tên tiếng Việt
+const typeDisplayNames = {
+    LessonApproval: 'Phê duyệt bài học',
+    NewMessage: 'Tin nhắn mới',
+    CourseEnrollment: 'Đăng ký khóa học',
+    CourseActivation: 'Khóa học chấp nhận',
+    CourseDeactivation: 'Khóa học từ chối',
+};
 
 const Notifications = () => {
     const [notifications, setNotifications] = useState([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [isDialogOpen, setIsDialogOpen] = useState(false);
-    const [userNames, setUserNames] = useState({}); // State lưu tên người dùng
+    const [isDetailDialogOpen, setIsDetailDialogOpen] = useState(false);
+    const [selectedNotification, setSelectedNotification] = useState(null);
+    const [userNames, setUserNames] = useState({});
+    const [error, setError] = useState(null);
+    const [dateFilter, setDateFilter] = useState('all');
+    const [typeFilter, setTypeFilter] = useState('all');
+    const [relatedEntityTypeFilter, setRelatedEntityTypeFilter] = useState('all');
+    const [readFilter, setReadFilter] = useState('all');
     const [formData, setFormData] = useState({
         type: 'LessonApproval',
         content: '',
@@ -42,19 +61,16 @@ const Notifications = () => {
         relatedEntityType: '',
         userIds: '',
     });
-
-    // Lấy danh sách thông báo và tên người dùng
-    useEffect(() => {
-        fetchNotifications();
-    }, []);
+    const [currentPage, setCurrentPage] = useState(1);
+    const itemsPerPage = 8;
+    const navigate = useNavigate();
 
     const fetchNotifications = async () => {
+        setLoading(true);
         try {
-            setLoading(true);
             const response = await getNotifications();
-            console.log('Danh sách thông báo:', response);
+            response.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
             setNotifications(response);
-            // Lấy danh sách userIds duy nhất
             const userIds = [...new Set(response.flatMap(n => n.userNotifications.map(un => un.userId)))];
             await fetchUserNames(userIds);
         } catch (error) {
@@ -65,7 +81,6 @@ const Notifications = () => {
         }
     };
 
-    // Hàm lấy tên người dùng bằng getUserById
     const fetchUserNames = async (userIds) => {
         try {
             const nameMap = {};
@@ -73,7 +88,6 @@ const Notifications = () => {
                 userIds.map(async (userId) => {
                     try {
                         const response = await getUserById(userId);
-                        // Giả sử API trả về trường 'name' hoặc 'fullName'
                         nameMap[userId] = response.data.fullName || response.data.name || 'Không có tên';
                     } catch (error) {
                         console.error(`Lỗi khi lấy tên người dùng ${userId}:`, error);
@@ -88,7 +102,10 @@ const Notifications = () => {
         }
     };
 
-    // Xử lý gửi form
+    useEffect(() => {
+        fetchNotifications();
+    }, []);
+
     const handleSubmit = async (e) => {
         e.preventDefault();
         if (!formData.content.trim()) {
@@ -132,7 +149,6 @@ const Notifications = () => {
         }
     };
 
-    // Xử lý xóa thông báo
     const handleDelete = async (id) => {
         if (window.confirm('Bạn có chắc chắn muốn xóa thông báo này?')) {
             try {
@@ -146,7 +162,6 @@ const Notifications = () => {
         }
     };
 
-    // Đặt lại form
     const resetForm = () => {
         setFormData({
             type: 'LessonApproval',
@@ -157,12 +172,127 @@ const Notifications = () => {
         });
     };
 
-    // Lọc thông báo dựa trên tìm kiếm
-    const filteredNotifications = notifications.filter(
-        (notification) =>
-            notification.content?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            notification.type?.toLowerCase().includes(searchTerm.toLowerCase())
+    const isToday = (dateStr) => {
+        if (!dateStr || typeof dateStr !== 'string') {
+            console.warn('Ngày không hợp lệ:', dateStr);
+            return false;
+        }
+        try {
+            const notificationDate = parse(dateStr, 'dd-MM-yyyy HH:mm:ss', new Date());
+            if (isNaN(notificationDate.getTime())) {
+                console.warn('Lỗi phân tích ngày:', dateStr);
+                return false;
+            }
+            return isSameDay(notificationDate, new Date());
+        } catch (e) {
+            console.warn('Lỗi phân tích ngày:', dateStr, e);
+            return false;
+        }
+    };
+
+    const isThisWeek = (dateStr) => {
+        if (!dateStr || typeof dateStr !== 'string') {
+            console.warn('Ngày không hợp lệ:', dateStr);
+            return false;
+        }
+        try {
+            const notificationDate = parse(dateStr, 'dd-MM-yyyy HH:mm:ss', new Date());
+            if (isNaN(notificationDate.getTime())) {
+                console.warn('Lỗi phân tích ngày:', dateStr);
+                return false;
+            }
+            const today = new Date();
+            return isWithinInterval(notificationDate, {
+                start: startOfWeek(today, { weekStartsOn: 1 }),
+                end: endOfWeek(today, { weekStartsOn: 1 }),
+            });
+        } catch (e) {
+            console.warn('Lỗi phân tích ngày:', dateStr, e);
+            return false;
+        }
+    };
+
+    const isThisMonth = (dateStr) => {
+        if (!dateStr || typeof dateStr !== 'string') {
+            console.warn('Ngày không hợp lệ:', dateStr);
+            return false;
+        }
+        try {
+            const notificationDate = parse(dateStr, 'dd-MM-yyyy HH:mm:ss', new Date());
+            if (isNaN(notificationDate.getTime())) {
+                console.warn('Lỗi phân tích ngày:', dateStr);
+                return false;
+            }
+            const today = new Date();
+            return isWithinInterval(notificationDate, {
+                start: startOfMonth(today),
+                end: endOfMonth(today),
+            });
+        } catch (e) {
+            console.warn('Lỗi phân tích ngày:', dateStr, e);
+            return false;
+        }
+    };
+
+    const filteredNotifications = notifications.filter((notification) => {
+        const typeVietnameseName = typeDisplayNames[notification.type] || notification.type;
+        const matchesSearch =
+            (notification.content?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                typeVietnameseName.toLowerCase().includes(searchTerm.toLowerCase())) ?? true;
+        const matchesType = typeFilter === 'all' || notification.type === typeFilter;
+        const matchesRelatedEntityType = relatedEntityTypeFilter === 'all' || notification.relatedEntityType === relatedEntityTypeFilter;
+        const matchesDate =
+            dateFilter === 'all' ||
+            (dateFilter === 'today' && isToday(notification.createdAt)) ||
+            (dateFilter === 'week' && isThisWeek(notification.createdAt)) ||
+            (dateFilter === 'month' && isThisMonth(notification.createdAt));
+        const matchesRead =
+            readFilter === 'all' ||
+            (readFilter === 'read' && notification.userNotifications.every(un => un.isRead)) ||
+            (readFilter === 'unread' && notification.userNotifications.some(un => !un.isRead));
+        return matchesSearch && matchesType && matchesRelatedEntityType && matchesDate && matchesRead;
+    });
+
+    const totalPages = Math.ceil(filteredNotifications.length / itemsPerPage);
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    const paginatedNotifications = filteredNotifications.slice(startIndex, endIndex);
+
+    const goToPage = (page) => {
+        if (page >= 1 && page <= totalPages) {
+            setCurrentPage(page);
+        }
+    };
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchTerm, typeFilter, dateFilter, readFilter]);
+
+    const totalNotifications = notifications.length;
+    const unreadNotifications = notifications.reduce(
+        (count, n) => count + n.userNotifications.filter((un) => !un.isRead).length,
+        0
     );
+    const recentNotifications = notifications.filter((n) => isThisWeek(n.createdAt)).length;
+
+    // Hàm xác định trạng thái thông báo
+    const getNotificationStatus = (notification) => {
+        const isRead = notification.userNotifications.every(un => un.isRead);
+        const baseClass = "font-medium rounded px-2 py-1 text-sm min-w-[80px] text-center inline-block";
+
+        return isRead ? (
+            <span className={`${baseClass} text-green-600 border border-green-600`}>Đã đọc</span>
+        ) : (
+            <span className={`${baseClass} text-red-600 border border-red-600`}>Chưa đọc</span>
+        );
+    };
+
+
+    // Hàm mở dialog chi tiết
+    const openDetailDialog = (notification) => {
+        setSelectedNotification(notification);
+        setIsDetailDialogOpen(true);
+    };
 
     if (loading) {
         return (
@@ -173,16 +303,23 @@ const Notifications = () => {
     }
 
     return (
-        <div className="p-6 space-y-6 w-full">
-            {/* Phần tiêu đề */}
-            <div className="flex justify-between items-center">
-                <div className="space-y-1">
-                    <h1 className="text-2xl font-bold tracking-tight text-pink-500">Quản lý thông báo</h1>
-                    <p className="text-muted-foreground">Quản lý và gửi thông báo đến người dùng</p>
+        <div className="container mx-auto px-4 py-8 w-full">
+            <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center">
+                    <Button
+                        variant="outline"
+                        className="mr-4"
+                        onClick={() => navigate('/admin/dashboard')}
+                    >
+                        <FaArrowLeft className="mr-2" /> Quay lại
+                    </Button>
+                    <h1 className="text-2xl font-bold text-pink-500">
+                        Quản lý thông báo
+                    </h1>
                 </div>
                 <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
                     <DialogTrigger asChild>
-                        <Button onClick={resetForm} className="bg-pink-500 hover:bg-pink-600 flex items-center">
+                        <Button>
                             <Plus className="h-4 w-4 mr-2" />
                             Thêm thông báo
                         </Button>
@@ -203,9 +340,9 @@ const Notifications = () => {
                                         <SelectValue placeholder="Chọn loại thông báo" />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="LessonApproval">Phê duyệt bài học</SelectItem>
-                                        <SelectItem value="NewMessage">Tin nhắn mới</SelectItem>
-                                        <SelectItem value="CourseEnrollment">Đăng ký khóa học</SelectItem>
+                                        {Object.entries(typeDisplayNames).map(([value, label]) => (
+                                            <SelectItem key={value} value={value}>{label}</SelectItem>
+                                        ))}
                                     </SelectContent>
                                 </Select>
                             </div>
@@ -248,7 +385,7 @@ const Notifications = () => {
                                     placeholder="Ví dụ: 123e4567-e89b-12d3-a456-426614174000,987fcdeb-1234-5678-9abc-def123456789"
                                 />
                             </div>
-                            <Button type="submit" className="w-full bg-pink-500 hover:bg-pink-600">
+                            <Button type="submit" className="w-full">
                                 Thêm mới
                             </Button>
                         </form>
@@ -256,99 +393,177 @@ const Notifications = () => {
                 </Dialog>
             </div>
 
-            {/* Thẻ thống kê */}
-            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 w-[calc(1420px-250px)]">
-                <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-200 border-l-4 border-pink-500">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-lg font-medium">Tổng số thông báo</CardTitle>
-                        <Bell className="h-6 w-6 text-pink-500" />
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-sm font-medium">Tổng số thông báo</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-pink-500">{notifications.length}</div>
-                        <p className="text-sm text-gray-500 mt-1">Tổng số thông báo đã gửi</p>
+                        <p className="text-2xl font-bold text-pink-500">{totalNotifications}</p>
                     </CardContent>
                 </Card>
-                <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-200 border-l-4 border-green-500">
-                    <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                        <CardTitle className="text-lg font-medium">Thông báo chưa đọc</CardTitle>
-                        <Bell className="h-6 w-6 text-green-500" />
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-sm font-medium">Thông báo chưa đọc</CardTitle>
                     </CardHeader>
                     <CardContent>
-                        <div className="text-2xl font-bold text-green-500">
-                            {notifications.reduce(
-                                (count, n) => count + n.userNotifications.filter((un) => !un.isRead).length,
-                                0
-                            )}
-                        </div>
-                        <p className="text-sm text-gray-500 mt-1">Thông báo chưa được người dùng đọc</p>
+                        <p className="text-2xl font-bold text-pink-500">{unreadNotifications}</p>
+                    </CardContent>
+                </Card>
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="text-sm font-medium">Thông báo mới (tuần này)</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <p className="text-2xl font-bold text-pink-500">{recentNotifications}</p>
                     </CardContent>
                 </Card>
             </div>
 
-            {/* Nội dung chính */}
-            <Card className="bg-white shadow-sm">
-                <CardHeader className="pb-3">
-                    <div className="flex items-center justify-between">
-                        <CardTitle className="text-lg font-medium">Danh sách thông báo</CardTitle>
-                        <div className="flex items-center gap-4">
-                            <div className="relative">
-                                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
-                                <Input
-                                    placeholder="Tìm kiếm thông báo..."
-                                    value={searchTerm}
-                                    onChange={(e) => setSearchTerm(e.target.value)}
-                                    className="pl-10 w-[300px]"
-                                />
-                            </div>
-                            <Button variant="outline" className="gap-2">
-                                <Filter className="h-6 w-6" />
-                                Lọc
-                            </Button>
+            <Card className="mb-6">
+                <CardContent className="pt-6">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                        <div className="relative">
+                            <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
+                            <Input
+                                placeholder="Tìm kiếm theo nội dung hoặc loại (tiếng Việt)"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                className="pl-8"
+                            />
                         </div>
-                    </div>
-                </CardHeader>
-                <CardContent>
-                    <div className="rounded-md border">
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead className="text-pink-500">Loại</TableHead>
-                                    <TableHead className="text-pink-500">Nội dung</TableHead>
-                                    <TableHead className="text-pink-500">Ngày tạo</TableHead>
-                                    <TableHead className="text-pink-500">Người nhận</TableHead>
-                                    <TableHead className="text-pink-500">Thao tác</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {filteredNotifications.map((notification) => (
-                                    <TableRow key={notification.id}>
-                                        <TableCell>{notification.type}</TableCell>
-                                        <TableCell>{notification.content}</TableCell>
-                                        <TableCell>{notification.createdAt}</TableCell>
-                                        <TableCell>
-                                            {notification.userNotifications.map((un) => (
-                                                <div key={un.id}>
-                                                    {userNames[un.userId] || 'Đang tải...'} ({un.isRead ? 'Đã đọc' : 'Chưa đọc'})
-                                                </div>
-                                            ))}
-                                        </TableCell>
-                                        <TableCell className="text-right">
-                                            <Button
-                                                variant="ghost"
-                                                size="icon"
-                                                onClick={() => handleDelete(notification.id)}
-                                                className="text-red-500 hover:text-red-700 hover:bg-red-100"
-                                            >
-                                                <Trash2 className="h-6 w-6" />
-                                            </Button>
-                                        </TableCell>
-                                    </TableRow>
+                        <Select value={typeFilter} onValueChange={setTypeFilter}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Lọc theo loại thông báo" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Tất cả loại</SelectItem>
+                                {Object.entries(typeDisplayNames).map(([value, label]) => (
+                                    <SelectItem key={value} value={value}>{label}</SelectItem>
                                 ))}
-                            </TableBody>
-                        </Table>
+                            </SelectContent>
+                        </Select>
+                        <Select value={dateFilter} onValueChange={setDateFilter}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Lọc theo thời gian" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Tất cả thời gian</SelectItem>
+                                <SelectItem value="today">Hôm nay</SelectItem>
+                                <SelectItem value="week">Tuần này</SelectItem>
+                                <SelectItem value="month">Tháng này</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <Select value={readFilter} onValueChange={setReadFilter}>
+                            <SelectTrigger>
+                                <SelectValue placeholder="Lọc theo trạng thái đọc" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">Tất cả trạng thái</SelectItem>
+                                <SelectItem value="read">Đã đọc</SelectItem>
+                                <SelectItem value="unread">Chưa đọc</SelectItem>
+                            </SelectContent>
+                        </Select>
                     </div>
                 </CardContent>
             </Card>
+
+            {!loading && !error && (
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Danh sách thông báo</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Loại</TableHead>
+                                    <TableHead>Nội dung</TableHead>
+                                    <TableHead>Ngày tạo</TableHead>
+                                    <TableHead>Trạng thái</TableHead>
+                                    <TableHead>Người nhận</TableHead>
+                                    <TableHead>Thao tác</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {paginatedNotifications.length > 0 ? (
+                                    paginatedNotifications.map((notification) => (
+                                        <TableRow key={notification.id}>
+                                            <TableCell>{typeDisplayNames[notification.type] || notification.type}</TableCell>
+                                            <TableCell>{notification.content}</TableCell>
+                                            <TableCell>{formatDate(notification.createdAt)}</TableCell>
+                                            <TableCell>{getNotificationStatus(notification)}</TableCell>
+                                            <TableCell>
+                                                {notification.userNotifications.map((un) => (
+                                                    <div key={un.id}>
+                                                        {userNames[un.userId] || 'Đang tải...'}
+                                                    </div>
+                                                ))}
+                                            </TableCell>
+                                            <TableCell className="text-right">
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => navigate(`/admin/notification/${notification.id}`)}
+                                                    className="text-blue-500 hover:text-blue-700 hover:bg-blue-100 mr-2"
+                                                >
+                                                    <Eye className="h-6 w-6" />
+                                                </Button>
+                                                <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    onClick={() => handleDelete(notification.id)}
+                                                    className="text-red-500 hover:text-red-700 hover:bg-red-100"
+                                                >
+                                                    <Trash2 className="h-6 w-6" />
+                                                </Button>
+                                            </TableCell>
+                                        </TableRow>
+                                    ))
+                                ) : (
+                                    <TableRow>
+                                        <TableCell colSpan={6} className="text-center">
+                                            Không có thông báo nào phù hợp
+                                        </TableCell>
+                                    </TableRow>
+                                )}
+                            </TableBody>
+                        </Table>
+
+                        {totalPages > 1 && (
+                            <div className="flex justify-between items-center mt-4">
+                                <Button
+                                    disabled={currentPage === 1}
+                                    onClick={() => goToPage(currentPage - 1)}
+                                    variant="outline"
+                                >
+                                    Trước
+                                </Button>
+                                <div className="flex space-x-2">
+                                    {Array.from({ length: totalPages }, (_, index) => (
+                                        <Button
+                                            key={index + 1}
+                                            variant={currentPage === index + 1 ? 'default' : 'outline'}
+                                            onClick={() => goToPage(index + 1)}
+                                        >
+                                            {index + 1}
+                                        </Button>
+                                    ))}
+                                </div>
+                                <Button
+                                    disabled={currentPage === totalPages}
+                                    onClick={() => goToPage(currentPage + 1)}
+                                    variant="outline"
+                                >
+                                    Tiếp theo
+                                </Button>
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
+            )}
+
+
         </div>
     );
 };

@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   User,
   Calendar,
@@ -7,15 +7,21 @@ import {
   BarChart3,
   Bell,
   Search,
-  Menu,
-  Home,
-  Settings,
-  HelpCircle,
-  LogOut,
+  Trash2, // Thêm Trash2
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { useSelector, useDispatch } from 'react-redux';
+import { useNavigate } from 'react-router-dom'; // Thêm useNavigate
+import { Button } from '@/components/ui/button'; // Thêm Button
+import { getNotificationsByUser, markNotificationAsRead, deleteNotification } from '@/api/notificationApi';
+import { getUserId } from '@/api/authUtils';
+import { formatDate } from '@/utils/formatDate';
+import { toast } from 'react-toastify';
+import { setNotifications, markNotificationAsRead as markNotificationAsReadAction, deleteNotification as deleteNotificationAction } from '@/reducers/notificationReducer';
+import { getCommentById } from '@/api/commentApi'; // Thêm getCommentById
+import { parse, format } from 'date-fns'; // Thêm date-fns
 
-// Dữ liệu mẫu
+// Dữ liệu mẫu (giữ nguyên)
 const studentPerformanceData = [
   { name: 'Tuần 1', average: 65 },
   { name: 'Tuần 2', average: 70 },
@@ -26,30 +32,9 @@ const studentPerformanceData = [
 ];
 
 const upcomingClasses = [
-  {
-    id: 1,
-    title: 'Lập trình Web nâng cao',
-    time: '09:00 AM - 11:00 AM',
-    date: 'Hôm nay',
-    students: 28,
-    room: 'A203',
-  },
-  {
-    id: 2,
-    title: 'Cơ sở dữ liệu',
-    time: '01:00 PM - 03:00 PM',
-    date: 'Hôm nay',
-    students: 32,
-    room: 'B101',
-  },
-  {
-    id: 3,
-    title: 'Thuật toán và cấu trúc dữ liệu',
-    time: '09:00 AM - 12:00 PM',
-    date: 'Ngày mai',
-    students: 25,
-    room: 'C305',
-  },
+  { id: 1, title: 'Lập trình Web nâng cao', time: '09:00 AM - 11:00 AM', date: 'Hôm nay', students: 28, room: 'A203' },
+  { id: 2, title: 'Cơ sở dữ liệu', time: '01:00 PM - 03:00 PM', date: 'Hôm nay', students: 32, room: 'B101' },
+  { id: 3, title: 'Thuật toán và cấu trúc dữ liệu', time: '09:00 AM - 12:00 PM', date: 'Ngày mai', students: 25, room: 'C305' },
 ];
 
 const courses = [
@@ -57,12 +42,6 @@ const courses = [
   { id: 2, title: 'Cơ sở dữ liệu', students: 32, completed: 32, total: 48 },
   { id: 3, title: 'Thuật toán và cấu trúc dữ liệu', students: 25, completed: 18, total: 36 },
   { id: 4, title: 'Lập trình hướng đối tượng', students: 30, completed: 24, total: 45 },
-];
-
-const notifications = [
-  { id: 1, content: 'Sinh viên Nguyễn Văn A đã nộp bài tập', time: '10 phút trước' },
-  { id: 2, content: 'Lịch họp khoa vào ngày 12/05/2025', time: '1 giờ trước' },
-  { id: 3, content: 'Hạn chấm điểm giữa kỳ: 15/05/2025', time: '2 giờ trước' },
 ];
 
 // Biểu đồ theo dõi tiến độ khóa học
@@ -89,6 +68,100 @@ const StatCard = ({ icon, title, value, bgColor }) => {
 };
 
 export default function InstructorDashboard() {
+  const dispatch = useDispatch();
+  const navigate = useNavigate(); // Thêm navigate
+  const notifications = useSelector((state) => state.notifications.notifications || []);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false); // State cho dropdown
+  const userId = getUserId();
+
+  // Hàm lấy thông báo
+  const fetchNotifications = async () => {
+    if (userId) {
+      try {
+        const response = await getNotificationsByUser(userId);
+        dispatch(setNotifications(response || []));
+        setIsLoading(false);
+      } catch (err) {
+        console.error('Lỗi khi lấy thông báo:', err);
+        setError(err.message || 'Không thể tải thông báo');
+        setIsLoading(false);
+        toast.error('Không thể tải thông báo. Vui lòng thử lại!');
+      }
+    } else {
+      setError('Không tìm thấy ID người dùng. Vui lòng đăng nhập lại.');
+      setIsLoading(false);
+      toast.error('Vui lòng đăng nhập để xem thông báo!');
+    }
+  };
+
+  // Tải thông báo khi mount
+  useEffect(() => {
+    fetchNotifications();
+    const intervalId = setInterval(() => {
+      if (userId) {
+        console.log('Polling fetchNotifications');
+        fetchNotifications();
+      }
+    }, 30000);
+    return () => clearInterval(intervalId);
+  }, [userId, dispatch]);
+
+  // Hàm xử lý nhấp vào thông báo
+  const handleNotificationClick = async (notification) => {
+    const entityId = notification.relatedEntityId;
+    const entityType = notification.relatedEntityType;
+
+    try {
+      if (entityType === 'Comment' && entityId) {
+        const commentResponse = await getCommentById(entityId);
+        const postId = commentResponse?.postId;
+        if (postId) {
+          navigate(`/detailspost/${postId}`);
+        } else {
+          toast.error('Không thể điều hướng: Không tìm thấy bài viết!');
+        }
+      } else if (entityType === 'Course' && entityId) {
+        navigate(`/details/${entityId}`);
+      } else if (entityType === 'Review' && entityId) {
+        navigate(`/details/${entityId}`);
+      } else {
+        toast.error('Không thể điều hướng: Thông tin không hợp lệ!');
+      }
+    } catch (error) {
+      toast.error('Không thể điều hướng: Lỗi khi lấy dữ liệu!');
+    }
+    setIsNotificationsOpen(false);
+  };
+
+  // Hàm đánh dấu đã đọc
+  const handleMarkAsRead = async (notificationId) => {
+    try {
+      if (!userId) {
+        throw new Error('Không tìm thấy ID người dùng');
+      }
+      await markNotificationAsRead(notificationId, userId);
+      dispatch(markNotificationAsReadAction({ notificationId, userId }));
+      toast.success('Đã đánh dấu thông báo là đã đọc!');
+    } catch (error) {
+      console.error('Lỗi khi đánh dấu thông báo:', error.response?.data || error);
+      toast.error(error.response?.data?.message || error.message || 'Không thể đánh dấu thông báo!');
+    }
+  };
+
+  // Hàm xóa thông báo
+  const handleDeleteNotification = async (notificationId) => {
+    try {
+      await deleteNotification(notificationId);
+      dispatch(deleteNotificationAction(notificationId));
+      toast.success('Xóa thông báo thành công!');
+    } catch (error) {
+      console.error('Lỗi khi xóa thông báo:', error);
+      toast.error('Không thể xóa thông báo!');
+    }
+  };
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
       {/* Header */}
@@ -104,10 +177,108 @@ export default function InstructorDashboard() {
           </div>
 
           <div className="flex items-center space-x-4">
-            <button className="relative p-2 rounded-full hover:bg-gray-100">
-              <Bell size={20} />
-              <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
-            </button>
+            <div className="relative">
+              <button
+                className="relative p-2 rounded-full hover:bg-gray-100"
+                onClick={() => setIsNotificationsOpen(!isNotificationsOpen)}
+              >
+                <Bell size={20} />
+                {notifications.some((n) => n.userNotifications.some((un) => !un.isRead && un.userId === userId)) && (
+                  <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                )}
+              </button>
+              {isNotificationsOpen && (
+                <div className="absolute right-0 mt-2 w-80 bg-white shadow-lg rounded-lg z-50 max-h-96 overflow-y-auto">
+                  {notifications.length === 0 ? (
+                    <p className="p-4 text-gray-500 text-center">Không có thông báo</p>
+                  ) : (
+                    [...notifications]
+                      .sort((a, b) => {
+                        const dateA = a.createdAt
+                          ? parse(a.createdAt, "dd-MM-yyyy HH:mm:ss", new Date())
+                          : new Date(0);
+                        const dateB = b.createdAt
+                          ? parse(b.createdAt, "dd-MM-yyyy HH:mm:ss", new Date())
+                          : new Date(0);
+                        return dateB.getTime() - dateA.getTime();
+                      })
+                      .map((notification) => {
+                        const userNotification = notification.userNotifications.find((un) => un.userId === userId);
+                        if (!userNotification) return null;
+
+                        return (
+                          <div
+                            key={notification.id}
+                            className={`p-3 border-b flex justify-between items-center ${!userNotification.isRead ? 'bg-gray-50' : ''
+                              } cursor-pointer hover:bg-gray-100`}
+                            onClick={() => handleNotificationClick(notification)}
+                          >
+                            <div className="flex-1">
+                              <p
+                                className="text-sm font-semibold overflow-hidden"
+                                style={{
+                                  display: '-webkit-box',
+                                  WebkitLineClamp: 2,
+                                  WebkitBoxOrient: 'vertical',
+                                }}
+                              >
+                                {notification.content}
+                              </p>
+
+                              <div className="flex justify-between items-center text-xs text-gray-500 gap-2 mt-1">
+                                <span>
+                                  {notification.createdAt
+                                    ? (() => {
+                                      try {
+                                        const parsedDate = parse(
+                                          notification.createdAt,
+                                          "dd-MM-yyyy HH:mm:ss",
+                                          new Date()
+                                        );
+                                        return isNaN(parsedDate.getTime())
+                                          ? "Ngày không hợp lệ"
+                                          : format(parsedDate, "dd/MM/yyyy HH:mm:ss");
+                                      } catch (error) {
+                                        return "Ngày không hợp lệ";
+                                      }
+                                    })()
+                                    : "Ngày không hợp lệ"}
+                                </span>
+                                <span>{userNotification.isRead ? 'Đã đọc' : 'Chưa đọc'}</span>
+                              </div>
+
+                              {!userNotification.isRead && (
+                                <button
+                                  className="text-blue-500 hover:text-blue-700 text-xs mt-1"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleMarkAsRead(notification.id);
+                                  }}
+                                >
+                                  Đánh dấu đã đọc
+                                </button>
+                              )}
+                            </div>
+
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleDeleteNotification(notification.id);
+                              }}
+                              className="text-red-500 hover:text-red-700 ml-2"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        );
+                      })
+                      .filter(Boolean)
+                  )}
+                </div>
+              )}
+            </div>
             <div className="flex items-center space-x-2">
               <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center">
                 <User size={20} className="text-white" />
@@ -184,20 +355,42 @@ export default function InstructorDashboard() {
               <h2 className="text-lg font-bold text-gray-800">Thông báo mới nhất</h2>
             </div>
             <div className="p-6">
-              <div className="space-y-4">
-                {notifications.map((notification) => (
-                  <div
-                    key={notification.id}
-                    className="flex items-start pb-4 border-b border-gray-100 last:border-0 last:pb-0"
-                  >
-                    <div className="flex-shrink-0 w-2 h-2 mt-2 rounded-full bg-blue-500"></div>
-                    <div className="ml-3">
-                      <p className="text-sm text-gray-800">{notification.content}</p>
-                      <p className="text-xs text-gray-500 mt-1">{notification.time}</p>
+              {isLoading ? (
+                <p className="text-center text-gray-500">Đang tải thông báo...</p>
+              ) : error ? (
+                <p className="text-center text-red-500">{error}</p>
+              ) : notifications.length === 0 ? (
+                <p className="text-center text-gray-500">Chưa có thông báo nào.</p>
+              ) : (
+                <div className="space-y-4">
+                  {notifications.map((notification) => (
+                    <div
+                      key={notification.id}
+                      className="flex items-start pb-4 border-b border-gray-100 last:border-0 last:pb-0"
+                    >
+                      <div
+                        className={`flex-shrink-0 w-2 h-2 mt-2 rounded-full ${notification.userNotifications?.[0]?.isRead
+                          ? 'bg-gray-400'
+                          : 'bg-blue-500'
+                          }`}
+                      ></div>
+                      <div className="ml-3">
+                        <p
+                          className={`text-sm ${notification.userNotifications?.[0]?.isRead
+                            ? 'text-gray-500'
+                            : 'text-gray-800'
+                            }`}
+                        >
+                          {notification.content}
+                        </p>
+                        <p className="text-xs text-gray-500 mt-1">
+                          {formatDate(notification.createdAt)}
+                        </p>
+                      </div>
                     </div>
-                  </div>
-                ))}
-              </div>
+                  ))}
+                </div>
+              )}
             </div>
             <div className="p-4 border-t text-center">
               <a href="#" className="text-blue-600 hover:text-blue-800 text-sm font-medium">
@@ -273,15 +466,15 @@ export default function InstructorDashboard() {
               <thead>
                 <tr className="bg-gray-50">
                   <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
-                    Khóa học
+                    Tên khóa học
                   </th>
-                  <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="text-left px-6 py-3 text-sm font-medium text-gray-500">
                     Sinh viên
                   </th>
-                  <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="text-left px-6 py-3 text-sm font-medium text-gray-600">
                     Tiến độ
                   </th>
-                  <th className="text-left px-6 py-3 text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="text-left px-6 py-3 text-sm font-medium text-gray-700 uppercase tracking-wider">
                     Hoàn thành
                   </th>
                 </tr>
