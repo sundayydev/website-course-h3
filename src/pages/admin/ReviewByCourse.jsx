@@ -11,7 +11,7 @@ import defaultAvatar from '../../assets/imgs/default-avatar.jpg';
 import { Input } from '@/components/ui/input';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Search } from 'lucide-react';
-import { parse, isSameDay, isWithinInterval, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
+import { isSameDay, isWithinInterval, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
 
 function ReviewByCourse() {
   const { courseId } = useParams();
@@ -27,11 +27,7 @@ function ReviewByCourse() {
     setLoading(true);
     try {
       const reviewData = await getReviewsByCourseId(courseId);
-      reviewData.sort((a, b) => {
-        const dateA = parse(a.createdAt, 'dd-MM-yyyy HH:mm:ss', new Date());
-        const dateB = parse(b.createdAt, 'dd-MM-yyyy HH:mm:ss', new Date());
-        return dateB - dateA;
-      });
+      reviewData.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
       setReviews(reviewData);
     } catch (err) {
       setError('Không thể tải danh sách bình luận');
@@ -52,7 +48,7 @@ function ReviewByCourse() {
       return false;
     }
     try {
-      const reviewDate = parse(date, 'dd-MM-yyyy HH:mm:ss', new Date());
+      const reviewDate = new Date(date);
       if (isNaN(reviewDate.getTime())) {
         console.warn('Failed to parse date:', date);
         return false;
@@ -70,7 +66,7 @@ function ReviewByCourse() {
       return false;
     }
     try {
-      const reviewDate = parse(date, 'dd-MM-yyyy HH:mm:ss', new Date());
+      const reviewDate = new Date(date);
       if (isNaN(reviewDate.getTime())) {
         console.warn('Failed to parse date:', date);
         return false;
@@ -92,7 +88,7 @@ function ReviewByCourse() {
       return false;
     }
     try {
-      const reviewDate = parse(date, 'dd-MM-yyyy HH:mm:ss', new Date());
+      const reviewDate = new Date(date);
       if (isNaN(reviewDate.getTime())) {
         console.warn('Failed to parse date:', date);
         return false;
@@ -168,7 +164,7 @@ function ReviewByCourse() {
         <div className="flex items-center">
           <Button
             variant="outline"
-            className="mr-4 hover:bg-pink-50 hover:text-pink-600"
+            className="mr-4"
             onClick={() => navigate('/admin/course')}
           >
             <FaArrowLeft className="mr-2" /> Quay lại
@@ -250,26 +246,26 @@ function ReviewByCourse() {
 
       {loading && (
         <div className="flex justify-center my-8">
-          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-pink-500"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
         </div>
       )}
       {!loading && error && (
-        <div className="text-red-500 text-center text-lg font-medium">{error}</div>
+        <div className="text-red-500 text-center">{error}</div>
       )}
       {!loading && !error && (
-        <Card className="shadow-lg">
-          <CardHeader className="bg-pink-50">
-            <CardTitle className="text-xl text-pink-600">Danh sách bình luận</CardTitle>
+        <Card>
+          <CardHeader>
+            <CardTitle>Danh sách bình luận</CardTitle>
           </CardHeader>
-          <CardContent className="p-6">
+          <CardContent>
             <Table>
               <TableHeader>
-                <TableRow className="bg-gray-50">
-                  <TableHead className="font-semibold">ID</TableHead>
-                  <TableHead className="font-semibold">Nội dung</TableHead>
-                  <TableHead className="font-semibold text-center">Đánh giá</TableHead>
-                  <TableHead className="font-semibold">Tác giả</TableHead>
-                  <TableHead className="font-semibold">Ngày tạo</TableHead>
+                <TableRow>
+                  <TableHead>ID</TableHead>
+                  <TableHead>Nội dung</TableHead>
+                  <TableHead>Đánh giá</TableHead>
+                  <TableHead>Tác giả</TableHead>
+                  <TableHead>Ngày tạo</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -277,7 +273,7 @@ function ReviewByCourse() {
                   filteredReviews.map(review => renderComment(review))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                    <TableCell colSpan={5} className="text-center">
                       Không có đánh giá nào phù hợp
                     </TableCell>
                   </TableRow>

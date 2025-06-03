@@ -13,6 +13,10 @@ import { ProtectedRouteAdmin } from './ProtectedRoute';
 import CommentByPost from '../pages/admin/CommentByPost';
 import Instructors from '../pages/admin/Instructors.jsx';
 import ReviewByCourse from '../pages/admin/ReviewByCourse.jsx';
+import EmailManagement from '../pages/admin/email/EmailManagement.jsx';
+import NotificationDetail from '../pages/admin/notifications/NotificationDetail.jsx';
+import EmailDetail from '../pages/admin/email/EmailDetail.jsx';
+
 const AdminRoutes = {
   path: '/admin',
   element: (
@@ -32,9 +36,12 @@ const AdminRoutes = {
     { path: 'payment-management', element: <PaymentManagement /> }, // /admin/payment-management
     { path: 'comment', element: <Comment /> }, // /admin/comment
     { path: 'post-management', element: <PostManagement /> }, // /admin/post-management
-    { path: 'Notifications', element: <Notifications /> }, // /admin/userNotification
+    { path: 'notifications', element: <Notifications /> }, // /admin/userNotification
     { path: "comments/:postId", element: < CommentByPost /> },
-    { path: "reviews/:courseId", element: <ReviewByCourse /> }
+    { path: "reviews/:courseId", element: <ReviewByCourse /> },
+    { path: "emails", element: <EmailManagement /> },
+    { path: "notification/:notificationId", element: <NotificationDetail /> },
+    { path: 'email/:emailId', element: <EmailDetail /> },
   ],
 };
 

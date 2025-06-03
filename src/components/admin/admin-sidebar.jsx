@@ -15,6 +15,7 @@ import {
   LogOut,
   ChevronDown,
   ChevronRight,
+  Mail,
 } from 'lucide-react';
 import LogoH3 from '@/assets/LogoH3.png';
 
@@ -33,7 +34,8 @@ const sidebarItems = [
       { icon: <GraduationCap size={16} />, text: 'Khóa học', path: '/admin/courses' },
       { icon: <BookOpenText size={16} />, text: 'Bài viết', path: '/admin/post-management?page=1' },
       { icon: <MessageSquare size={16} />, text: 'Bình luận', path: '/admin/comment' },
-      { icon: <BookOpen size={16} />, text: 'Thông báo', path: '/admin/Notifications' },
+      { icon: <BookOpen size={16} />, text: 'Thông báo', path: '/admin/notifications?page=1' },
+      { icon: <Mail size={16} />, text: 'Email', path: '/admin/emails' },
     ],
   },
   {
