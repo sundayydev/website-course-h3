@@ -21,6 +21,7 @@ export const createPayment = async (orderData) => {
     const formattedOrderData = {
       UserId: orderData.userId,
       Amount: orderData.amount,
+      Status: orderData.amount === 0 ? 'Paid' : 'Pending',
       OrderDetails: [
         {
           CourseId: orderData.courseId,
@@ -30,6 +31,11 @@ export const createPayment = async (orderData) => {
         },
       ],
     };
+
+    // Kiểm tra nếu có couponId nhưng discountAmount không hợp lệ
+    if (formattedOrderData.OrderDetails[0].CouponId && formattedOrderData.OrderDetails[0].DiscountAmount <= 0) {
+      throw new Error('Số tiền giảm giá không hợp lệ cho mã coupon.');
+    }
 
     console.log('Dữ liệu đơn hàng gửi đi:', formattedOrderData);
     console.log('Token:', token);

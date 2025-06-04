@@ -253,7 +253,7 @@ const CourseList = () => {
           Không có khóa học phù hợp
         </div>
       ) : (
-        <div className="flex flex-wrap justify-start gap-10">
+        <div className="flex flex-wrap justify-start gap-5">
           {courses.map((course) => (
             <div
               key={course.id}

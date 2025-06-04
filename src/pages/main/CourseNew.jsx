@@ -269,7 +269,7 @@ const CourseNew = () => {
         </div>
       </div>
       {newCourses.length > 0 ? (
-        <div className="flex flex-wrap justify-start gap-10 mb-8">
+        <div className="flex flex-wrap justify-start gap-5 mb-8">
           {newCourses.map((course) => (
             <div
               key={course.id}

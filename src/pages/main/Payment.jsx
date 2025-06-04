@@ -5,7 +5,7 @@ import { jwtDecode } from 'jwt-decode';
 import { createPayment } from '@/api/paymentApi';
 import { getCourseById } from '@/api/courseApi';
 import axios from 'axios';
-
+import { getCouponByCode } from '@/api/couponApi';
 const API_URL = process.env.VITE_API_URL || 'http://localhost:5221/api';
 
 const getUserIdFromToken = () => {
@@ -27,11 +27,13 @@ const PaymentModal = ({ courseId, onClose }) => {
   const [total, setTotal] = useState(0);
   const [originalTotal, setOriginalTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(false);
+  const [isApplyingCoupon, setIsApplyingCoupon] = useState(false);
   const [course, setCourse] = useState(null);
   const [errorMessage, setErrorMessage] = useState(null);
   const [couponCode, setCouponCode] = useState('');
   const [discountAmount, setDiscountAmount] = useState(0);
   const [couponId, setCouponId] = useState(null);
+  const [isCouponValid, setIsCouponValid] = useState(true);
   const navigate = useNavigate();
   const userId = getUserIdFromToken();
 
@@ -57,27 +59,38 @@ const PaymentModal = ({ courseId, onClose }) => {
   }, [courseId, userId, navigate]);
 
   const applyCoupon = async () => {
-    if (!couponCode) return setErrorMessage('Vui lòng nhập mã coupon!');
+    if (!couponCode) {
+      setErrorMessage('Vui lòng nhập mã coupon!');
+      setIsCouponValid(false);
+      return;
+    }
+    setIsApplyingCoupon(true); // Bắt đầu loading
     try {
-      const response = await axios.get(`${API_URL}/Coupon/code/${couponCode}`, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('authToken')}` },
-      });
-
-      const coupon = response.data;
+      const coupon = await getCouponByCode(couponCode); // Sử dụng getCouponByCode
       const now = new Date();
-      if (!coupon.isActive || now < new Date(coupon.startDate) || now > new Date(coupon.endDate))
-        return setErrorMessage('Mã coupon không hợp lệ hoặc đã hết hạn!');
+      if (!coupon.data.isActive || now < new Date(coupon.data.startDate) || now > new Date(coupon.data.endDate)) {
+        setErrorMessage('Mã coupon không hợp lệ hoặc đã hết hạn!');
+        setIsCouponValid(false);
+        return;
+      }
 
-      if (coupon.currentUsage >= coupon.maxUsage)
-        return setErrorMessage('Mã coupon đã được sử dụng hết!');
+      if (coupon.data.currentUsage >= coupon.data.maxUsage) {
+        setErrorMessage('Mã coupon đã được sử dụng hết!');
+        setIsCouponValid(false);
+        return;
+      }
 
-      const discount = (originalTotal * coupon.discountPercentage) / 100;
+      const discount = (originalTotal * coupon.data.discountPercentage) / 100;
       setDiscountAmount(discount);
       setTotal(originalTotal - discount);
-      setCouponId(coupon.id);
+      setCouponId(coupon.data.id);
       setErrorMessage(null);
-    } catch {
-      setErrorMessage('Mã coupon không hợp lệ!');
+      setIsCouponValid(true);
+    } catch (error) {
+      setErrorMessage(error.message);
+      setIsCouponValid(false);
+    } finally {
+      setIsApplyingCoupon(false); // K‘Them trạng thái loadingết thúc loading
     }
   };
 
@@ -176,10 +189,11 @@ const PaymentModal = ({ courseId, onClose }) => {
                 className="flex-1 px-3 py-2 border rounded"
               />
               <button
-                onClick={applyCoupon}
-                className="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                  onClick={applyCoupon}
+                  disabled={isApplyingCoupon}
+                  className={`bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 ${isApplyingCoupon ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
-                Áp dụng
+                {isApplyingCoupon ? 'Đang kiểm tra...' : 'Áp dụng'}
               </button>
             </div>
           )}
@@ -208,16 +222,19 @@ const PaymentModal = ({ courseId, onClose }) => {
 
           {/* Button */}
           <button
-            onClick={handlePayment}
-            disabled={isLoading}
-            className={`mt-2 py-3 rounded-lg text-white font-semibold ${isLoading ? 'bg-gray-400 cursor-not-allowed' : 'bg-blue-600 hover:bg-blue-700'
+              onClick={handlePayment}
+              disabled={isLoading || (couponCode && !isCouponValid)}
+              className={`mt-2 py-3 rounded-lg text-white font-semibold ${
+                  isLoading || (couponCode && !isCouponValid)
+                      ? 'bg-gray-400 cursor-not-allowed'
+                      : 'bg-blue-600 hover:bg-blue-700'
               }`}
           >
             {isLoading
-              ? 'Đang xử lý...'
-              : total === 0
-                ? 'Đăng ký miễn phí'
-                : 'Tiếp tục thanh toán'}
+                ? 'Đang xử lý...'
+                : total === 0
+                    ? 'Đăng ký miễn phí'
+                    : 'Tiếp tục thanh toán'}
           </button>
 
           {total > 0 && (

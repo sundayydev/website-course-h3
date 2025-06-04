@@ -23,10 +23,19 @@ export const getCouponById = async (id) => {
 
 // Get coupon by code
 export const getCouponByCode = async (code) => {
+    const token = getAuthToken();
+    if (!token) {
+        throw new Error('Không tìm thấy token');
+    }
     try {
-        return await api.get(`${API_URL}/code/${code}`);
+        const response = await api.get(`${API_URL}/code/${code}`, {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        });
+        return response;
     } catch (error) {
-        throw new Error(error.response?.data?.message || 'Lỗi khi lấy mã giảm giá theo mã');
+        throw new Error(error.response?.data?.message || 'Mã coupon không hợp lệ hoặc không tồn tại');
     }
 };
 
