@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
-import { FaArrowLeft } from 'react-icons/fa';
+import { useParams } from 'react-router-dom';
+import { FaArrowLeft, FaEye } from 'react-icons/fa';
 import { getCommentsByPostId } from '../../api/commentApi';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogClose } from '@/components/ui/dialog';
 import { toast } from 'react-toastify';
 import { formatDate } from '../../utils/formatDate';
 import defaultAvatar from '../../assets/imgs/default-avatar.jpg';
@@ -15,13 +16,14 @@ import { parse, isSameDay, isWithinInterval, startOfWeek, endOfWeek, startOfMont
 
 function CommentByPost() {
   const { postId } = useParams();
-  const navigate = useNavigate();
   const [comments, setComments] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [dateFilter, setDateFilter] = useState('all');
+  const [isOpen, setIsOpen] = useState(false);
+  const [selectedComment, setSelectedComment] = useState(null);
 
   const fetchComments = async () => {
     setLoading(true);
@@ -102,6 +104,7 @@ function CommentByPost() {
       return false;
     }
   };
+
   const filteredComments = comments.filter((comment) => {
     const matchesSearch =
       (comment.content?.toLowerCase()?.includes(searchTerm.toLowerCase()) ||
@@ -123,11 +126,16 @@ function CommentByPost() {
   const parentComments = comments.filter((c) => !c.parentCommentId).length;
   const recentComments = comments.filter((c) => isThisWeek(c.createdAt)).length;
 
+  const handleViewDetails = (comment) => {
+    setSelectedComment(comment);
+    setIsOpen(true);
+  };
+
   const renderComment = (comment) => (
     <TableRow key={comment.id}>
       <TableCell>{comment.id}</TableCell>
       <TableCell>
-        <div className="text-gray-900 whitespace-pre-line">{comment.content}</div>
+        <div className=" whitespace-pre-line line-clamp-2">{comment.content}</div>
       </TableCell>
       <TableCell>
         <div className="flex items-center">
@@ -144,6 +152,16 @@ function CommentByPost() {
       </TableCell>
       <TableCell>{formatDate(comment.createdAt)}</TableCell>
       <TableCell>{comment.parentCommentId ? `Con của ID ${comment.parentCommentId}` : 'Cha'}</TableCell>
+      <TableCell>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => handleViewDetails(comment)}
+          title="Xem chi tiết"
+        >
+          <FaEye className="mr-2 h-4 w-4" /> Xem chi tiết
+        </Button>
+      </TableCell>
     </TableRow>
   );
 
@@ -154,7 +172,7 @@ function CommentByPost() {
           <Button
             variant="outline"
             className="mr-4"
-            onClick={() => navigate('/admin/post-management')}
+            onClick={() => window.history.back()}
           >
             <FaArrowLeft className="mr-2" /> Quay lại
           </Button>
@@ -247,11 +265,24 @@ function CommentByPost() {
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>ID</TableHead>
-                  <TableHead>Nội dung</TableHead>
-                  <TableHead>Tác giả</TableHead>
-                  <TableHead>Ngày tạo</TableHead>
-                  <TableHead>Bình luận cha</TableHead>
+                  <TableHead className="w-[5%] text-pink-500 font-semibold ">
+                    ID
+                  </TableHead>
+                  <TableHead className="w-[25%] text-pink-500 font-semibold ">
+                    Nội dung
+                  </TableHead>
+                  <TableHead className="w-[15%] text-pink-500 font-semibold ">
+                    Tác giả
+                  </TableHead>
+                  <TableHead className="w-[15%] text-pink-500 font-semibold ">
+                    Ngày tạo
+                  </TableHead>
+                  <TableHead className="w-[15%] text-pink-500 font-semibold ">
+                    Loại bình luận
+                  </TableHead>
+                  <TableHead className="w-[15%] text-pink-700 font-semibold ">
+                    Thao tác
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -259,7 +290,7 @@ function CommentByPost() {
                   filteredComments.map(comment => renderComment(comment))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center">
+                    <TableCell colSpan={6} className="text-center">
                       Không có bình luận nào phù hợp
                     </TableCell>
                   </TableRow>
@@ -269,6 +300,76 @@ function CommentByPost() {
           </CardContent>
         </Card>
       )}
+
+      {/* Popup chi tiết bình luận */}
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader className="border-b pb-4">
+            <DialogTitle className="text-xl font-semibold text-gray-800">
+              Chi tiết bình luận
+            </DialogTitle>
+            <DialogClose className="absolute right-4 top-4" />
+          </DialogHeader>
+          {selectedComment && (
+            <div className="grid grid-cols-2 gap-6 py-4">
+              {/* Cột trái */}
+              <div className="space-y-6">
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <span className="text-sm font-medium text-red-500 block mb-2">
+                    Nội dung:
+                  </span>
+                  <p className="text-gray-700 whitespace-pre-line">
+                    {selectedComment.content}
+                  </p>
+                </div>
+
+                <div className="flex items-center space-x-2 p-3 bg-gray-50 rounded-lg">
+                  <span className="text-sm font-medium text-gray-500">Loại bình luận:</span>
+                  <span
+                    className={`px-3 py-1 rounded-full text-sm ${selectedComment.parentCommentId
+                      ? 'bg-blue-100 text-blue-700'
+                      : 'bg-green-100 text-green-700'
+                      }`}
+                  >
+                    {selectedComment.parentCommentId
+                      ? `Con của ID ${selectedComment.parentCommentId}`
+                      : 'Cha'}
+                  </span>
+                </div>
+              </div>
+
+              {/* Cột phải */}
+              <div className="space-y-6">
+                <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm font-medium text-gray-500">ID:</span>
+                    <span className="text-gray-700">{selectedComment.id}</span>
+                  </div>
+                  <div className="flex items-center space-x-2">
+                    <span className="text-sm font-medium text-gray-500">Ngày tạo:</span>
+                    <span className="text-gray-700">{formatDate(selectedComment.createdAt)}</span>
+                  </div>
+                </div>
+
+                <div className="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                  <span className="text-sm font-medium text-gray-500">Tác giả:</span>
+                  {selectedComment.userProfileImage && (
+                    <img
+                      src={selectedComment.userProfileImage}
+                      alt={selectedComment.userFullName || 'Ẩn danh'}
+                      className="h-10 w-10 rounded-full object-cover border-2 border-white shadow-sm"
+                      onError={(e) => (e.target.src = defaultAvatar)}
+                    />
+                  )}
+                  <span className="font-medium text-gray-700">
+                    {selectedComment.userFullName || 'Ẩn danh'}
+                  </span>
+                </div>
+              </div>
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

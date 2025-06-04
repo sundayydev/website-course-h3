@@ -29,10 +29,6 @@ import {
   uploadAvatar,
   deleteInstructor,
 } from '@/api/instructorApi';
-import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover';
-import { Calendar } from '@/components/ui/calendar';
-import { format } from 'date-fns';
-import { cn } from '@/lib/utils';
 import { CalendarIcon } from 'lucide-react';
 import DatePicker from 'react-datepicker';
 import 'react-datepicker/dist/react-datepicker.css';
@@ -50,6 +46,8 @@ const Instructors = () => {
     birthDate: null,
     avatar: null,
     role: 'Instructor',
+    status: 'Active', // Thêm trường status
+    showPassword: false,
   });
 
   // Fetch instructors data
@@ -60,8 +58,11 @@ const Instructors = () => {
   const fetchInstructors = async () => {
     try {
       const response = await getInstructors();
-      console.log(response);
-      setInstructors(response);
+      const updatedInstructors = response.map((instructor) => ({
+        ...instructor,
+        status: instructor.status || 'Active', // Mặc định Active nếu không có status
+      }));
+      setInstructors(updatedInstructors);
     } catch (error) {
       toast.error('Không thể tải danh sách giảng viên');
     } finally {
@@ -118,6 +119,8 @@ const Instructors = () => {
         birthDate: response.birthDate ? new Date(response.birthDate) : null,
         avatar: response.profileImage || null,
         role: 'Instructor',
+        status: response.status || 'Active',
+        showPassword: false,
       });
       setIsDialogOpen(true);
     } catch (error) {
@@ -134,6 +137,8 @@ const Instructors = () => {
       birthDate: null,
       avatar: null,
       role: 'Instructor',
+      status: 'Active',
+      showPassword: false,
     });
     setEditingInstructor(null);
   };
@@ -174,19 +179,20 @@ const Instructors = () => {
                 {editingInstructor ? 'Chỉnh sửa giảng viên' : 'Thêm giảng viên mới'}
               </DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="space-y-4" encType="multipart/form-data">
+            <form onSubmit={handleSubmit} className="space-y-6" encType="multipart/form-data">
               <div className="space-y-2">
-                <Label htmlFor="fullName">Họ và tên</Label>
+                <Label htmlFor="fullName" className="text-sm font-medium">Họ và tên</Label>
                 <Input
                   id="fullName"
                   value={formData.fullName}
                   onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                   required
                   placeholder="Nhập họ và tên giảng viên"
+                  className="w-full"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className="text-sm font-medium">Email</Label>
                 <Input
                   id="email"
                   type="email"
@@ -194,12 +200,13 @@ const Instructors = () => {
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                   required
                   placeholder="example@email.com"
+                  className="w-full"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="password">Mật khẩu</Label>
+                <Label htmlFor="password" className="text-sm font-medium">Mật khẩu</Label>
                 <div className="flex gap-2">
-                  <div className="relative">
+                  <div className="relative flex-1">
                     <Input
                       id="password"
                       type={formData.showPassword ? 'text' : 'password'}
@@ -207,34 +214,28 @@ const Instructors = () => {
                       onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                       placeholder="Nhập mật khẩu"
                       disabled={editingInstructor}
-                      className={editingInstructor ? 'bg-gray-100 text-gray-500 w-[250px]' : ''}
+                      className={`w-full ${editingInstructor ? 'bg-gray-100 text-gray-500' : ''}`}
                       required={!editingInstructor}
                     />
                     <Button
                       type="button"
                       variant="ghost"
-                      className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0"
+                      className="absolute right-2 top-1/2 -translate-y-1/2 h-8 w-8 p-0 hover:bg-transparent"
                       onClick={() =>
                         setFormData((prev) => ({ ...prev, showPassword: !prev.showPassword }))
                       }
                     >
-                      {formData.showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
+                      {formData.showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </Button>
                   </div>
                   <Button
                     type="button"
-                    className="bg-pink-500 hover:bg-pink-600"
+                    className="bg-pink-500 hover:bg-pink-600 whitespace-nowrap"
                     onClick={() => {
-                      const chars =
-                        'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-                      let randomPassword = '';
-                      for (let i = 0; i < 8; i++) {
-                        randomPassword += chars.charAt(Math.floor(Math.random() * chars.length));
-                      }
+                      const chars = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
+                      const randomPassword = Array.from({ length: 8 }, () =>
+                        chars.charAt(Math.floor(Math.random() * chars.length))
+                      ).join('');
                       setFormData({ ...formData, password: randomPassword });
                     }}
                   >
@@ -242,7 +243,6 @@ const Instructors = () => {
                   </Button>
                 </div>
               </div>
-              {/* Birth Date Field */}
               <div className="space-y-2">
                 <Label htmlFor="birthDate" className="text-sm font-medium">Ngày sinh</Label>
                 <div className="relative">
@@ -263,9 +263,21 @@ const Instructors = () => {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="avatar">Ảnh đại diện</Label>
+                <Label htmlFor="status" className="text-sm font-medium">Trạng thái</Label>
+                <select
+                  id="status"
+                  value={formData.status}
+                  onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                  className="w-full border rounded-md p-2 focus:outline-none focus:ring-2 focus:ring-pink-500"
+                >
+                  <option value="Active">Đang làm việc</option>
+                  <option value="Inactive">Tạm nghỉ</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="avatar" className="text-sm font-medium">Ảnh đại diện</Label>
                 <div className="flex items-center gap-4">
-                  <div className="relative">
+                  <div className="relative flex-1">
                     <Input
                       id="avatar"
                       type="file"
@@ -336,6 +348,29 @@ const Instructors = () => {
             </div>
           </CardContent>
         </Card>
+        <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-200 border-l-4 border-green-500">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-lg font-medium">Đang làm việc</CardTitle>
+            <Users className="h-6 w-6 text-green-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-green-500">
+              {instructors.filter((i) => i.status === 'Active').length}
+            </div>
+            <p className="text-sm text-gray-500 mt-1">Giảng viên đang làm việc</p>
+            <div className="w-full bg-gray-200 rounded-full h-2.5 mt-2">
+              <div
+                className="bg-green-500 h-2.5 rounded-full"
+                style={{
+                  width: `${instructors.length > 0
+                    ? (instructors.filter((i) => i.status === 'Active').length / instructors.length) * 100
+                    : 0
+                    }%`,
+                }}
+              ></div>
+            </div>
+          </CardContent>
+        </Card>
         <Card className="bg-white shadow-lg hover:shadow-xl transition-all duration-200 border-l-4 border-blue-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-lg font-medium">Online</CardTitle>
@@ -376,56 +411,48 @@ const Instructors = () => {
         </CardHeader>
         <CardContent>
           <div className="rounded-md border">
-            <Table className="w-full">
+            <Table>
               <TableHeader>
-                <TableRow className="hover:bg-gray-50">
-                  <TableHead className="text-pink-500 font-semibold w-[100px] text-center">Ảnh</TableHead>
-                  <TableHead className="text-pink-500 font-semibold w-[200px] text-left">Giảng viên</TableHead>
-                  <TableHead className="text-pink-500 font-semibold w-[250px] text-left">Email</TableHead>
-                  <TableHead className="text-pink-500 font-semibold w-[150px] text-center">Ngày sinh</TableHead>
-                  <TableHead className="text-pink-500 font-semibold w-[120px] text-center">Thao tác</TableHead>
+                <TableRow>
+                  <TableHead className="text-pink-500 font-semibold">Giảng viên</TableHead>
+                  <TableHead className="text-pink-500 font-semibold">Email</TableHead>
+                  <TableHead className="text-pink-500 font-semibold">Ngày sinh</TableHead>
+
+                  <TableHead className="text-pink-500 font-semibold">Thao tác</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {filteredInstructors.map((instructor) => (
-                  <TableRow key={instructor.id} className="hover:bg-gray-50 transition-colors">
-                    <TableCell className="py-4 text-center">
-                      <Avatar className="h-10 w-10 border-2 border-pink-100 mx-auto">
-                        <AvatarImage
-                          src={instructor.profileImage || undefined}
-                          className="object-cover"
-                        />
-                        <AvatarFallback className="bg-pink-100 text-pink-500">
-                          {instructor.fullName?.charAt(0).toUpperCase() || '?'}
-                        </AvatarFallback>
+                  <TableRow key={instructor.id}>
+                    <TableCell className="flex items-center gap-3">
+                      <Avatar>
+                        <AvatarImage src={instructor.profileImage || null} />
+                        <AvatarFallback>{instructor.fullName?.charAt(0).toUpperCase() || '?'}</AvatarFallback>
                       </Avatar>
+                      <span>{instructor.fullName}</span>
                     </TableCell>
-                    <TableCell className="py-4 font-medium text-left">{instructor.fullName || ''}</TableCell>
-                    <TableCell className="py-4 text-left">{instructor.email || ''}</TableCell>
-                    <TableCell className="py-4 text-center">
-                      {instructor.birthDate
-                        ? format(new Date(instructor.birthDate), 'dd/MM/yyyy')
-                        : 'Chưa có'}
+                    <TableCell>{instructor.email}</TableCell>
+                    <TableCell>
+                      {instructor.birthDate ? format(new Date(instructor.birthDate), 'dd/MM/yyyy') : 'Chưa có'}
                     </TableCell>
-                    <TableCell className="py-4 text-right">
-                      <div className="flex justify-end gap-2">
+
+                    <TableCell className="text-right">
+                      <div className="flex gap-2">
                         <Button
                           variant="ghost"
                           size="icon"
                           onClick={() => handleEdit(instructor.id)}
-                          className="hover:bg-green-100 transition-colors"
-                          title="Chỉnh sửa"
+                          className="hover:bg-green-200 text-green-600"
                         >
-                          <Pencil className="h-5 w-5 text-green-600" />
+                          <Pencil className="h-6 w-6" />
                         </Button>
                         <Button
                           variant="ghost"
                           size="icon"
                           onClick={() => handleDelete(instructor.id)}
-                          className="hover:bg-red-100 transition-colors"
-                          title="Xóa"
+                          className="hover:bg-red-100 text-red-500"
                         >
-                          <Trash2 className="h-5 w-5 text-red-500" />
+                          <Trash2 className="h-6 w-6" />
                         </Button>
                       </div>
                     </TableCell>

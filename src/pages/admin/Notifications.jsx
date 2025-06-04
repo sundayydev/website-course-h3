@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import {
     Table,
     TableBody,
@@ -30,9 +31,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { parse, isSameDay, isWithinInterval, startOfWeek, endOfWeek, startOfMonth, endOfMonth } from 'date-fns';
 import { FaArrowLeft } from 'react-icons/fa';
 import { formatDate } from '../../utils/formatDate';
-import { useNavigate } from 'react-router-dom';
 
-// Ánh xạ giữa type tiếng Anh và tên tiếng Việt
+
 const typeDisplayNames = {
     LessonApproval: 'Phê duyệt bài học',
     NewMessage: 'Tin nhắn mới',
@@ -64,6 +64,21 @@ const Notifications = () => {
     const [currentPage, setCurrentPage] = useState(1);
     const itemsPerPage = 8;
     const navigate = useNavigate();
+    const [searchParams, setSearchParams] = useSearchParams();
+
+    useEffect(() => {
+        const page = parseInt(searchParams.get('page')) || 1;
+        const type = searchParams.get('type') || 'all';
+        const date = searchParams.get('date') || 'all';
+        const read = searchParams.get('read') || 'all';
+        const search = searchParams.get('search') || '';
+
+        setCurrentPage(page);
+        setTypeFilter(type);
+        setDateFilter(date);
+        setReadFilter(read);
+        setSearchTerm(search);
+    }, [searchParams]);
 
     const fetchNotifications = async () => {
         setLoading(true);
@@ -105,6 +120,14 @@ const Notifications = () => {
     useEffect(() => {
         fetchNotifications();
     }, []);
+
+    const updateSearchParams = (updates) => {
+        const currentParams = Object.fromEntries(searchParams);
+        setSearchParams({
+            ...currentParams,
+            ...updates,
+        });
+    };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -240,7 +263,6 @@ const Notifications = () => {
             (notification.content?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                 typeVietnameseName.toLowerCase().includes(searchTerm.toLowerCase())) ?? true;
         const matchesType = typeFilter === 'all' || notification.type === typeFilter;
-        const matchesRelatedEntityType = relatedEntityTypeFilter === 'all' || notification.relatedEntityType === relatedEntityTypeFilter;
         const matchesDate =
             dateFilter === 'all' ||
             (dateFilter === 'today' && isToday(notification.createdAt)) ||
@@ -250,7 +272,7 @@ const Notifications = () => {
             readFilter === 'all' ||
             (readFilter === 'read' && notification.userNotifications.every(un => un.isRead)) ||
             (readFilter === 'unread' && notification.userNotifications.some(un => !un.isRead));
-        return matchesSearch && matchesType && matchesRelatedEntityType && matchesDate && matchesRead;
+        return matchesSearch && matchesType && matchesDate && matchesRead;
     });
 
     const totalPages = Math.ceil(filteredNotifications.length / itemsPerPage);
@@ -261,12 +283,20 @@ const Notifications = () => {
     const goToPage = (page) => {
         if (page >= 1 && page <= totalPages) {
             setCurrentPage(page);
+            updateSearchParams({ page });
         }
     };
 
     useEffect(() => {
-        setCurrentPage(1);
-    }, [searchTerm, typeFilter, dateFilter, readFilter]);
+        updateSearchParams({
+            page: currentPage,
+            type: typeFilter,
+            date: dateFilter,
+            read: readFilter,
+            search: searchTerm,
+        });
+    }, [currentPage, typeFilter, dateFilter, readFilter, searchTerm]);
+
 
     const totalNotifications = notifications.length;
     const unreadNotifications = notifications.reduce(
@@ -287,12 +317,6 @@ const Notifications = () => {
         );
     };
 
-
-    // Hàm mở dialog chi tiết
-    const openDetailDialog = (notification) => {
-        setSelectedNotification(notification);
-        setIsDetailDialogOpen(true);
-    };
 
     if (loading) {
         return (
@@ -426,13 +450,13 @@ const Notifications = () => {
                         <div className="relative">
                             <Search className="absolute left-2 top-2.5 h-4 w-4 text-gray-500" />
                             <Input
-                                placeholder="Tìm kiếm theo nội dung hoặc loại (tiếng Việt)"
+                                placeholder="Tìm kiếm theo nội dung hoặc loại"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 className="pl-8"
                             />
                         </div>
-                        <Select value={typeFilter} onValueChange={setTypeFilter}>
+                        <Select value={typeFilter} onValueChange={(value) => setTypeFilter(value)}>
                             <SelectTrigger>
                                 <SelectValue placeholder="Lọc theo loại thông báo" />
                             </SelectTrigger>
@@ -443,7 +467,7 @@ const Notifications = () => {
                                 ))}
                             </SelectContent>
                         </Select>
-                        <Select value={dateFilter} onValueChange={setDateFilter}>
+                        <Select value={dateFilter} onValueChange={(value) => setDateFilter(value)}>
                             <SelectTrigger>
                                 <SelectValue placeholder="Lọc theo thời gian" />
                             </SelectTrigger>
@@ -454,7 +478,7 @@ const Notifications = () => {
                                 <SelectItem value="month">Tháng này</SelectItem>
                             </SelectContent>
                         </Select>
-                        <Select value={readFilter} onValueChange={setReadFilter}>
+                        <Select value={readFilter} onValueChange={(value) => setReadFilter(value)}>
                             <SelectTrigger>
                                 <SelectValue placeholder="Lọc theo trạng thái đọc" />
                             </SelectTrigger>
@@ -562,8 +586,6 @@ const Notifications = () => {
                     </CardContent>
                 </Card>
             )}
-
-
         </div>
     );
 };

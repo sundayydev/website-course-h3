@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom'; // Thêm useSearchParams
 import { FaArrowLeft } from 'react-icons/fa';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -12,8 +12,24 @@ import { isSameDay, isWithinInterval, startOfWeek, endOfWeek, startOfMonth, endO
 import { getAllEmails } from '../../../api/emailApi';
 import { formatDate } from '../../../utils/formatDate';
 
+// Ánh xạ sourceType và status sang tiếng Việt
+const typeLabels = {
+  Assignment: 'Bài tập',
+  PasswordReset: 'Đặt lại mật khẩu',
+  Contact: 'Liên hệ',
+  Payment: 'Thanh toán',
+};
+
+const statusLabels = {
+  Sent: 'Đã gửi',
+  Draft: 'Bản nháp',
+  Failed: 'Thất bại',
+  Pending: 'Đang chờ',
+};
+
 function EmailManagement() {
   const navigate = useNavigate();
+  const [searchParams, setSearchParams] = useSearchParams(); // Thêm useSearchParams
   const [emails, setEmails] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -23,6 +39,19 @@ function EmailManagement() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
+  // Khởi tạo state từ query parameters
+  useEffect(() => {
+    const page = parseInt(searchParams.get('page')) || 1;
+    const type = searchParams.get('type') || 'all';
+    const date = searchParams.get('date') || 'all';
+    const search = searchParams.get('search') || '';
+
+    setCurrentPage(page);
+    setTypeFilter(type);
+    setDateFilter(date);
+    setSearchTerm(search);
+  }, [searchParams]);
+
   const fetchEmails = async () => {
     setLoading(true);
     try {
@@ -30,7 +59,7 @@ function EmailManagement() {
       emailData.sort((a, b) => new Date(b.sentAt) - new Date(a.sentAt));
       setEmails(emailData);
     } catch (err) {
-      setError('Không thể tải danh sách email');
+      setError('Không thể tải danh sách email. Vui lòng thử lại sau.');
       toast.error('Không thể tải dữ liệu');
       console.error('Error fetching emails:', err);
     } finally {
@@ -41,6 +70,15 @@ function EmailManagement() {
   useEffect(() => {
     fetchEmails();
   }, []);
+
+  // Cập nhật query parameters khi các bộ lọc thay đổi
+  const updateSearchParams = (updates) => {
+    const currentParams = Object.fromEntries(searchParams);
+    setSearchParams({
+      ...currentParams,
+      ...updates,
+    });
+  };
 
   const isToday = (dateStr) => {
     if (!dateStr || typeof dateStr !== 'string') {
@@ -126,12 +164,19 @@ function EmailManagement() {
   const goToPage = (page) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
+      updateSearchParams({ page });
     }
   };
 
+  // Cập nhật query params khi các bộ lọc thay đổi
   useEffect(() => {
-    setCurrentPage(1);
-  }, [searchTerm, typeFilter, dateFilter]);
+    updateSearchParams({
+      page: currentPage,
+      type: typeFilter,
+      date: dateFilter,
+      search: searchTerm,
+    });
+  }, [currentPage, typeFilter, dateFilter, searchTerm]);
 
   const totalEmails = emails.length;
   const sentEmails = emails.filter((e) => e.status === 'Sent').length;
@@ -143,9 +188,7 @@ function EmailManagement() {
       <TableCell>{email.senderEmail}</TableCell>
       <TableCell>{email.receiverEmail}</TableCell>
       <TableCell>{email.subject}</TableCell>
-      <TableCell className="max-w-xs truncate">{email.message}</TableCell>
-      <TableCell>{email.sourceType}</TableCell>
-      <TableCell>{email.status}</TableCell>
+      <TableCell>{typeLabels[email.sourceType] || 'Không có'}</TableCell>
       <TableCell>{formatDate(email.sentAt)}</TableCell>
       <TableCell className="text-right">
         <Button
@@ -216,19 +259,19 @@ function EmailManagement() {
                 className="pl-8"
               />
             </div>
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
+            <Select value={typeFilter} onValueChange={(value) => setTypeFilter(value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Lọc theo loại email" />
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Tất cả loại</SelectItem>
-                <SelectItem value="Assignment">Assignment</SelectItem>
-                <SelectItem value="PasswordReset">PasswordReset</SelectItem>
-                <SelectItem value="Contact">Contact</SelectItem>
-                <SelectItem value="Payment">Payment</SelectItem>
+                <SelectItem value="Assignment">Bài tập</SelectItem>
+                <SelectItem value="PasswordReset">Đặt lại mật khẩu</SelectItem>
+                <SelectItem value="Contact">Liên hệ</SelectItem>
+                <SelectItem value="Payment">Thanh toán</SelectItem>
               </SelectContent>
             </Select>
-            <Select value={dateFilter} onValueChange={setDateFilter}>
+            <Select value={dateFilter} onValueChange={(value) => setDateFilter(value)}>
               <SelectTrigger>
                 <SelectValue placeholder="Lọc theo thời gian" />
               </SelectTrigger>
@@ -264,9 +307,7 @@ function EmailManagement() {
                   <TableHead>Người gửi</TableHead>
                   <TableHead>Người nhận</TableHead>
                   <TableHead>Tiêu đề</TableHead>
-                  <TableHead>Nội dung</TableHead>
                   <TableHead>Loại</TableHead>
-                  <TableHead>Trạng thái</TableHead>
                   <TableHead>Thời gian gửi</TableHead>
                   <TableHead>Thao tác</TableHead>
                 </TableRow>
@@ -276,7 +317,7 @@ function EmailManagement() {
                   paginatedEmails.map(email => renderEmail(email))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={9} className="text-center">
+                    <TableCell colSpan={8} className="text-center">
                       Không có email nào phù hợp
                     </TableCell>
                   </TableRow>

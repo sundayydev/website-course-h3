@@ -7,6 +7,21 @@ import { Skeleton } from '@/components/ui/skeleton';
 import { getEmailById } from '@/api/emailApi';
 import { formatDate } from '@/utils/formatDate';
 
+// Ánh xạ sourceType và status sang tiếng Việt
+const typeLabels = {
+  Assignment: 'Bài tập',
+  PasswordReset: 'Đặt lại mật khẩu',
+  Contact: 'Liên hệ',
+  Payment: 'Thanh toán',
+};
+
+const statusLabels = {
+  Sent: 'Đã gửi',
+  Draft: 'Bản nháp',
+  Failed: 'Thất bại',
+  Pending: 'Đang chờ',
+};
+
 export default function EmailDetail() {
   const { emailId } = useParams();
   const navigate = useNavigate();
@@ -109,15 +124,15 @@ export default function EmailDetail() {
                 <div className="space-y-4">
                   <div>
                     <h3 className="text-sm font-medium text-gray-500">Loại</h3>
-                    <p className="text-pink-500 font-medium">{email?.sourceType || 'Không có'}</p>
+                    <p className="text-pink-500 font-medium">{typeLabels[email?.sourceType] || 'Không có'}</p>
                   </div>
                   <div>
                     <h3 className="text-sm font-medium text-gray-500">Trạng thái</h3>
-                    <p className="text-gray-700">{email?.status || 'N/A'}</p>
+                    <p className="text-gray-700">{statusLabels[email?.status] || 'Không có'}</p>
                   </div>
                   <div>
                     <h3 className="text-sm font-medium text-gray-500">Thời gian gửi</h3>
-                    <p className="text-gray-700">{formatDate(email?.sentAt) || 'N/A'}</p>
+                    <p className="text-gray-700">{formatDate(email?.sentAt) || 'Không có'}</p>
                   </div>
                 </div>
               </CardContent>
