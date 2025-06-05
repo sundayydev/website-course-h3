@@ -139,7 +139,7 @@ const Students = () => {
       birthDate: null,
       avatar: null,
       role: 'student',
-      status: 'Enrolled', // Đặt lại status mặc định
+      status: 'Enrolled',
     });
     setEditingStudent(null);
   };
@@ -423,7 +423,6 @@ const Students = () => {
                   <TableHead className="text-pink-500">Học viên</TableHead>
                   <TableHead className="text-pink-500">Email</TableHead>
                   <TableHead className="text-pink-500">Ngày sinh</TableHead>
-                  <TableHead className="text-pink-500">Trạng thái</TableHead>
                   <TableHead className="text-pink-500">Thao tác</TableHead>
                 </TableRow>
               </TableHeader>
@@ -441,23 +440,7 @@ const Students = () => {
                     </TableCell>
                     <TableCell>{student.email}</TableCell>
                     <TableCell>{student.birthDate}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          student.status === 'Enrolled'
-                            ? 'success'
-                            : student.status === 'inactive'
-                              ? 'destructive'
-                              : 'secondary'
-                        }
-                      >
-                        {student.status === 'Enrolled'
-                          ? 'Đang học'
-                          : student.status === 'inactive'
-                            ? 'Đã nghỉ'
-                            : 'Đã tốt nghiệp'}
-                      </Badge>
-                    </TableCell>
+
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-2">
                         <Button

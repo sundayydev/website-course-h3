@@ -19,6 +19,15 @@ export const getNotifications = async () => {
     }
 };
 
+export const getPaginatedNotifications = (pageNumber = 1, pageSize = 5) => {
+    return api.get(`${API_URL}/paginated`, {
+        params: {
+            pageNumber,
+            pageSize,
+        },
+    });
+};
+
 export const getNotificationsByUser = async (userId) => {
     try {
         const response = await api.get(`${API_URL}/by-user/${userId}`, {

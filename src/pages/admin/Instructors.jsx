@@ -400,12 +400,12 @@ const Instructors = () => {
                         </AvatarFallback>
                       </Avatar>
                     </TableCell>
-                    <TableCell className="py-4 font-medium text-left">{instructor.fullName || 'N/A'}</TableCell>
-                    <TableCell className="py-4 text-left">{instructor.email || 'N/A'}</TableCell>
+                    <TableCell className="py-4 font-medium text-left">{instructor.fullName || ''}</TableCell>
+                    <TableCell className="py-4 text-left">{instructor.email || ''}</TableCell>
                     <TableCell className="py-4 text-center">
                       {instructor.birthDate
                         ? format(new Date(instructor.birthDate), 'dd/MM/yyyy')
-                        : 'N/A'}
+                        : 'Chưa có'}
                     </TableCell>
                     <TableCell className="py-4 text-right">
                       <div className="flex justify-end gap-2">

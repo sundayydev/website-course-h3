@@ -25,6 +25,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { useNavigate } from 'react-router-dom';
 import { FaArrowLeft, FaComment } from 'react-icons/fa';
 import { getCourses, createCourse, updateCourse, uploadImage, deleteCourse, approveCourse } from '@/api/courseApi';
+import { addNotification } from '@/api/notificationApi'; // Thêm import addNotification
 import {
   Select,
   SelectContent,
@@ -55,7 +56,7 @@ const Courses = () => {
   const fetchCourses = async () => {
     try {
       const data = await getCourses();
-      console.log('Danh sách khóa học:', data); // Debug log
+      console.log('Danh sách khóa học:', data);
       setCourses(data);
     } catch (error) {
       toast.error('Không thể tải danh sách khóa học');
@@ -132,6 +133,25 @@ const Courses = () => {
     try {
       await approveCourse(id, value);
       toast.success(`Khóa học đã được ${value === 'Active' ? 'kích hoạt' : 'hủy kích hoạt'}`);
+
+      // Gửi thông báo khi khóa học được kích hoạt hoặc hủy kích hoạt
+      const course = courses.find(c => c.id === id);
+      if (course && course.instructorId) {
+        const notificationData = {
+          type: value === 'Active' ? 'CourseActivation' : 'CourseDeactivation',
+          content: `Khóa học "${course.title}" của bạn ${value === 'Active' ? 'đã được kích hoạt' : 'đã bị hủy kích hoạt'}.`,
+          relatedEntityId: id.toString(),
+          relatedEntityType: 'Course',
+          userIds: [course.instructorId],
+        };
+        try {
+          await addNotification(notificationData);
+          console.log(`Thông báo ${value === 'Active' ? 'kích hoạt' : 'hủy kích hoạt'} khóa học đã được gửi.`);
+        } catch (error) {
+          console.error(`Lỗi khi gửi thông báo ${value === 'Active' ? 'kích hoạt' : 'hủy kích hoạt'} khóa học:`, error);
+        }
+      }
+
       fetchCourses();
     } catch (error) {
       const errorMessage = error.response?.data?.message || error.message || 'Không xác định';
