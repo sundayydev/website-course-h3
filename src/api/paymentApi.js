@@ -136,3 +136,52 @@ export const exportPaymentReport = async (startDate, endDate) => {
     throw new Error(error.response?.data?.message || 'Không thể xuất báo cáo thanh toán');
   }
 };
+
+
+export const createPaymentMomo = async (orderData) => {
+  try {
+    const token = getAuthToken();
+    const formattedOrderData = {
+      UserId: orderData.userId,
+      Amount: orderData.amount,
+      OrderDetails: [
+        {
+          CourseId: orderData.courseId,
+          Price: orderData.amount + (orderData.discountAmount || 0),
+          CouponId: orderData.couponId || null,
+          DiscountAmount: orderData.discountAmount || 0,
+        },
+      ],
+    };
+
+    const response = await axios.post(`${API_URL}/momo/create`, formattedOrderData, {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi tạo thanh toán Momo:', error.response?.data || error.message);
+    throw new Error(error.response?.data?.message || 'Không thể tạo thanh toán Momo');
+  }
+}
+
+export const getPaymentCallbackMomo = async (queryParams) => {
+  try {
+    const token = getAuthToken();
+    const queryString = new URLSearchParams(queryParams).toString();
+    const response = await axios.get(`${API_URL}/momo/callback?${queryString}`, {
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${token}`,
+      },
+    });
+
+    return response.data;
+  } catch (error) {
+    console.error('Lỗi khi xử lý callback thanh toán Momo:', error.response?.data || error.message);
+    throw new Error(error.response?.data?.message || 'Không thể xử lý callback thanh toán Momo');
+  }
+}

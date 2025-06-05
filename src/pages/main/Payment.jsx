@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { FaTimes, FaLock } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
-import { createPayment } from '@/api/paymentApi';
+import { createPayment, createPaymentMomo } from '@/api/paymentApi';
 import { getCourseById } from '@/api/courseApi';
 import axios from 'axios';
 import { getCouponByCode } from '@/api/couponApi';
@@ -33,7 +33,7 @@ const PaymentModal = ({ courseId, onClose }) => {
   const [couponCode, setCouponCode] = useState('');
   const [discountAmount, setDiscountAmount] = useState(0);
   const [couponId, setCouponId] = useState(null);
-  const [isCouponValid, setIsCouponValid] = useState(true);
+  const [paymentMethod, setPaymentMethod] = useState('VNPAY');
   const navigate = useNavigate();
   const userId = getUserIdFromToken();
 
@@ -107,7 +107,8 @@ const PaymentModal = ({ courseId, onClose }) => {
     };
 
     try {
-      const res = await createPayment(orderData);
+      const paymentFunction = paymentMethod === 'MOMO' ? createPaymentMomo : createPayment;
+      const res = await paymentFunction(orderData);
       if (res.message) navigate(`/payment-success/${res.orderId}`);
       else if (res.paymentUrl) window.location.href = res.paymentUrl;
       else throw new Error('Không nhận được URL thanh toán');
@@ -198,6 +199,35 @@ const PaymentModal = ({ courseId, onClose }) => {
             </div>
           )}
 
+          {/* Payment Method Selection */}
+          <div className="space-y-2">
+            <h4 className="text-sm font-semibold text-gray-700">Phương thức thanh toán:</h4>
+            <div className="flex space-x-4">
+              <label className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  name="paymentMethod"
+                  value="VNPAY"
+                  checked={paymentMethod === 'VNPAY'}
+                  onChange={() => setPaymentMethod('VNPAY')}
+                  className="form-radio text-blue-600"
+                />
+                <span>VNPAY</span>
+              </label>
+              <label className="flex items-center space-x-2">
+                <input
+                  type="radio"
+                  name="paymentMethod"
+                  value="MOMO"
+                  checked={paymentMethod === 'MOMO'}
+                  onChange={() => setPaymentMethod('MOMO')}
+                  className="form-radio text-blue-600"
+                />
+                <span>MoMo</span>
+              </label>
+            </div>
+          </div>
+
           {/* Giá */}
           <div className="text-sm space-y-1 mt-2">
             <div className="flex justify-between">
@@ -239,7 +269,7 @@ const PaymentModal = ({ courseId, onClose }) => {
 
           {total > 0 && (
             <p className="text-xs text-gray-500 text-center flex items-center justify-center gap-1">
-              <FaLock className="text-red-300" /> Thanh toán an toàn qua VNPAY
+              <FaLock className="text-red-300" /> Thanh toán an toàn qua {paymentMethod}
             </p>
           )}
         </div>
