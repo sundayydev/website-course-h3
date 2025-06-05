@@ -21,6 +21,7 @@ import { toast } from 'react-toastify';
 import { Pencil, Trash2, Plus, Search, Loader2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { getComments, createComment, deleteComment, getCommentById } from '@/api/commentApi';
+import { formatDate } from '../../utils/formatDate';
 
 const Comment = () => {
   const [comments, setComments] = useState([]);
@@ -278,34 +279,44 @@ const Comment = () => {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filteredComments.map((comment) => (
-                  <TableRow key={comment.id}>
-                    <TableCell>{comment.userId || 'N/A'}</TableCell>
-                    <TableCell>{comment.postId || 'N/A'}</TableCell>
-                    <TableCell>{comment.content || 'N/A'}</TableCell>
-                    <TableCell>{comment.createdAt || 'N/A'}</TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleEdit(comment.id)}
-                          className="hover:bg-green-200"
-                        >
-                          <Pencil className="h-6 w-6" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(comment.id)}
-                          className="text-red-500 hover:text-red-700 hover:bg-red-100"
-                        >
-                          <Trash2 className="h-6 w-6" />
-                        </Button>
-                      </div>
+                {filteredComments.length > 0 ? (
+                  filteredComments.map((comment) => (
+                    <TableRow key={comment.id}>
+                      <TableCell className="font-medium">{comment.userId || 'N/A'}</TableCell>
+                      <TableCell className="font-medium">{comment.postId || 'N/A'}</TableCell>
+                      <TableCell className="line-clamp-1 text-gray-600">{comment.content || 'N/A'}</TableCell>
+                      <TableCell className="text-gray-500">{formatDate(comment.createdAt) || 'N/A'}</TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleEdit(comment.id)}
+                            className="hover:bg-green-200"
+                            title="Chỉnh sửa"
+                          >
+                            <Pencil className="h-6 w-6" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDelete(comment.id)}
+                            className="text-red-500 hover:text-red-700 hover:bg-red-100"
+                            title="Xóa"
+                          >
+                            <Trash2 className="h-6 w-6" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-4">
+                      Không có bình luận nào
                     </TableCell>
                   </TableRow>
-                ))}
+                )}
               </TableBody>
             </Table>
           </div>
