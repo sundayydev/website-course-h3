@@ -132,7 +132,6 @@ const Details = () => {
               console.log('userId từ profile:', userId);
 
               const notificationData = {
-                id: crypto.randomUUID(),
                 type: 'CourseEnrollment',
                 content: `Bạn đã đăng ký thành công khóa học "${course.title}"!`,
                 relatedEntityId: courseId,
