@@ -63,7 +63,7 @@ function CommentByPost() {
         <Button
           variant="outline"
           className="mr-4"
-          onClick={() => navigate('/admin/post-management')}
+          onClick={() => navigate('/instructor/post-management')}
         >
           <FaArrowLeft className="mr-2" /> Quay lại
         </Button>

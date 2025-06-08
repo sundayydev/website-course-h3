@@ -23,6 +23,7 @@ import { getNotificationsByUser, deleteNotification, markNotificationAsRead } fr
 import { format, parse } from 'date-fns';
 import { setNotifications, markNotificationAsRead as markNotificationAsReadAction, deleteNotification as deleteNotificationAction } from '@/reducers/notificationReducer';
 import { getCommentById } from '@/api/commentApi';
+import { getOrderById } from '../api/orderApi';
 
 const Header = () => {
   const dispatch = useDispatch();
@@ -205,6 +206,14 @@ const Header = () => {
         navigate(`/details/${entityId}`);
       } else if (entityType === 'Review' && entityId) {
         navigate(`/details/${entityId}`);
+      } else if (entityType === 'Order' && entityId) {
+        const orderResponse = await getOrderById(entityId);
+        const courseId = orderResponse.orderDetails?.[0]?.courseId;
+        if (courseId) {
+          navigate(`/details/${courseId}`);
+        } else {
+          toast.error('Không thể điều hướng: Không tìm thấy khóa học liên quan!');
+        }
       } else {
         toast.error('Không thể điều hướng: Thông tin không hợp lệ!');
       }
@@ -213,7 +222,6 @@ const Header = () => {
     }
     setIsNotificationsOpen(false);
   };
-
   // Xử lý đăng nhập
   const handleLogin = async () => {
     if (!loginData.email || !loginData.password) {

@@ -1,4 +1,5 @@
 import { useMemo, useState, useEffect } from 'react';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Table,
   TableBody,
@@ -22,20 +23,22 @@ import { toast } from 'react-toastify';
 import { Pencil, Trash2, Plus, Search, Loader2, BookOpen, Filter, FileVideo } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { useNavigate } from 'react-router-dom';
-import { FaArrowLeft, FaComment } from 'react-icons/fa';
+import { FaComment } from 'react-icons/fa';
 import { getCourses, createCourse, updateCourse, uploadImage, deleteCourse, approveCourse } from '@/api/courseApi';
-import { addNotification } from '@/api/notificationApi'; // Thêm import addNotification
+import { addNotification } from '@/api/notificationApi';
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
 } from '@/components/ui/select';
+import { formatDate } from '../../utils/formatDate';
+import slugify from 'slugify'; // Import slugify
 
 const Courses = () => {
   const navigate = useNavigate();
-  const [courses, setCourses] = useState([]);
+  const [allCourses, setAllCourses] = useState([]);
+  const [displayedCourses, setDisplayedCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -48,16 +51,37 @@ const Courses = () => {
     instructorId: '',
     contents: [],
   });
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [pageSize] = useState(5);
+  const [searchParams, setSearchParams] = useSearchParams();
+  const pageNumberFromUrl = parseInt(searchParams.get('page') || 1, 10);
 
+  // Sử dụng slugify thay cho hàm generateSlug
+  const generateSlug = (text) => {
+    if (!text) return '';
+    return slugify(text, {
+      lower: true, // Chuyển thành chữ thường
+      strict: true, // Loại bỏ ký tự đặc biệt
+      remove: /[*+~.()'"!:@]/g, // Loại bỏ các ký tự không mong muốn
+      locale: 'vi', // Hỗ trợ loại bỏ dấu tiếng Việt
+      trim: true, // Xóa khoảng trắng đầu/cuối
+    });
+  };
+
+  // Cập nhật currentPage dựa trên URL
   useEffect(() => {
-    fetchCourses();
-  }, []);
+    const initialPage = pageNumberFromUrl >= 1 ? pageNumberFromUrl : 1;
+    setCurrentPage(initialPage);
+  }, [pageNumberFromUrl]);
 
+  // Lấy toàn bộ khóa học
   const fetchCourses = async () => {
     try {
       const data = await getCourses();
       console.log('Danh sách khóa học:', data);
-      setCourses(data);
+      setAllCourses(data);
+      setTotalPages(Math.ceil(data.length / pageSize));
     } catch (error) {
       toast.error('Không thể tải danh sách khóa học');
       console.error('Lỗi khi tải danh sách khóa học:', error.response?.data || error.message);
@@ -65,6 +89,34 @@ const Courses = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchCourses();
+  }, []);
+
+  // Xử lý phân trang và tìm kiếm phía client
+  useEffect(() => {
+    const slug = searchParams.get('slug') || '';
+    let filteredCourses = allCourses;
+
+    // Lọc khóa học dựa trên searchTerm và slug
+    if (slug || searchTerm) {
+      filteredCourses = allCourses.filter(
+        (course) =>
+          course.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          course.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+          generateSlug(course.title).includes(slug)
+      );
+    }
+
+    // Cập nhật totalPages dựa trên danh sách đã lọc
+    setTotalPages(Math.ceil(filteredCourses.length / pageSize));
+
+    // Tính toán khóa học hiển thị trên trang hiện tại
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    setDisplayedCourses(filteredCourses.slice(startIndex, endIndex));
+  }, [searchTerm, searchParams, currentPage, allCourses]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -104,7 +156,7 @@ const Courses = () => {
       try {
         await deleteCourse(id);
         toast.success('Xóa khóa học thành công');
-        fetchCourses();
+        setAllCourses(allCourses.filter((course) => course.id !== id));
       } catch (error) {
         toast.error('Có lỗi xảy ra khi xóa khóa học');
         console.error('Lỗi khi xóa khóa học:', error);
@@ -134,8 +186,7 @@ const Courses = () => {
       await approveCourse(id, value);
       toast.success(`Khóa học đã được ${value === 'Active' ? 'kích hoạt' : 'hủy kích hoạt'}`);
 
-      // Gửi thông báo khi khóa học được kích hoạt hoặc hủy kích hoạt
-      const course = courses.find(c => c.id === id);
+      const course = allCourses.find((c) => c.id === id);
       if (course && course.instructorId) {
         const notificationData = {
           type: value === 'Active' ? 'CourseActivation' : 'CourseDeactivation',
@@ -205,19 +256,34 @@ const Courses = () => {
     navigate(`/admin/course-detail/${courseId}`);
   };
 
-  const filteredCourses = courses.filter(
-    (course) =>
-      course.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      course.description.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const handleSearchChange = (e) => {
+    const value = e.target.value;
+    setSearchTerm(value);
+    setCurrentPage(1); // Reset về trang 1
+    const slug = generateSlug(value);
+    setSearchParams({ page: '1', slug: slug || '' }); // Cập nhật URL với slug
+  };
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-pink-500" />
-      </div>
-    );
-  }
+  const handlePageChange = (page) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+      setSearchParams({ page: page, slug: searchParams.get('slug') || '' });
+    }
+  };
+
+  const handlePreviousPage = () => {
+    if (currentPage > 1) {
+      setCurrentPage(currentPage - 1);
+      setSearchParams({ page: currentPage - 1, slug: searchParams.get('slug') || '' });
+    }
+  };
+
+  const handleNextPage = () => {
+    if (currentPage < totalPages) {
+      setCurrentPage(currentPage + 1);
+      setSearchParams({ page: currentPage + 1, slug: searchParams.get('slug') || '' });
+    }
+  };
 
   return (
     <div className="p-6 space-y-6 w-full">
@@ -338,7 +404,7 @@ const Courses = () => {
                       src={
                         formData.urlImage instanceof Blob || formData.urlImage instanceof File
                           ? URL.createObjectURL(formData.urlImage)
-                          : editingCourse.urlImage
+                          : editingCourse?.urlImage
                       }
                       alt="Preview"
                       className="w-full h-full object-cover"
@@ -370,7 +436,7 @@ const Courses = () => {
             <BookOpen className="h-5 w-5 text-pink-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-gray-900">{courses.length}</div>
+            <div className="text-3xl font-bold text-gray-900">{allCourses.length}</div>
             <p className="text-sm text-gray-500 mt-1">Khóa học đang hoạt động</p>
           </CardContent>
         </Card>
@@ -381,7 +447,7 @@ const Courses = () => {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-gray-900">
-              {courses.filter((c) => c.price === 0).length}
+              {allCourses.filter((c) => c.price === 0).length}
             </div>
             <p className="text-sm text-gray-500 mt-1">Khóa học không tính phí</p>
           </CardContent>
@@ -399,7 +465,7 @@ const Courses = () => {
                 <Input
                   placeholder="Tìm kiếm theo tên khóa học..."
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={handleSearchChange}
                   className="pl-10 w-[300px]"
                 />
               </div>
@@ -415,7 +481,7 @@ const Courses = () => {
             <div className="flex justify-center items-center h-64">
               <Loader2 className="h-8 w-8 animate-spin text-pink-500" />
             </div>
-          ) : courses.length === 0 ? (
+          ) : displayedCourses.length === 0 ? (
             <div className="text-center py-8 text-gray-500">Chưa có khóa học nào được tạo</div>
           ) : (
             <div className="rounded-md border">
@@ -443,7 +509,7 @@ const Courses = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filteredCourses.map((course) => (
+                  {displayedCourses.map((course) => (
                     <TableRow key={course.id} className="hover:bg-gray-100 transition-colors">
                       <TableCell className="flex items-center gap-4 py-3">
                         <img
@@ -452,7 +518,10 @@ const Courses = () => {
                           className="h-12 w-12 rounded-lg object-cover border border-gray-200"
                         />
                         <div>
-                          <div className="font-medium text-gray-900 line-clamp-1">
+                          <div
+                            className="font-medium text-gray-900 line-clamp-1 cursor-pointer hover:underline"
+                            onClick={() => navigate(`/courses/${generateSlug(course.title)}`)}
+                          >
                             {course.title}
                           </div>
                           <div className="text-sm text-gray-500 line-clamp-1 max-w-[350px]">
@@ -492,7 +561,7 @@ const Courses = () => {
                         </Select>
                       </TableCell>
                       <TableCell className="text-gray-600 text-center">
-                        {course.createdAt}
+                        {formatDate(course.createdAt)}
                       </TableCell>
                       <TableCell className="text-center">
                         <Button
@@ -540,6 +609,32 @@ const Courses = () => {
               </Table>
             </div>
           )}
+          {/* Phân trang */}
+          <div className="flex justify-center items-center gap-2 mt-6">
+            <button
+              onClick={handlePreviousPage}
+              disabled={currentPage === 1}
+              className={`px-3 py-1 rounded-lg font-medium border ${currentPage === 1 ? 'text-gray-400 border-gray-300 cursor-not-allowed' : 'text-gray-700 hover:text-gray-900 border-gray-400'}`}
+            >
+              Trước
+            </button>
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+              <button
+                key={page}
+                onClick={() => handlePageChange(page)}
+                className={`px-3 py-1 rounded-lg font-medium border ${currentPage === page ? 'bg-pink-500 text-white border-pink-500' : 'text-gray-700 hover:bg-gray-200 border-gray-300'}`}
+              >
+                {page}
+              </button>
+            ))}
+            <button
+              onClick={handleNextPage}
+              disabled={currentPage === totalPages}
+              className={`px-3 py-1 rounded-lg font-medium border ${currentPage === totalPages ? 'text-gray-400 border-gray-300 cursor-not-allowed' : 'text-gray-700 hover:text-gray-900 border-gray-400'}`}
+            >
+              Sau
+            </button>
+          </div>
         </CardContent>
       </Card>
     </div>

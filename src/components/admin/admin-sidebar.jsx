@@ -16,12 +16,13 @@ import {
   ChevronDown,
   ChevronRight,
   Mail,
+  CreditCard
 } from 'lucide-react';
 import LogoH3 from '@/assets/LogoH3.png';
 
 const sidebarItems = [
   {
-    section: 'Overview',
+    section: 'Tổng quan',
     items: [
       { icon: <LayoutDashboard size={16} />, text: 'Trang Chủ', path: '/admin/dashboard' },
       { icon: <Users size={16} />, text: 'Học viên', path: '/admin/students' },
@@ -29,17 +30,18 @@ const sidebarItems = [
     ],
   },
   {
-    section: 'Content Management',
+    section: 'Quản lý nội dung',
     items: [
       { icon: <GraduationCap size={16} />, text: 'Khóa học', path: '/admin/courses' },
       { icon: <BookOpenText size={16} />, text: 'Bài viết', path: '/admin/post-management?page=1' },
       { icon: <MessageSquare size={16} />, text: 'Bình luận', path: '/admin/comment' },
       { icon: <BookOpen size={16} />, text: 'Thông báo', path: '/admin/notifications?page=1' },
       { icon: <Mail size={16} />, text: 'Email', path: '/admin/emails' },
+      { icon: <CreditCard size={16} />, text: 'Thanh toán', path: '/admin/payment-management' }
     ],
   },
   {
-    section: 'Settings',
+    section: 'Cài đặt',
     items: [
       { icon: <Settings size={16} />, text: 'Cài đặt', path: '/admin/settings' },
     ],
@@ -133,7 +135,7 @@ export default function AdminSidebar({ className }) {
           onClick={handleLogout}
         >
           <LogOut size={16} className="mr-2" />
-          Logout
+          Đăng xuất
         </Button>
         <div className="text-center text-xs text-gray-500 dark:text-gray-400">
           © 2025 H3 Academy
