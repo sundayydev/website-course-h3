@@ -12,7 +12,6 @@ import { isSameDay, isWithinInterval, startOfWeek, endOfWeek, startOfMonth, endO
 import { getAllEmails } from '../../../api/emailApi';
 import { formatDate } from '../../../utils/formatDate';
 
-// Ánh xạ sourceType và status sang tiếng Việt
 const typeLabels = {
   Assignment: 'Bài tập',
   PasswordReset: 'Đặt lại mật khẩu',
@@ -29,7 +28,7 @@ const statusLabels = {
 
 function EmailManagement() {
   const navigate = useNavigate();
-  const [searchParams, setSearchParams] = useSearchParams(); // Thêm useSearchParams
+  const [searchParams, setSearchParams] = useSearchParams();
   const [emails, setEmails] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -39,7 +38,6 @@ function EmailManagement() {
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
-  // Khởi tạo state từ query parameters
   useEffect(() => {
     const page = parseInt(searchParams.get('page')) || 1;
     const type = searchParams.get('type') || 'all';

@@ -20,7 +20,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Pagination } from '@mui/material';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 function Post() {
   const [posts, setPosts] = useState([]);
@@ -51,7 +51,7 @@ function Post() {
         throw new Error('Không tìm thấy userId');
       }
       const response = await getAllPost();
-      const userPosts = Array.isArray(response.data) ? response.data.filter((post) => post.userId === userId) : [];
+      const userPosts = response.data?.filter((post) => post.userId === userId) ?? [];
       setPosts(userPosts);
       setFilteredPosts(userPosts);
       setTotalPages(Math.ceil(userPosts.length / postsPerPage));
@@ -77,6 +77,7 @@ function Post() {
     );
     setFilteredPosts(results);
     setTotalPages(Math.ceil(results.length / postsPerPage));
+    setPage(1); // Reset về trang 1 khi lọc thay đổi
   }, [searchTerm, posts]);
 
   const handleInputChange = (e) => {
@@ -184,10 +185,23 @@ function Post() {
     }
   };
 
-  // Calculate pagination
+  // Tính toán phân trang
   const indexOfLastPost = page * postsPerPage;
   const indexOfFirstPost = indexOfLastPost - postsPerPage;
   const currentPosts = filteredPosts.slice(indexOfFirstPost, indexOfLastPost);
+
+  // Hàm xử lý chuyển trang
+  const handlePreviousPage = () => {
+    if (page > 1) {
+      setPage(page - 1);
+    }
+  };
+
+  const handleNextPage = () => {
+    if (page < totalPages) {
+      setPage(page + 1);
+    }
+  };
 
   return (
     <div className="container mx-auto px-4 py-8 w-full">
@@ -238,57 +252,73 @@ function Post() {
                 {currentPosts.map((post) => (
                   <TableRow key={post.id}>
                     <TableCell>
-                      <div className="flex items-center">
-                        {post && (
+                      <div className="flex items-center gap-3">
+                        {post?.urlImage && (
                           <img
-                            src={post.urlImage || ''}
+                            src={post.urlImage}
                             alt={post.title}
-                            className="h-12 w-12 object-cover rounded-md mr-3"
+                            className="h-12 w-12 object-cover rounded-md"
                             onError={(e) => (e.target.src = '/placeholder-image.jpg')}
                           />
                         )}
-                        <div>
-                          <div className="font-medium text-gray-900">{post.title}</div>
-                          <div className="text-gray-500 truncate max-w-md">
+                        <div className="flex-1 min-w-0">
+                          <h3 className="font-medium text-gray-900 truncate">{post.title}</h3>
+                          <p className="text-gray-500 truncate">
                             {post.content || 'Không có nội dung'}
-                          </div>
+                          </p>
                         </div>
                       </div>
                     </TableCell>
-                    <TableCell>{post.user?.fullName || 'Unknown'}</TableCell>
-                    <TableCell>{formatDate(post.createdAt)}</TableCell>
-                    <TableCell>
-                      {post.tags ? (
-                        post.tags.split(',').map((tag, index) => (
-                          <span
-                            key={index}
-                            className="inline-block bg-gray-200 rounded-full px-3 py-1 text-sm font-semibold text-gray-700 mr-2 mb-2"
-                          >
-                            {tag.trim()}
-                          </span>
-                        ))
-                      ) : (
-                        <span className="text-gray-500">Không có tags</span>
-                      )}
+                    <TableCell className="whitespace-nowrap">
+                      {post.user?.fullName || 'Unknown'}
+                    </TableCell>
+                    <TableCell className="whitespace-nowrap">
+                      {formatDate(post.createdAt)}
                     </TableCell>
                     <TableCell>
-                      <div className="flex space-x-2">
-                        <Button variant="outline" size="sm" onClick={() => openEditModal(post)}>
-                          <FaEdit className="mr-1" /> Sửa
+                      <div className="flex flex-wrap gap-2">
+                        {post.tags ? (
+                          post.tags.split(',').map((tag, index) => (
+                            <span
+                              key={index}
+                              className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800"
+                            >
+                              {tag.trim()}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="text-gray-500 text-sm">Không có tags</span>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => openEditModal(post)}
+                          className="h-8"
+                        >
+                          <FaEdit className="h-4 w-4 mr-1" />
+                          <span>Sửa</span>
                         </Button>
                         <Button
                           variant="destructive"
                           size="sm"
                           onClick={() => handleDelete(post.id)}
+                          className="h-8"
                         >
-                          <FaTrash className="mr-1" /> Xóa
+                          <FaTrash className="h-4 w-4 mr-1" />
+                          <span>Xóa</span>
                         </Button>
                         <Button
                           variant="outline"
                           size="sm"
                           onClick={() => navigate(`/instructor/comments/${post.id}`)}
+                          className="h-8"
                         >
-                          <FaSearch className="mr-1" /> Xem bình luận
+                          <FaSearch className="h-4 w-4 mr-1" />
+                          <span>Xem bình luận</span>
                         </Button>
                       </div>
                     </TableCell>
@@ -300,20 +330,33 @@ function Post() {
         </Card>
       )}
 
-      <div className="mt-4 flex justify-center">
-        <Pagination
-          count={totalPages}
-          page={page}
-          onChange={(e, value) => setPage(value)}
-          color="primary"
-        />
+      <div className="flex items-center justify-between mt-4">
+        <Button
+          variant="outline"
+          onClick={handlePreviousPage}
+          disabled={page === 1 || totalPages === 0}
+        >
+          <ChevronLeft className="h-4 w-4 mr-2" />
+          Trang Trước
+        </Button>
+        <span>
+          {totalPages === 0 ? 'Không có trang' : `Trang ${page} / ${totalPages}`}
+        </span>
+        <Button
+          variant="outline"
+          onClick={handleNextPage}
+          disabled={page >= totalPages || totalPages === 0}
+        >
+          Trang Sau
+          <ChevronRight className="h-4 w-4 ml-2" />
+        </Button>
       </div>
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="max-w-4xl">
           <DialogHeader>
             <DialogTitle>
-              {isEditing ? 'Chỉnh sửa bài viết' : 'Thêm bài viết mới'}
+              {isEditing ? 'Chỉnh sửa bài viết' : 'Thêm bài viết đăng'}
             </DialogTitle>
           </DialogHeader>
           <form onSubmit={handleSubmit} className="grid gap-6 md:grid-cols-[1fr_2fr]">

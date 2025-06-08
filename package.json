@@ -61,6 +61,7 @@
     "recharts": "^2.15.1",
     "remark-gfm": "^4.0.1",
     "shadcn-ui": "^0.9.4",
+    "slugify": "^1.6.6",
     "tailwind-merge": "^3.0.2",
     "tailwindcss-animate": "^1.0.7",
     "uuid": "^11.1.0"

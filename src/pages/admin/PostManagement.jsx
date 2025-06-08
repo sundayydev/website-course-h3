@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { FaComment, FaEdit, FaTrash, FaPlus, FaSearch } from 'react-icons/fa';
-import { getPaginatedPosts, createPost, updatePost, uploadPostImage, deletePost } from '../../api/postApi';
+import { getAllPost, createPost, updatePost, uploadPostImage, deletePost } from '../../api/postApi';
 import { jwtDecode } from 'jwt-decode';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -19,9 +19,11 @@ import {
 import { toast } from 'react-toastify';
 import MDEditor from '@uiw/react-md-editor';
 import { formatDate } from '../../utils/formatDate';
+import slugify from 'slugify';
 
 function PostManagement() {
-  const [posts, setPosts] = useState([]);
+  const [allPosts, setAllPosts] = useState([]);
+  const [displayedPosts, setDisplayedPosts] = useState([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [currentPost, setCurrentPost] = useState({
@@ -41,20 +43,31 @@ function PostManagement() {
   const [searchParams, setSearchParams] = useSearchParams();
   const pageNumberFromUrl = parseInt(searchParams.get('page') || 1, 10);
 
-  // Cập nhật currentPage dựa trên URL
+
+  const generateSlug = (text) => {
+    if (!text) return '';
+    return slugify(text, {
+      lower: true,
+      strict: true,
+      remove: /[*+~.()'"!:@]/g,
+      locale: 'vi',
+      trim: true,
+    });
+  };
+
   useEffect(() => {
     const initialPage = pageNumberFromUrl >= 1 ? pageNumberFromUrl : 1;
     setCurrentPage(initialPage);
   }, [pageNumberFromUrl]);
 
-  // Lấy danh sách bài viết phân trang
-  const fetchPosts = async (page = 1) => {
+  // Lấy toàn bộ bài viết
+  const fetchPosts = async () => {
     setLoading(true);
     try {
-      const response = await getPaginatedPosts(page, pageSize);
-      if (response.data && response.data.data && Array.isArray(response.data.data)) {
-        setPosts(response.data.data);
-        setTotalPages(response.data.totalPages || 1);
+      const response = await getAllPost();
+      if (response.data && Array.isArray(response.data)) {
+        setAllPosts(response.data);
+        setTotalPages(Math.ceil(response.data.length / pageSize));
       } else {
         setError('Không có bài viết nào.');
       }
@@ -67,24 +80,31 @@ function PostManagement() {
   };
 
   useEffect(() => {
-    fetchPosts(currentPage);
-  }, [currentPage]);
+    fetchPosts();
+  }, []);
 
-  // Xử lý tìm kiếm
+
   useEffect(() => {
-    if (searchTerm) {
-      const filtered = posts.filter(
+    const slug = searchParams.get('slug') || '';
+    let filteredPosts = allPosts;
+
+
+    if (slug || searchTerm) {
+      filteredPosts = allPosts.filter(
         (post) =>
           post.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          post.content?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-          post.tags?.toLowerCase().includes(searchTerm.toLowerCase())
+          generateSlug(post.title).includes(slug)
       );
-      setPosts(filtered);
-      setTotalPages(Math.ceil(filtered.length / pageSize));
-    } else {
-      fetchPosts(currentPage);
     }
-  }, [searchTerm]);
+
+
+    setTotalPages(Math.ceil(filteredPosts.length / pageSize));
+
+
+    const startIndex = (currentPage - 1) * pageSize;
+    const endIndex = startIndex + pageSize;
+    setDisplayedPosts(filteredPosts.slice(startIndex, endIndex));
+  }, [searchTerm, searchParams, currentPage, allPosts]);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -103,9 +123,11 @@ function PostManagement() {
   };
 
   const handleSearchChange = (e) => {
-    setSearchTerm(e.target.value);
-    setCurrentPage(1); // Reset về trang 1 khi tìm kiếm
-    setSearchParams({ page: 1 });
+    const value = e.target.value;
+    setSearchTerm(value);
+    setCurrentPage(1);
+    const slug = generateSlug(value);
+    setSearchParams({ page: '1', slug: slug || '' });
   };
 
   const resetForm = () => {
@@ -143,7 +165,7 @@ function PostManagement() {
       setLoading(true);
       try {
         await deletePost(postId);
-        fetchPosts(currentPage);
+        setAllPosts(allPosts.filter((post) => post.id !== postId));
         toast.success('Xóa bài viết thành công');
       } catch (err) {
         toast.error('Không thể xóa bài viết');
@@ -175,7 +197,7 @@ function PostManagement() {
         }
         toast.success('Cập nhật bài viết thành công');
         setIsModalOpen(false);
-        fetchPosts(currentPage);
+        fetchPosts();
         resetForm();
       } catch (error) {
         console.error('Lỗi khi cập nhật bài viết:', error);
@@ -189,7 +211,7 @@ function PostManagement() {
         }
         toast.success('Thêm bài viết thành công');
         setIsModalOpen(false);
-        fetchPosts(currentPage);
+        fetchPosts();
         resetForm();
       } catch (error) {
         console.error('Lỗi khi tạo bài viết:', error);
@@ -198,25 +220,24 @@ function PostManagement() {
     }
   };
 
-  // Xử lý chuyển trang
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
-      setSearchParams({ page: page });
+      setSearchParams({ page: page, slug: searchParams.get('slug') || '' });
     }
   };
 
   const handlePreviousPage = () => {
     if (currentPage > 1) {
       setCurrentPage(currentPage - 1);
-      setSearchParams({ page: currentPage - 1 });
+      setSearchParams({ page: currentPage - 1, slug: searchParams.get('slug') || '' });
     }
   };
 
   const handleNextPage = () => {
     if (currentPage < totalPages) {
       setCurrentPage(currentPage + 1);
-      setSearchParams({ page: currentPage + 1 });
+      setSearchParams({ page: currentPage + 1, slug: searchParams.get('slug') || '' });
     }
   };
 
@@ -266,10 +287,10 @@ function PostManagement() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {posts.map((post) => (
+                {displayedPosts.map((post) => (
                   <TableRow key={post.id}>
                     <TableCell>
-                      <div className="flex items-center gap-3 line-clamp-1 ">
+                      <div className="flex items-center gap-3 line-clamp-1">
                         {post && (
                           <img
                             src={post.urlImage || ''}
@@ -279,7 +300,12 @@ function PostManagement() {
                           />
                         )}
                         <div className="flex flex-col">
-                          <div className="font-medium text-gray-900 line-clamp-1">{post.title}</div>
+                          <div
+                            className="font-medium text-gray-900 line-clamp-1 cursor-pointer hover:underline"
+                            onClick={() => navigate(`/posts/${generateSlug(post.title)}`)}
+                          >
+                            {post.title}
+                          </div>
                           <div className="text-gray-500 line-clamp-1 text-sm">
                             {post.content || 'Không có nội dung'}
                           </div>
@@ -371,7 +397,6 @@ function PostManagement() {
           Sau
         </button>
       </div>
-
 
       <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
         <DialogContent className="max-w-4xl">
