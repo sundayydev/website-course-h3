@@ -1,10 +1,9 @@
 import { useState, useEffect, useRef } from 'react';
 import { FaTimes } from 'react-icons/fa';
-import { getCourses } from '../api/courseApi';
-import { getEnrollmentByUserId } from '../api/enrollmentApi';
+import { getEnrollmentByUserId } from '../../api/enrollmentApi';
 import { jwtDecode } from 'jwt-decode';
 import { useNavigate } from 'react-router-dom';
-import { getCourseById } from '../api/courseApi'; // Import hàm lấy thông tin khóa học theo ID
+import { getCourseById } from '../../api/courseApi';
 
 const CoursePopup = ({ isOpen, onClose }) => {
   const [courses, setCourses] = useState([]);
@@ -13,7 +12,7 @@ const CoursePopup = ({ isOpen, onClose }) => {
   const popupRef = useRef(null);
   const navigate = useNavigate();
 
-  // Lấy userId từ token đã lưu trong localStorage
+
   const getUserIdFromToken = () => {
     const token = localStorage.getItem('authToken');
     if (!token) return null;
@@ -26,7 +25,6 @@ const CoursePopup = ({ isOpen, onClose }) => {
     }
   };
 
-  // Lấy danh sách khóa học từ API
   useEffect(() => {
     const fetchCourses = async () => {
       if (isOpen) {
@@ -49,8 +47,18 @@ const CoursePopup = ({ isOpen, onClose }) => {
             return;
           }
 
+          // Lọc các enrollment có status là "Enrolled"
+          const enrolledData = enrollmentResponse.data.filter(
+            (enrollment) => enrollment.status === 'Enrolled'
+          );
+
+          if (enrolledData.length === 0) {
+            setCourses([]); // Không có khóa học nào với status "Enrolled"
+            return;
+          }
+
           // Lặp qua các khóa học đã đăng ký và lấy thông tin chi tiết từ API
-          const coursesPromises = enrollmentResponse.data.map(async (enrollment) => {
+          const coursesPromises = enrolledData.map(async (enrollment) => {
             console.log('enrollment', enrollment);
             const coursesResponse = await getCourseById(enrollment.courseId);
             console.log('coursesResponse', coursesResponse);
@@ -59,7 +67,7 @@ const CoursePopup = ({ isOpen, onClose }) => {
 
           // Chờ tất cả các API gọi trả về kết quả
           const enrolledCourses = await Promise.all(coursesPromises);
-          console.log('Danh sách khóa học đã đăng ký:', enrolledCourses); // Fix logging enrolled courses instead of promises
+          console.log('Danh sách khóa học đã đăng ký:', enrolledCourses);
 
           // Filter out any null values from failed requests
           const validCourses = enrolledCourses.filter((course) => course != null);
@@ -77,7 +85,7 @@ const CoursePopup = ({ isOpen, onClose }) => {
     fetchCourses();
   }, [isOpen]); // Chạy lại khi `isOpen` thay đổi
 
-  // Đóng popup khi click vào ngoài popup
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (popupRef.current && !popupRef.current.contains(event.target)) {
