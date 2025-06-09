@@ -1,23 +1,26 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { getPaginatedPosts } from '../../api/postApi';
 import defaultAvatar from '../../assets/imgs/default-avatar.jpg';
 import { formatDate } from '../../utils/formatDate';
 import HashLoader from 'react-spinners/HashLoader';
 
-const topics = ['HTML', 'CSS', 'JavaScript', 'React', 'Node.js', 'Python', 'Java', 'PHP'];
-
 const Post = () => {
   const [posts, setPosts] = useState([]);
+  const [filteredPosts, setFilteredPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [totalPages, setTotalPages] = useState(1);
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize] = useState(5);
+  const [selectedTags, setSelectedTags] = useState([]);
+  const [availableTags, setAvailableTags] = useState([]);
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const pageNumberFromUrl = parseInt(searchParams.get("page") || 1, 10);
+  const postsSectionRef = useRef(null);
 
+  // Khởi tạo trang hiện tại từ URL
   useEffect(() => {
     const initialPage = pageNumberFromUrl >= 1 ? pageNumberFromUrl : 1;
     setCurrentPage(initialPage);
@@ -29,7 +32,17 @@ const Post = () => {
       const response = await getPaginatedPosts(page, pageSize);
       if (response.data && response.data.data && Array.isArray(response.data.data)) {
         setPosts(response.data.data);
+        setFilteredPosts(response.data.data);
         setTotalPages(response.data.totalPages || 1);
+
+        // Trích xuất các thẻ duy nhất
+        const tagsSet = new Set();
+        response.data.data.forEach((post) => {
+          if (post.tags && post.tags.trim() !== '') {
+            post.tags.split(',').forEach((tag) => tagsSet.add(tag.trim()));
+          }
+        });
+        setAvailableTags([...tagsSet]);
       } else {
         setError('Không có bài viết nào.');
       }
@@ -45,10 +58,26 @@ const Post = () => {
     fetchPosts(currentPage);
   }, [currentPage]);
 
+  // Lọc 
+  useEffect(() => {
+    if (selectedTags.length === 0) {
+      setFilteredPosts(posts);
+    } else {
+      const filtered = posts.filter((post) =>
+        post.tags &&
+        post.tags
+          .split(',')
+          .some((tag) => selectedTags.includes(tag.trim()))
+      );
+      setFilteredPosts(filtered);
+    }
+  }, [selectedTags, posts]);
+
+  // Xử lý thay đổi trang
   const handlePageChange = (page) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
-      setSearchParams({ page: page }); // Cập nhật URL với tham số page
+      setSearchParams({ page: page });
     }
   };
 
@@ -66,27 +95,48 @@ const Post = () => {
     }
   };
 
+  const toggleTag = (tag) => {
+    setSelectedTags((prev) =>
+      prev.includes(tag)
+        ? prev.filter((t) => t !== tag)
+        : [...prev, tag]
+    );
+
+    if (postsSectionRef.current) {
+      postsSectionRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-12 mt-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        {/* Mobile Topics */}
+        {/* Mobile Tags Filter */}
         <div className="md:hidden mb-8">
           <div className="bg-white dark:bg-gray-800 shadow-lg rounded-xl p-6">
-            <h4 className="font-bold text-xl mb-4 text-gray-800 dark:text-white">Chủ đề nổi bật</h4>
+            <h4 className="font-bold text-xl mb-4 text-gray-800 dark:text-white">Lọc theo thẻ</h4>
             <div className="grid grid-cols-2 gap-3">
-              {topics.map((topic, index) => (
+              {availableTags.map((tag, index) => (
                 <button
                   key={index}
-                  className="px-4 py-2 bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-100 rounded-lg text-sm font-medium hover:bg-green-200 dark:hover:bg-green-800 transition-colors"
+                  onClick={() => toggleTag(tag)}
+                  className={`px-4 py-2 rounded-lg text-sm font-medium ${selectedTags.includes(tag)
+                    ? 'bg-red-500 text-white'
+                    : 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-100 hover:bg-green-200 dark:hover:bg-green-800'
+                    } transition-colors`}
                 >
-                  {topic}
+                  {tag}
                 </button>
               ))}
             </div>
           </div>
         </div>
 
-        <h1 className="text-4xl font-bold text-green-600 mb-8">Bài viết nổi bật</h1>
+        <h1
+          className="text-4xl font-bold text-green-600 mb-8"
+          ref={postsSectionRef}
+        >
+          Bài viết nổi bật
+        </h1>
 
         {loading ? (
           <div className="flex justify-center items-center h-96">
@@ -99,9 +149,9 @@ const Post = () => {
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-6">
-              {posts.length > 0 ? (
+              {filteredPosts.length > 0 ? (
                 <>
-                  {posts.map((post) => (
+                  {filteredPosts.map((post) => (
                     <div
                       key={post.id}
                       className="bg-white dark:bg-gray-800 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300 overflow-hidden cursor-pointer"
@@ -160,6 +210,7 @@ const Post = () => {
                         : 'text-gray-700 hover:text-gray-900'
                         }`}
                     >
+                      Trước
                     </button>
                     {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
                       <button
@@ -181,31 +232,35 @@ const Post = () => {
                         : 'text-gray-700 hover:text-gray-900'
                         }`}
                     >
-
+                      Sau
                     </button>
                   </div>
                 </>
               ) : (
                 <div className="text-center text-gray-500 dark:text-gray-400 py-12">
-                  <p className="text-xl">Chưa có bài viết nào.</p>
+                  <p className="text-xl">Không tìm thấy bài viết nào phù hợp.</p>
                 </div>
               )}
             </div>
 
             <div className="hidden lg:block">
               <div className="sticky top-24">
-                {/* Topics */}
+                {/* Tags Filter */}
                 <div className="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6 mb-8">
                   <h4 className="font-bold text-xl mb-4 text-gray-800 dark:text-white">
-                    Chủ đề nổi bật
+                    Lọc theo thẻ
                   </h4>
                   <div className="space-y-2">
-                    {topics.map((topic, index) => (
+                    {availableTags.map((tag, index) => (
                       <button
                         key={index}
-                        className="w-full px-4 py-2 text-left bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-100 rounded-lg text-sm font-medium hover:bg-green-200 dark:hover:bg-green-800 transition-colors"
+                        onClick={() => toggleTag(tag)}
+                        className={`w-full px-4 py-2 text-left rounded-lg text-sm font-medium ${selectedTags.includes(tag)
+                          ? 'bg-red-500 text-white'
+                          : 'bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-100 hover:bg-green-200 dark:hover:bg-green-800'
+                          } transition-colors`}
                       >
-                        {topic}
+                        {tag}
                       </button>
                     ))}
                   </div>

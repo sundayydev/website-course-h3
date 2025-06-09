@@ -2,52 +2,34 @@
 import React, { useEffect, useState } from 'react';
 import { FaClock, FaUser, FaStar, FaCheckCircle } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import HashLoader from 'react-spinners/HashLoader';
 import { getActiveCourses } from '../../api/courseApi';
 import { getReviewsByCourseId } from '../../api/reviewApi';
 import { getEnrollmentsByCourseId, getEnrollmentByUserId } from '../../api/enrollmentApi';
 import { getLessonsByCourseId } from '../../api/lessonApi';
 import { getUserId, isAuthenticated } from '../../api/authUtils';
+import { toast } from 'react-toastify';
 
 const CourseForUser = () => {
   const [courses, setCourses] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [currentPage, setCurrentPage] = useState(1);
-  const [isLoggedIn, setIsLoggedIn] = useState(isAuthenticated()); // Khởi tạo với isAuthenticated
+  const { isLoggedIn, user, refreshHome } = useSelector((state) => state.auth); // Lấy isLoggedIn từ Redux
   const coursesPerPage = 4;
   const navigate = useNavigate();
-
-  // Hàm kiểm tra và cập nhật trạng thái đăng nhập
-  const checkAuthStatus = () => {
-    setIsLoggedIn(isAuthenticated());
-  };
-
-  // Lắng nghe sự thay đổi của localStorage (khi token được lưu hoặc xóa)
-  useEffect(() => {
-    checkAuthStatus(); // Kiểm tra trạng thái ban đầu
-    const handleStorageChange = () => {
-      checkAuthStatus(); // Cập nhật trạng thái khi localStorage thay đổi
-    };
-
-    window.addEventListener('storage', handleStorageChange);
-    // Thêm sự kiện tùy chỉnh để xử lý khi setAuthToken được gọi
-    window.addEventListener('authTokenChanged', handleStorageChange);
-
-    return () => {
-      window.removeEventListener('storage', handleStorageChange);
-      window.removeEventListener('authTokenChanged', handleStorageChange);
-    };
-  }, []);
 
   // Hàm lấy danh sách khóa học
   const fetchCourses = async () => {
     try {
-      setLoading(true); // Đặt lại loading khi bắt đầu fetch
-      const userId = getUserId();
-      const enrollmentResponse = await getEnrollmentByUserId(userId);
+      setLoading(true);
+      setError(null);
+      const enrollmentResponse = await getEnrollmentByUserId();
       const enrolledCourseIds = Array.isArray(enrollmentResponse.data)
-        ? enrollmentResponse.data.map((enrollment) => enrollment.courseId)
+        ? enrollmentResponse.data
+          .filter((enrollment) => enrollment.status === 'Enrolled')
+          .map((enrollment) => enrollment.courseId)
         : [];
 
       if (enrolledCourseIds.length === 0) {
@@ -122,27 +104,39 @@ const CourseForUser = () => {
     } catch (err) {
       console.error('Lỗi khi tải khóa học:', err);
       setError('Lỗi khi tải khóa học. Vui lòng thử lại sau.');
+      toast.error('Lỗi khi tải khóa học. Vui lòng thử lại sau.');
     } finally {
       setLoading(false);
     }
   };
 
-  // Gọi fetchCourses khi isLoggedIn thay đổi thành true
+  // Gọi fetchCourses khi isLoggedIn hoặc refreshHome thay đổi
   useEffect(() => {
     if (isLoggedIn) {
       fetchCourses();
     } else {
-      setLoading(false); // Tắt loading nếu không đăng nhập
-      setCourses([]); // Xóa danh sách khóa học nếu không đăng nhập
+      setLoading(false);
+      setCourses([]);
     }
-  }, [isLoggedIn]);
+  }, [isLoggedIn, refreshHome]);
 
-  // Tính toán các khóa học hiển thị trên trang hiện tại
+  // Lắng nghe sự kiện authTokenChanged để cập nhật ngay lập tức
+  useEffect(() => {
+    const handleAuthChange = () => {
+      if (isAuthenticated()) {
+        fetchCourses();
+      }
+    };
+
+    window.addEventListener('authTokenChanged', handleAuthChange);
+    return () => {
+      window.removeEventListener('authTokenChanged', handleAuthChange);
+    };
+  }, []);
+
   const indexOfLastCourse = currentPage * coursesPerPage;
   const indexOfFirstCourse = indexOfLastCourse - coursesPerPage;
   const currentCourses = courses.slice(indexOfFirstCourse, indexOfLastCourse);
-
-  // Tính toán tổng số trang
   const totalPages = Math.ceil(courses.length / coursesPerPage);
 
   // Hàm chuyển trang
@@ -154,9 +148,8 @@ const CourseForUser = () => {
     setCurrentPage((prev) => Math.min(prev + 1, totalPages));
   };
 
-  // Nếu chưa đăng nhập, không hiển thị gì
   if (!isLoggedIn) {
-    return null; // Hoặc: <p>Vui lòng đăng nhập để xem khóa học đã đăng ký.</p>
+    return null;
   }
 
   if (loading) {
@@ -196,7 +189,9 @@ const CourseForUser = () => {
           </div>
         )}
       </div>
-      {courses.length === 0 ? (
+      {error ? (
+        <p className="text-red-600 text-center font-bold">{error}</p>
+      ) : courses.length === 0 ? (
         <p className="text-gray-600 text-center font-bold">Bạn chưa đăng ký khóa học nào.</p>
       ) : (
         <div className="flex flex-wrap justify-start gap-5">
