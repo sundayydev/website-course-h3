@@ -1,14 +1,14 @@
 /* eslint-disable react/prop-types */
 import { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
 import { FaAngleDown, FaEnvelope, FaPhone, FaBirthdayCake, FaCalendar, FaTimes, FaLocationArrow } from 'react-icons/fa';
 import { getUserByProfile } from '../../api/userApi';
-import { getFollowersByUser, getFollowingByUser, createFollower, deleteFollower } from '../../api/followerApi'; // Import follower APIs
+import { getFollowersByUser, getFollowingByUser, createFollower, deleteFollower } from '../../api/followerApi';
+import { getChatsByUser, createChat } from '../../api/chatApi';
 import { getUserId } from '../../api/authUtils';
 import defaultAvatar from '../../assets/imgs/default-avatar.jpg';
 import { formatDate } from '../../utils/formatDate';
-import { useNavigate } from 'react-router-dom';
 import HashLoader from 'react-spinners/HashLoader';
 
 const ProfileImage = ({ src, onClick }) => (
@@ -49,9 +49,9 @@ const UserProfile = () => {
   const [followerId, setFollowerId] = useState(null);
   const [followers, setFollowers] = useState([]);
   const [following, setFollowing] = useState([]);
-  const navigate = useNavigate();
   const [isFollowersModalOpen, setIsFollowersModalOpen] = useState(false);
   const [isFollowingModalOpen, setIsFollowingModalOpen] = useState(false);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const fetchUserProfile = async () => {
@@ -114,7 +114,44 @@ const UserProfile = () => {
         toast.success('Đã theo dõi!');
       }
     } catch (error) {
-      toast.error(error.message || 'Không thể thực hiện hành động!');
+      toast.error(error.response?.data?.message || 'Không thể thực hiện hành động!');
+    }
+  };
+
+  const handleMessageClick = async () => {
+    try {
+      const currentUserId = getUserId();
+      if (!currentUserId) {
+        toast.error('Vui lòng đăng nhập để nhắn tin!');
+        navigate('/login');
+        return;
+      }
+      if (currentUserId === id) {
+        toast.error('Bạn không thể nhắn tin cho chính mình!');
+        return;
+      }
+      const chats = await getChatsByUser(currentUserId);
+      const existingChat = chats.find(
+        chat =>
+          (chat.user1Id === currentUserId && chat.user2Id === id) ||
+          (chat.user1Id === id && chat.user2Id === currentUserId)
+      );
+
+      let chatId;
+      if (existingChat) {
+        chatId = existingChat.id;
+      } else {
+        const newChat = await createChat({
+          user1Id: currentUserId,
+          user2Id: id
+        });
+        chatId = newChat.id;
+      }
+
+      navigate(`/chat/${chatId}`);
+    } catch (error) {
+      toast.error(error.response?.data?.message || 'Không thể mở cuộc trò chuyện!');
+      console.error('Message click error:', error);
     }
   };
 
@@ -146,7 +183,6 @@ const UserProfile = () => {
               <h1 className="text-2xl font-bold text-emerald-500">
                 {user.fullName || 'Không có tên'}
               </h1>
-
             </div>
             <span>
               <p className="text-gray-600 font-semibold">
@@ -158,7 +194,6 @@ const UserProfile = () => {
                 ) : 'Không có thông tin'}
               </p>
             </span>
-            {/* Thông tin bài viết, khóa học, người theo dõi, đang theo dõi */}
             <div className="flex items-center gap-4 mb-4 mt-2">
               <button
                 onClick={() => setIsFollowersModalOpen(true)}
@@ -172,31 +207,24 @@ const UserProfile = () => {
               >
                 {`0 khóa học`}
               </button>
-
               <button
                 onClick={() => setIsFollowersModalOpen(true)}
                 className="text-gray-600 hover:text-emerald-500"
               >
                 <span className="font-bold text-emerald-500">{followerCount}</span> người theo dõi
               </button>
-
               <button
                 onClick={() => setIsFollowingModalOpen(true)}
                 className="text-gray-600 hover:text-emerald-500"
               >
                 <span className="font-bold text-emerald-500">{followingCount}</span> đang theo dõi
               </button>
-
             </div>
-
-            {/* Các nút Thêm vào tin, Chỉnh sửa, và Dropdown */}
             <div className="flex items-center gap-2">
               <button
                 className="bg-blue-600 text-white px-3 py-1.5 rounded-md hover:bg-blue-700 transition-colors flex items-center gap-1.5"
                 aria-label="Nhắn tin"
-                onClick={() => {
-                  toast.info('Chức năng nhắn tin đang được phát triển!');
-                }}
+                onClick={handleMessageClick}
               >
                 <FaLocationArrow /> Nhắn tin
               </button>
@@ -237,10 +265,7 @@ const UserProfile = () => {
                       <li>
                         <button
                           className="block w-full text-left px-4 py-2 text-gray-700 hover:bg-gray-100"
-                          onClick={() => {
-                            toast.info('Chức năng nhắn tin đang được phát triển!');
-                            setIsDropdownOpen(false);
-                          }}
+                          onClick={handleMessageClick}
                         >
                           Nhắn tin
                         </button>
@@ -253,7 +278,7 @@ const UserProfile = () => {
           </div>
         </div>
         <hr className="my-6" />
-        <div className='ml-5'>
+        <div className="ml-5">
           <Section title="Thông tin liên hệ">
             <ul className="space-y-2 text-gray-700">
               <ContactItem icon={<FaEnvelope />} text={user.email || 'Chưa có email'} />
@@ -268,117 +293,107 @@ const UserProfile = () => {
         </div>
       </div>
 
-      {/* Profile Image Modal */}
-      {
-        isModalOpen && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-75 p-4 z-50">
-            <div className="relative max-w-md w-full">
-              <img
-                src={user?.profileImage ? `${user.profileImage}` : defaultAvatar}
-                alt="Profile Enlarged"
-                className="rounded-lg shadow-2xl w-full"
-                loading="lazy"
-              />
+      {isModalOpen && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-75 p-4 z-50">
+          <div className="relative max-w-md w-full">
+            <img
+              src={user?.profileImage ? `${user.profileImage}` : defaultAvatar}
+              alt="Profile Enlarged"
+              className="rounded-lg shadow-2xl w-full"
+              loading="lazy"
+            />
+            <button
+              className="absolute top-2 right-2 bg-red-600 text-white rounded-full p-2"
+              onClick={() => setIsModalOpen(false)}
+            >
+              <FaTimes />
+            </button>
+          </div>
+        </div>
+      )}
+      {isFollowersModalOpen && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-75 p-4 z-50">
+          <div className="bg-white rounded-xl w-full max-w-md p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-emerald-500">Người theo dõi</h2>
               <button
-                className="absolute top-2 right-2 bg-red-600 text-white rounded-full p-2"
-                onClick={() => setIsModalOpen(false)}
+                className="text-gray-500 hover:text-gray-700"
+                onClick={() => setIsFollowersModalOpen(false)}
               >
                 <FaTimes />
               </button>
             </div>
-          </div>
-        )
-      }
-      {
-        isFollowersModalOpen && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-75 p-4 z-50">
-            <div className="bg-white rounded-xl w-full max-w-md p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold text-emerald-500">Người theo dõi</h2>
-                <button
-                  className="text-gray-500 hover:text-gray-700"
-                  onClick={() => setIsFollowersModalOpen(false)}
-                >
-                  <FaTimes />
-                </button>
-              </div>
-              <div className="max-h-96 overflow-y-auto">
-                {followers.length > 0 ? (
-                  followers.map((follower, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center gap-4 p-3 hover:bg-gray-50 cursor-pointer"
-                      onClick={() => {
-                        console.log('Navigating to follower profile:', follower.followerId);
-                        navigate(`/profile/${follower.followerId}`);
-                        setIsFollowersModalOpen(false);
-                      }}
-                    >
-                      <img
-                        src={follower.followerProfileImage ? `${follower.followerProfileImage}` : defaultAvatar}
-                        alt={follower.followerFullName || 'Không có tên'}
-                        className="w-10 h-10 rounded-full"
-                      />
-                      <div>
-                        <p className="font-semibold">{follower.followerFullName || 'Không có tên'}</p>
-                        <p className="text-sm text-gray-500">{follower.followerEmail || 'Chưa có email'}</p>
-                      </div>
+            <div className="max-h-96 overflow-y-auto">
+              {followers.length > 0 ? (
+                followers.map((follower, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center gap-4 p-3 hover:bg-gray-50 cursor-pointer"
+                    onClick={() => {
+                      navigate(`/profile/${follower.followerId}`);
+                      setIsFollowersModalOpen(false);
+                    }}
+                  >
+                    <img
+                      src={follower.followerProfileImage ? `${follower.followerProfileImage}` : defaultAvatar}
+                      alt={follower.followerFullName || 'Không có tên'}
+                      className="w-10 h-10 rounded-full"
+                    />
+                    <div>
+                      <p className="font-semibold">{follower.followerFullName || 'Không có tên'}</p>
+                      <p className="text-sm text-gray-500">{follower.followerEmail || 'Chưa có email'}</p>
                     </div>
-                  ))
-                ) : (
-                  <p className="text-center text-gray-500">Chưa có người theo dõi</p>
-                )}
-              </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-center text-gray-500">Chưa có người theo dõi</p>
+              )}
             </div>
           </div>
-        )
-      }
-
-      {
-        isFollowingModalOpen && (
-          <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-75 p-4 z-50">
-            <div className="bg-white rounded-xl w-full max-w-md p-6">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold text-emerald-500">Đang theo dõi</h2>
-                <button
-                  className="text-gray-500 hover:text-gray-700"
-                  onClick={() => setIsFollowingModalOpen(false)}
-                >
-                  <FaTimes />
-                </button>
-              </div>
-              <div className="max-h-96 overflow-y-auto">
-                {following.length > 0 ? (
-                  following.map((followedUser, index) => (
-                    <div
-                      key={index}
-                      className="flex items-center gap-4 p-3 hover:bg-gray-50 cursor-pointer"
-                      onClick={() => {
-                        console.log('Navigating to following profile:', followedUser.followingId);
-                        navigate(`/profile/${followedUser.followingId}`);
-                        setIsFollowingModalOpen(false);
-                      }}
-                    >
-                      <img
-                        src={followedUser.followingProfileImage ? `${followedUser.followingProfileImage}` : defaultAvatar}
-                        alt={followedUser.followingFullName || 'Không có tên'}
-                        className="w-10 h-10 rounded-full"
-                      />
-                      <div>
-                        <p className="font-semibold">{followedUser.followingFullName || 'Không có tên'}</p>
-                        <p className="text-sm text-gray-500">{followedUser.followingEmail || 'Chưa có email'}</p>
-                      </div>
+        </div>
+      )}
+      {isFollowingModalOpen && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-75 p-4 z-50">
+          <div className="bg-white rounded-xl w-full max-w-md p-6">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-xl font-bold text-emerald-500">Đang theo dõi</h2>
+              <button
+                className="text-gray-500 hover:text-gray-700"
+                onClick={() => setIsFollowingModalOpen(false)}
+              >
+                <FaTimes />
+              </button>
+            </div>
+            <div className="max-h-96 overflow-y-auto">
+              {following.length > 0 ? (
+                following.map((followedUser, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center gap-4 p-3 hover:bg-gray-50 cursor-pointer"
+                    onClick={() => {
+                      navigate(`/profile/${followedUser.followingId}`);
+                      setIsFollowingModalOpen(false);
+                    }}
+                  >
+                    <img
+                      src={followedUser.followingProfileImage ? `${followedUser.followingProfileImage}` : defaultAvatar}
+                      alt={followedUser.followingFullName || 'Không có tên'}
+                      className="w-10 h-10 rounded-full"
+                    />
+                    <div>
+                      <p className="font-semibold">{followedUser.followingFullName || 'Không có tên'}</p>
+                      <p className="text-sm text-gray-500">{followedUser.followingEmail || 'Chưa có email'}</p>
                     </div>
-                  ))
-                ) : (
-                  <p className="text-center text-gray-500">Chưa theo dõi ai</p>
-                )}
-              </div>
+                  </div>
+                ))
+              ) : (
+                <p className="text-center text-gray-500">Chưa theo dõi ai</p>
+              )}
             </div>
           </div>
-        )
-      }
-    </div >
+        </div>
+      )}
+    </div>
   );
 };
 

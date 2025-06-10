@@ -1,7 +1,7 @@
 import api from './axios';
 import { getAuthToken } from './authUtils';
 
-const API_URL = '/api/Coupon';
+const API_URL = '/coupon';
 
 // Get all coupons
 export const getAllCoupons = async () => {

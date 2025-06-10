@@ -17,6 +17,9 @@ import AccountSettings from '../pages/main/account/SettingAccount.jsx';
 import UserProfile from '../pages/main/UserProfile.jsx';
 import Terms from '../pages/main/info/Terms.jsx';
 import PrivacyPolicy from '../pages/main/info/PrivacyPolicy.jsx';
+import CardInfo from '../pages/main/card/CardInfo.jsx';
+import CardReview from '../pages/main/card/CardReview.jsx';
+import ChatPage from '../pages/main/chat/ChatPage.jsx';
 
 const MainRoutes = {
   path: '/',
@@ -38,7 +41,10 @@ const MainRoutes = {
     { path: 'payment-failure', element: <PaymentFailure /> },
     { path: 'profile', element: <ProfilePage /> },
     { path: 'setting', element: <AccountSettings /> },
-    { path: 'profile/:id', element: <UserProfile /> }, // Đường dẫn cho trang chi tiết người dùng
+    { path: 'profile/:id', element: <UserProfile /> },
+    { path: 'cardinfo', element: <CardInfo /> },
+    { path: 'cardreview', element: <CardReview /> },
+    { path: 'chat/:chatId', element: <ChatPage /> }
   ],
 };
 

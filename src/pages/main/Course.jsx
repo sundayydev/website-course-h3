@@ -257,7 +257,7 @@ const CourseList = () => {
           {courses.map((course) => (
             <div
               key={course.id}
-              className="rounded-2xl shadow-lg overflow-hidden bg-white w-full md:w-1/3 lg:w-[320px] 
+              className="rounded-2xl shadow-lg overflow-hidden bg-white w-full md:w-1/3 lg:w-[335px] 
               transform transition-transform duration-300 hover:scale-105 flex flex-col cursor-pointer"
               onClick={() => navigate(`/details/${course.id}`)}
             >

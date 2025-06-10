@@ -1,11 +1,12 @@
+// Payment.jsx
 import { useState, useEffect } from 'react';
 import { FaTimes, FaLock } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 import { createPayment, createPaymentMomo } from '@/api/paymentApi';
 import { getCourseById } from '@/api/courseApi';
-import axios from 'axios';
-import { getCouponByCode } from '@/api/couponApi';
+import { getAllCoupons, getCouponByCode } from '@/api/couponApi'; // Thêm getAllCoupons
+
 const API_URL = process.env.VITE_API_URL || 'http://localhost:5221/api';
 
 const getUserIdFromToken = () => {
@@ -34,9 +35,12 @@ const PaymentModal = ({ courseId, onClose }) => {
   const [discountAmount, setDiscountAmount] = useState(0);
   const [couponId, setCouponId] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState('VNPAY');
+  const [coupons, setCoupons] = useState([]); // Danh sách coupon
+  const [isCouponValid, setIsCouponValid] = useState(false);
   const navigate = useNavigate();
   const userId = getUserIdFromToken();
 
+  // Lấy danh sách coupon và thông tin khóa học
   useEffect(() => {
     if (!userId) {
       alert('Bạn cần đăng nhập để thanh toán!');
@@ -44,29 +48,36 @@ const PaymentModal = ({ courseId, onClose }) => {
       return;
     }
 
-    const fetchCourse = async () => {
+    const fetchCourseAndCoupons = async () => {
       try {
-        const data = await getCourseById(courseId);
-        setCourse(data);
-        setTotal(data.price || 0);
-        setOriginalTotal(data.price || 0);
+        // Lấy thông tin khóa học
+        const courseData = await getCourseById(courseId);
+        setCourse(courseData);
+        setTotal(courseData.price || 0);
+        setOriginalTotal(courseData.price || 0);
+
+        // Lấy danh sách coupon
+        const couponData = await getAllCoupons();
+        console.log(couponData.data);
+        setCoupons(couponData.data || []);
       } catch (err) {
-        setErrorMessage('Không thể tải thông tin khóa học!');
+        setErrorMessage('Không thể tải thông tin khóa học hoặc coupon!');
       }
     };
 
-    if (courseId) fetchCourse();
+    if (courseId) fetchCourseAndCoupons();
   }, [courseId, userId, navigate]);
 
-  const applyCoupon = async () => {
-    if (!couponCode) {
-      setErrorMessage('Vui lòng nhập mã coupon!');
+  // Áp dụng coupon
+  const applyCoupon = async (selectedCouponCode) => {
+    if (!selectedCouponCode) {
+      setErrorMessage('Vui lòng chọn hoặc nhập mã coupon!');
       setIsCouponValid(false);
       return;
     }
-    setIsApplyingCoupon(true); // Bắt đầu loading
+    setIsApplyingCoupon(true);
     try {
-      const coupon = await getCouponByCode(couponCode); // Sử dụng getCouponByCode
+      const coupon = await getCouponByCode(selectedCouponCode);
       const now = new Date();
       if (!coupon.data.isActive || now < new Date(coupon.data.startDate) || now > new Date(coupon.data.endDate)) {
         setErrorMessage('Mã coupon không hợp lệ hoặc đã hết hạn!');
@@ -84,16 +95,18 @@ const PaymentModal = ({ courseId, onClose }) => {
       setDiscountAmount(discount);
       setTotal(originalTotal - discount);
       setCouponId(coupon.data.id);
+      setCouponCode(selectedCouponCode);
       setErrorMessage(null);
       setIsCouponValid(true);
     } catch (error) {
       setErrorMessage(error.message);
       setIsCouponValid(false);
     } finally {
-      setIsApplyingCoupon(false); // K‘Them trạng thái loadingết thúc loading
+      setIsApplyingCoupon(false);
     }
   };
 
+  // Xử lý thanh toán
   const handlePayment = async () => {
     setIsLoading(true);
     setErrorMessage(null);
@@ -137,11 +150,7 @@ const PaymentModal = ({ courseId, onClose }) => {
           <div className="md:w-1/2 p-6 border-r border-gray-200 flex flex-col space-y-4">
             <div className="flex items-center space-x-4">
               <img
-                src={
-                  course.urlImage
-                    ? `${course.urlImage}`
-                    : ''
-                }
+                src={course.urlImage ? `${course.urlImage}` : ''}
                 alt={course.title}
                 className="w-16 h-16 rounded-lg object-cover"
               />
@@ -164,7 +173,7 @@ const PaymentModal = ({ courseId, onClose }) => {
             <div className="bg-red-100 text-red-700 text-sm p-2 rounded">{errorMessage}</div>
           )}
 
-          {/* Coupon Box */}
+          {/* Coupon Selection */}
           {discountAmount > 0 ? (
             <div className="flex justify-between items-center bg-green-100 text-green-700 p-2 rounded">
               <span>Đã áp dụng mã: <strong>{couponCode}</strong></span>
@@ -174,6 +183,7 @@ const PaymentModal = ({ courseId, onClose }) => {
                   setDiscountAmount(0);
                   setTotal(originalTotal);
                   setCouponId(null);
+                  setIsCouponValid(false);
                 }}
                 className="text-red-500 hover:underline text-sm"
               >
@@ -182,17 +192,23 @@ const PaymentModal = ({ courseId, onClose }) => {
             </div>
           ) : (
             <div className="flex space-x-2">
-              <input
-                type="text"
-                placeholder="Nhập mã coupon"
+              <select
                 value={couponCode}
-                onChange={(e) => setCouponCode(e.target.value)}
+                onChange={(e) => applyCoupon(e.target.value)}
                 className="flex-1 px-3 py-2 border rounded"
-              />
+                disabled={isApplyingCoupon}
+              >
+                <option value="">Chọn mã coupon</option>
+                {coupons.map((coupon) => (
+                  <option key={coupon.id} value={coupon.code}>
+                    {coupon.code} - Giảm {coupon.discountPercentage}% (Tối đa {coupon.maxUsage} lần)
+                  </option>
+                ))}
+              </select>
               <button
-                  onClick={applyCoupon}
-                  disabled={isApplyingCoupon}
-                  className={`bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 ${isApplyingCoupon ? 'opacity-50 cursor-not-allowed' : ''}`}
+                onClick={() => applyCoupon(couponCode)}
+                disabled={isApplyingCoupon}
+                className={`bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 ${isApplyingCoupon ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 {isApplyingCoupon ? 'Đang kiểm tra...' : 'Áp dụng'}
               </button>
@@ -252,19 +268,18 @@ const PaymentModal = ({ courseId, onClose }) => {
 
           {/* Button */}
           <button
-              onClick={handlePayment}
-              disabled={isLoading || (couponCode && !isCouponValid)}
-              className={`mt-2 py-3 rounded-lg text-white font-semibold ${
-                  isLoading || (couponCode && !isCouponValid)
-                      ? 'bg-gray-400 cursor-not-allowed'
-                      : 'bg-blue-600 hover:bg-blue-700'
+            onClick={handlePayment}
+            disabled={isLoading || (couponCode && !isCouponValid)}
+            className={`mt-2 py-3 rounded-lg text-white font-semibold ${isLoading || (couponCode && !isCouponValid)
+              ? 'bg-gray-400 cursor-not-allowed'
+              : 'bg-blue-600 hover:bg-blue-700'
               }`}
           >
             {isLoading
-                ? 'Đang xử lý...'
-                : total === 0
-                    ? 'Đăng ký miễn phí'
-                    : 'Tiếp tục thanh toán'}
+              ? 'Đang xử lý...'
+              : total === 0
+                ? 'Đăng ký miễnEO4 miễn phí'
+                : 'Tiếp tục thanh toán'}
           </button>
 
           {total > 0 && (

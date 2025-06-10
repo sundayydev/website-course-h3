@@ -184,3 +184,36 @@ export const updateOrderStatus = async (orderId, status) => {
     throw new Error(errorMessage);
   }
 };
+
+export const exportOrderReport = async ({ startDate, endDate, period, month, year }) => {
+  const token = localStorage.getItem('authToken');
+  if (!token) {
+    throw new Error('Không tìm thấy token');
+  }
+
+  try {
+    const decodedToken = getAuthToken(token);
+    if (decodedToken.exp * 1000 < Date.now()) {
+      throw new Error('Token đã hết hạn');
+    }
+
+    const queryParams = new URLSearchParams();
+    if (startDate) queryParams.append('startDate', startDate);
+    if (endDate) queryParams.append('endDate', endDate);
+    if (period) queryParams.append('period', period);
+    if (month) queryParams.append('month', month);
+    if (year) queryParams.append('year', year);
+
+    const response = await api.get(`${API_URL}/export-report?${queryParams.toString()}`, {
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
+      responseType: 'blob', // Quan trọng để nhận file Excel
+    });
+    return response;
+  } catch (error) {
+    const errorMessage = error.response?.data?.message || error.response?.data || error.message;
+    console.error('Lỗi khi xuất báo cáo:', errorMessage);
+    throw new Error(errorMessage);
+  }
+};
