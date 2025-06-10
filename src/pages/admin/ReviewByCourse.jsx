@@ -165,7 +165,7 @@ function ReviewByCourse() {
           <Button
             variant="outline"
             className="mr-4"
-            onClick={() => navigate('/admin/course')}
+            onClick={() => navigate('/admin/courses')}
           >
             <FaArrowLeft className="mr-2" /> Quay lại
           </Button>

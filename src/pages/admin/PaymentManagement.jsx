@@ -1,31 +1,14 @@
 import { useState, useEffect } from 'react';
 import { toast } from 'react-toastify';
-
-// Import các components UI
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table';
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Input } from '@/components/ui/input';
-
-// Import các icons
 import { Loader2, Search, Download, Eye, ChevronLeft, ChevronRight, X } from 'lucide-react';
 import { formatDate } from '../../utils/formatDate';
-import { getAllOrders, updateOrderStatus } from '@/api/orderApi';
+import { getAllOrders, updateOrderStatus, exportOrderReport } from '@/api/orderApi';
 import { getCourseById } from '@/api/courseApi';
 
 const OrdersDetail = () => {
@@ -37,6 +20,13 @@ const OrdersDetail = () => {
   const [pageSize] = useState(5);
   const [totalPages, setTotalPages] = useState(1);
   const [selectedOrder, setSelectedOrder] = useState(null);
+  // State cho popup xuất báo cáo
+  const [showExportModal, setShowExportModal] = useState(false);
+  const [exportType, setExportType] = useState('month'); // 'month' hoặc 'date'
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [month, setMonth] = useState('');
+  const [year, setYear] = useState(new Date().getFullYear().toString());
 
   useEffect(() => {
     fetchOrders();
@@ -119,13 +109,69 @@ const OrdersDetail = () => {
     }
   };
 
+  const handleExportReport = async () => {
+    try {
+      if (exportType === 'date') {
+        // Kiểm tra lọc theo ngày
+        if (!startDate || !endDate) {
+          toast.error('Vui lòng chọn cả ngày bắt đầu và ngày kết thúc.');
+          return;
+        }
+        if (new Date(startDate) > new Date(endDate)) {
+          toast.error('Ngày bắt đầu phải nhỏ hơn hoặc bằng ngày kết thúc.');
+          return;
+        }
+      } else if (exportType === 'month') {
+        // Kiểm tra lọc theo tháng
+        if (!month) {
+          toast.error('Vui lòng chọn tháng.');
+          return;
+        }
+        if (!year || year < 1900 || year > new Date().getFullYear()) {
+          toast.error(`Năm phải từ 1900 đến ${new Date().getFullYear()}.`);
+          return;
+        }
+      }
+
+      const params = exportType === 'date'
+        ? { startDate, endDate }
+        : { period: 'month', month, year };
+
+      const response = await exportOrderReport(params);
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+
+      // Tạo tên file theo định dạng yêu cầu
+      let fileName = 'BaoCaoDonHang';
+      if (exportType === 'date') {
+        const start = new Date(startDate).toLocaleDateString('vi-VN', { day: '2-digit' });
+        const end = new Date(endDate).toLocaleDateString('vi-VN', { day: '2-digit' });
+        const monthYear = new Date(startDate).toLocaleDateString('vi-VN', { month: '2-digit', year: 'numeric' }).replace('/', '-');
+        fileName += `_${start}-${end}-${monthYear}.xlsx`;
+      } else {
+        fileName += `_${month.padStart(2, '0')}-${year}.xlsx`;
+      }
+
+      link.setAttribute('download', fileName);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      toast.success('Xuất báo cáo thành công!');
+      setShowExportModal(false); // Đóng popup sau khi xuất
+    } catch (error) {
+      const errorMessage = error.message || 'Lỗi khi xuất báo cáo';
+      toast.error(errorMessage);
+      console.error('Lỗi khi xuất báo cáo:', error);
+    }
+  };
+
   const filteredOrders = orders.filter((order) => {
     const matchesSearch =
       (order.fullName?.toLowerCase()?.includes(searchTerm.toLowerCase()) ||
         order.title?.toLowerCase()?.includes(searchTerm.toLowerCase())) ??
       true;
-    const matchesStatus =
-      statusFilter === 'all' || order.status === statusFilter;
+    const matchesStatus = statusFilter === 'all' || order.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
@@ -172,6 +218,16 @@ const OrdersDetail = () => {
     setSelectedOrder(null);
   };
 
+  const closeExportModal = () => {
+    setShowExportModal(false);
+    // Reset các giá trị khi đóng popup
+    setExportType('month');
+    setStartDate('');
+    setEndDate('');
+    setMonth('');
+    setYear(new Date().getFullYear().toString());
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen w-screen bg-gray-100">
@@ -188,7 +244,7 @@ const OrdersDetail = () => {
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-2xl font-bold">Quản Lý Đơn Hàng</h1>
         <div className="flex gap-2">
-          <Button variant="outline">
+          <Button variant="outline" onClick={() => setShowExportModal(true)}>
             <Download className="h-4 w-4 mr-2" />
             Xuất Báo Cáo
           </Button>
@@ -310,6 +366,84 @@ const OrdersDetail = () => {
           </div>
         </CardContent>
       </Card>
+
+      {/* Popup xuất báo cáo */}
+      {showExportModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md relative">
+            <button
+              onClick={closeExportModal}
+              className="absolute top-4 right-4 text-gray-500 hover:text-pink-500"
+            >
+              <X className="h-6 w-6" />
+            </button>
+            <h2 className="text-xl font-semibold text-gray-800 mb-4">Xuất Báo Cáo Đơn Hàng</h2>
+            <div className="space-y-4">
+              <Select value={exportType} onValueChange={setExportType}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Chọn kiểu xuất" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="month">Theo Tháng</SelectItem>
+                  <SelectItem value="date">Theo Khoảng Ngày</SelectItem>
+                </SelectContent>
+              </Select>
+
+              {exportType === 'month' && (
+                <div className="space-y-4">
+                  <Select value={month} onValueChange={setMonth}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Chọn Tháng" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {Array.from({ length: 12 }, (_, i) => i + 1).map((m) => (
+                        <SelectItem key={m} value={m.toString()}>
+                          Tháng {m}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                  <Input
+                    type="number"
+                    placeholder="Năm"
+                    value={year}
+                    onChange={(e) => setYear(e.target.value)}
+                    min="1900"
+                    max={new Date().getFullYear()}
+                  />
+                </div>
+              )}
+
+              {exportType === 'date' && (
+                <div className="space-y-4">
+                  <Input
+                    type="date"
+                    placeholder="Từ ngày"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                  />
+                  <Input
+                    type="date"
+                    placeholder="Đến ngày"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                  />
+                </div>
+              )}
+
+              <Button
+                className="w-full bg-pink-500 hover:bg-pink-600 text-white"
+                onClick={handleExportReport}
+              >
+                <Download className="h-4 w-4 mr-2" />
+                Xuất Báo Cáo
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal chi tiết đơn hàng */}
       {selectedOrder && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-4xl relative transition-all duration-300 transform hover:scale-102">

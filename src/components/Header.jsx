@@ -102,7 +102,6 @@ const Header = () => {
     if (isLoggedIn && user?.id) {
       try {
         const response = await getNotificationsByUser(user.id);
-        console.log('Notifications fetched:', response);
         dispatch(setNotifications(response));
       } catch (error) {
         console.error('Lỗi khi lấy thông báo:', error);
@@ -115,7 +114,6 @@ const Header = () => {
 
     const intervalId = setInterval(() => {
       if (isLoggedIn && user?.id) {
-        console.log('Polling fetchNotifications');
         fetchNotifications();
       }
     }, 30000);
@@ -247,7 +245,7 @@ const Header = () => {
         setIsLoginOpen(false);
         toast.success('Đăng nhập thành công!');
         navigate('/');
-        dispatch(refreshHome()); // Kích hoạt làm mới Home
+        dispatch(refreshHome());
       }
     } catch (error) {
       console.error('Login Error:', error.response?.data);

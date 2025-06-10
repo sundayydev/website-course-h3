@@ -2,9 +2,9 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { toast } from 'react-toastify';
-import { getAllPost } from '../../api/postApi';
-import defaultAvatar from '../../assets/imgs/default-avatar.jpg';
-import { formatDate } from '../../utils/formatDate';
+import { getAllPost } from '@/api/postApi';
+import defaultAvatar from '@/assets/imgs/default-avatar.jpg';
+import { formatDate } from '@/utils/formatDate';
 import HashLoader from 'react-spinners/HashLoader';
 import { FaBookOpen } from 'react-icons/fa';
 
@@ -60,7 +60,7 @@ const CardPost = () => {
         {posts.map((post, index) => (
           <div
             key={index}
-            className="rounded-2xl shadow-lg overflow-hidden bg-white w-full md:w-1/3 lg:w-[320px] 
+            className="rounded-2xl shadow-lg overflow-hidden bg-white w-full md:w-1/3 lg:w-[335px] 
               transform transition-transform duration-300 hover:scale-105 flex flex-col cursor-pointer"
             onClick={() => navigate(`/detailspost/${post.id}`)}
           >

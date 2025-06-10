@@ -359,13 +359,7 @@ const Dashboard = () => {
                         }}
                         formatter={(value, name) => [`${value} khóa học`, name]}
                       />
-                      <Legend
-                        verticalAlign="bottom"
-                        height={36}
-                        formatter={(value) => (
-                          <span className="text-sm text-gray-700">{value}</span>
-                        )}
-                      />
+
                     </PieChart>
                   </ResponsiveContainer>
                 )}

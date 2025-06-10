@@ -16,13 +16,8 @@ export const getUsers = async () => {
 };
 
 export const getUserById = async (id) => {
-  const token = localStorage.getItem('authToken');
-  if (!token) {
-    throw new Error('Không tìm thấy token');
-  }
   return await api.get(`${API_URL}/${id}`, {
     headers: {
-      Authorization: `Bearer ${token}`,
       'Content-Type': 'application/json',
     },
   });
