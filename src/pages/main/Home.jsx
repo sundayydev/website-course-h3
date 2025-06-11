@@ -1,7 +1,7 @@
 import React from 'react';
 import BannerShow from '../../components/BannerShow';
 import Course from '@/pages/main/Course.jsx';
-import CardPost from './CardPost';
+import CardPost from '@/pages/main/card/CardPost';
 import CourseForUser from './CourseForUser';
 import CourseNew from './CourseNew';
 const Home = () => {

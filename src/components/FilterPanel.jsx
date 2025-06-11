@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { getCategories } from '@/api/categoryApi';
 import { filterCourses } from '@/api/filterApi';
-import { getCourses } from '@/api/courseApi';
+import { getActiveCourses } from '@/api/courseApi';
 import { Button } from '@/components/ui/button';
 import {
     Select,
@@ -64,7 +64,7 @@ const FilterPanel = ({ isOpen, onToggle, onFilterChange }) => {
             minRating: '',
         });
         try {
-            const allCourses = await getCourses();
+            const allCourses = await getActiveCourses();
             onFilterChange(allCourses);
             onToggle();
         } catch (error) {
