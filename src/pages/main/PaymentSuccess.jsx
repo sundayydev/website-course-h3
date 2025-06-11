@@ -13,13 +13,12 @@ const PaymentSuccess = () => {
     const navigate = useNavigate();
     const dispatch = useDispatch();
     const searchParams = new URLSearchParams(location.search);
-    const amount = searchParams.get('vnp_Amount');
-    const orderInfo = searchParams.get('vnp_OrderInfo');
+    const amount = searchParams.get('amount') || searchParams.get('vnp_Amount');
+    const orderInfo = searchParams.get('orderInfo') || searchParams.get('vnp_OrderInfo');
 
     useEffect(() => {
         const sendPaymentNotification = async () => {
             try {
-                // Kiểm tra xem người dùng đã đăng nhập chưa
                 if (!isAuthenticated()) {
                     removeAuthToken();
                     alert('Phiên đăng nhập đã hết hạn. Vui lòng đăng nhập lại!');
@@ -27,14 +26,12 @@ const PaymentSuccess = () => {
                     return;
                 }
 
-                // Lấy thông tin hồ sơ người dùng để có userId
                 const profileResponse = await getUserProfile();
                 const userId = profileResponse.data.id;
                 console.log('userId từ hồ sơ:', userId);
 
-                // Chuẩn bị dữ liệu thông báo, dùng type hợp lệ từ backend
                 const notificationData = {
-                    type: 'NewMessage', 
+                    type: 'NewMessage',
                     content: `Thanh toán thành công cho đơn hàng ${id}! Số tiền: ${amount ? parseInt(amount) / 100 : 'N/A'} VND`,
                     relatedEntityId: id,
                     relatedEntityType: 'Order',
@@ -42,7 +39,6 @@ const PaymentSuccess = () => {
                 };
                 console.log('Đang gửi thông báo:', notificationData);
 
-                // Gửi thông báo qua API
                 await addNotification({
                     type: notificationData.type,
                     content: notificationData.content,
@@ -51,7 +47,6 @@ const PaymentSuccess = () => {
                     userIds: notificationData.userIds,
                 });
 
-                // Kích hoạt tải lại danh sách thông báo trong Redux
                 console.log('Đang kích hoạt triggerNotificationReload sau khi thêm thông báo');
                 dispatch(triggerNotificationReload());
             } catch (error) {
@@ -60,7 +55,6 @@ const PaymentSuccess = () => {
                     response: error.response?.data,
                     status: error.response?.status,
                 });
-                // Hiển thị thông báo lỗi cho người dùng
                 alert('Có lỗi xảy ra khi gửi thông báo. Vui lòng thử lại sau!');
             }
         };
@@ -69,7 +63,6 @@ const PaymentSuccess = () => {
     }, [id, amount, navigate, dispatch]);
 
     const handleBackToDetails = () => {
-        // Chuyển hướng người dùng về trang chính
         navigate('/');
     };
 
