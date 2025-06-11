@@ -111,7 +111,7 @@ export const uploadAvatar = async (file) => { // Bỏ instructorId
   const formData = new FormData();
   formData.append('file', file);
   try {
-    const response = await api.post(`/api/instructor/upload-image`, formData, { // Sửa endpoint
+    const response = await api.post(`${API_URL}/upload-image`, formData, {
       headers: {
         'Content-Type': 'multipart/form-data',
         Authorization: `Bearer ${token}`,
