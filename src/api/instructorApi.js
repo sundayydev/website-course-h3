@@ -1,6 +1,6 @@
 import api from './axios';
 import { getAuthToken } from './authUtils';
-const API_URL = '/user';
+const API_URL = '/instructor';
 
 export const getInstructors = async () => {
   const token = getAuthToken();
@@ -91,19 +91,19 @@ export const deleteInstructor = async (id) => {
     throw new Error('Không tìm thấy token');
   }
   try {
-    const response = await api.delete(`${API_URL}/${id}`, {
+    await api.delete(`${API_URL}/${id}`, {
       headers: {
         Authorization: `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
     });
-    return response.data || null;
+    return null;
   } catch (error) {
     throw new Error(error.response?.data?.message || `Không thể xóa giảng viên ID ${id}`);
   }
 };
 
-export const uploadAvatar = async (instructorId, file) => {
+export const uploadAvatar = async (file) => { // Bỏ instructorId
   const token = getAuthToken();
   if (!token) {
     throw new Error('Không tìm thấy token');
@@ -111,7 +111,7 @@ export const uploadAvatar = async (instructorId, file) => {
   const formData = new FormData();
   formData.append('file', file);
   try {
-    const response = await api.post(`${API_URL}/${instructorId}/upload-profile-image`, formData, {
+    const response = await api.post(`/api/instructor/upload-image`, formData, { // Sửa endpoint
       headers: {
         'Content-Type': 'multipart/form-data',
         Authorization: `Bearer ${token}`,
