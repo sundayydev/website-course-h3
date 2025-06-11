@@ -21,6 +21,7 @@ import CardInfo from '../pages/main/card/CardInfo.jsx';
 import CardReview from '../pages/main/card/CardReview.jsx';
 import ChatPage from '../pages/main/chat/ChatPage.jsx';
 
+
 const MainRoutes = {
   path: '/',
   element: <MainLayout />,
@@ -45,6 +46,7 @@ const MainRoutes = {
     { path: 'cardinfo', element: <CardInfo /> },
     { path: 'cardreview', element: <CardReview /> },
     { path: 'chat/:chatId', element: <ChatPage /> }
+
   ],
 };
 

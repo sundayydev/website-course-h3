@@ -37,7 +37,8 @@ const sidebarItems = [
       { icon: <MessageSquare size={16} />, text: 'Bình luận', path: '/admin/comment' },
       { icon: <BookOpen size={16} />, text: 'Thông báo', path: '/admin/notifications?page=1' },
       { icon: <Mail size={16} />, text: 'Email', path: '/admin/emails' },
-      { icon: <CreditCard size={16} />, text: 'Thanh toán', path: '/admin/payment-management' }
+      { icon: <CreditCard size={16} />, text: 'Thanh toán', path: '/admin/payment-management' },
+      { icon: <LayoutDashboard size={16} />, text: 'Danh mục', path: '/admin/categories' }
     ],
   },
   {

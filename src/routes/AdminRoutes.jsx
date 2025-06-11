@@ -16,6 +16,7 @@ import ReviewByCourse from '../pages/admin/ReviewByCourse.jsx';
 import EmailManagement from '../pages/admin/email/EmailManagement.jsx';
 import NotificationDetail from '../pages/admin/notifications/NotificationDetail.jsx';
 import EmailDetail from '../pages/admin/email/EmailDetail.jsx';
+import PageCategory from '../pages/admin/category/Category.jsx';
 
 const AdminRoutes = {
   path: '/admin',
@@ -42,6 +43,7 @@ const AdminRoutes = {
     { path: "emails", element: <EmailManagement /> },
     { path: "notification/:notificationId", element: <NotificationDetail /> },
     { path: 'email/:emailId', element: <EmailDetail /> },
+    { path: 'category', element: <PageCategory /> }
   ],
 };
 
