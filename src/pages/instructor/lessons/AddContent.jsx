@@ -22,10 +22,10 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Progress } from '@/components/ui/progress';
 import { getCourseById } from '@/api/courseApi';
-import { getChapters, createChapter } from '@/api/chapterApi';
+import { getChaptersByCourseId, createChapter } from '@/api/chapterApi';
 import { createLesson, uploadVideoLesson, getVideoPreviewUrl } from '@/api/lessonApi';
 import MDEditor from '@uiw/react-md-editor';
-import { Upload, X, Video } from 'lucide-react';
+import { Upload, X, Video, BookOpen } from 'lucide-react';
 import { toast } from 'react-toastify';
 
 export default function AddContent() {
@@ -91,13 +91,16 @@ export default function AddContent() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const courseData = await getCourseById(courseId);
-        const chaptersData = await getChapters(courseId);
+        const [courseData, chaptersData] = await Promise.all([
+          getCourseById(courseId),
+          getChaptersByCourseId(courseId)
+        ]);
         setCourse(courseData);
         setChapters(chaptersData);
       } catch (err) {
         console.error('Failed to fetch data:', err);
         setError('Failed to load course and chapters');
+        toast.error('Không thể tải dữ liệu khóa học và chương');
       }
     };
     fetchData();
@@ -186,6 +189,7 @@ export default function AddContent() {
       navigate(`/instructor/course/${courseId}/lessons`);
     } catch (err) {
       setError(err.message || 'Không thể tạo bài học');
+      toast.error(err.message || 'Không thể tạo bài học');
     } finally {
       setIsSubmitting(false);
     }
@@ -204,16 +208,31 @@ export default function AddContent() {
         orderNumber: parseInt(chapterData.orderNumber) || 0,
       };
       await createChapter(payload);
-      navigate(`/instructor/courses/${courseId}/lessons`);
+      // Refresh chapters list after creating new chapter
+      const updatedChapters = await getChaptersByCourseId(courseId);
+      setChapters(updatedChapters);
+      toast.success('Tạo chương thành công');
+      // Reset chapter data after successful creation
+      resetFormChapter();
     } catch (err) {
       setError(err.message || 'Không thể tạo chương');
+      toast.error(err.message || 'Không thể tạo chương');
     } finally {
       setIsSubmitting(false);
     }
   };
 
+  const resetFormChapter = () => {
+    setChapterData({
+      courseId: courseId,
+      title: '',
+      description: '',
+      orderNumber: '',
+    });
+  };
+
   return (
-    <div className="container mx-auto py-8 px-4 md:px-6 h-screen overflow-y-auto ">
+    <div className="container mx-auto py-8 px-4 md:px-6 h-screen overflow-y-auto">
       <div className="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div className="flex items-center gap-4">
           <Button
@@ -237,12 +256,18 @@ export default function AddContent() {
             <CardContent className="flex-1 overflow-y-auto">
               <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="lesson">Thêm bài học</TabsTrigger>
-                  <TabsTrigger value="chapter">Thêm chương</TabsTrigger>
+                  <TabsTrigger value="lesson" className="flex items-center gap-2">
+                    <Video className="h-4 w-4" />
+                    Thêm bài học
+                  </TabsTrigger>
+                  <TabsTrigger value="chapter" className="flex items-center gap-2">
+                    <BookOpen className="h-4 w-4" />
+                    Thêm chương
+                  </TabsTrigger>
                 </TabsList>
 
                 {/* Lesson Form */}
-                <TabsContent value="lesson" className="space-y-6">
+                <TabsContent value="lesson" className="space-y-6 mt-6">
                   <form onSubmit={handleLessonSubmit} className="space-y-6">
                     <div className="space-y-2">
                       <Label htmlFor="chapterId">Chương *</Label>
@@ -305,10 +330,10 @@ export default function AddContent() {
                       <Label>Video bài học</Label>
                       <div
                         className={`
-          border-2 border-dashed rounded-lg p-6
-          ${isUploading ? 'border-gray-300' : 'border-gray-300 hover:border-pink-500'}
-          transition-colors cursor-pointer
-        `}
+                          border-2 border-dashed rounded-lg p-6
+                          ${isUploading ? 'border-gray-300' : 'border-gray-300 hover:border-pink-500'}
+                          transition-colors cursor-pointer
+                        `}
                         onClick={() => !isUploading && fileInputRef.current?.click()}
                       >
                         <input
@@ -401,7 +426,7 @@ export default function AddContent() {
                 </TabsContent>
 
                 {/* Chapter Form */}
-                <TabsContent value="chapter" className="space-y-6">
+                <TabsContent value="chapter" className="space-y-6 mt-6">
                   <form onSubmit={handleChapterSubmit} className="space-y-6">
                     <div className="space-y-2">
                       <Label htmlFor="title">Tiêu đề chương *</Label>
@@ -485,11 +510,27 @@ export default function AddContent() {
               <CardDescription>Thiết lập các tùy chọn bổ sung</CardDescription>
             </CardHeader>
             <CardContent className="flex-1">
-              <div className="space-y-2">
-                <Label>Loại nội dung</Label>
-                <p className="text-sm text-gray-600">
-                  Chọn giữa bài học hoặc chương để thêm nội dung phù hợp cho khóa học.
-                </p>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <Label>Loại nội dung</Label>
+                  <p className="text-sm text-gray-600">
+                    Chọn giữa bài học hoặc chương để thêm nội dung phù hợp cho khóa học.
+                  </p>
+                </div>
+                <div className="space-y-2">
+                  <Label>Danh sách chương</Label>
+                  <div className="space-y-2 max-h-[300px] overflow-y-auto">
+                    {chapters.map((chapter) => (
+                      <div
+                        key={chapter.id}
+                        className="p-3 bg-gray-50 rounded-lg border border-gray-200"
+                      >
+                        <p className="font-medium">{chapter.title}</p>
+                        <p className="text-sm text-gray-500">{chapter.description}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
               </div>
             </CardContent>
           </Card>

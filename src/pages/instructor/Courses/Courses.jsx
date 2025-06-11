@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Filter, BookOpen, DollarSign, Calendar, ArrowRight, Plus } from 'lucide-react';
+import { Search, Filter, BookOpen, DollarSign, Calendar, ArrowRight, Plus, Star, Users } from 'lucide-react';
 import {
   Card,
   CardContent,
@@ -23,6 +23,7 @@ import { getCategories } from '@/api/categoryApi';
 import { getUserId } from '@/api/authUtils';
 import { getCourseByInstructorId } from '@/api/courseApi';
 import { useNavigate } from 'react-router-dom';
+import CourseStats from '@/components/instructor/course/CourseStats';
 
 // Tạo một component với tên CoursesPage
 export default function CoursesPage() {
@@ -125,6 +126,11 @@ export default function CoursesPage() {
         </div>
       </div>
 
+      {/* Course Stats */}
+      {!loading && filteredCourses.length > 0 && (
+        <CourseStats courseId={filteredCourses[0].id} />
+      )}
+
       {/* Thanh tìm kiếm và bộ lọc */}
       <div className="mb-8 bg-white p-4 rounded-lg shadow">
         <div className="flex flex-col md:flex-row gap-4">
@@ -223,7 +229,7 @@ export default function CoursesPage() {
                   </Badge>
                   <div className="text-sm text-gray-500 flex items-center">
                     <Calendar size={14} className="mr-1" />
-                    {course.createdAt.split(' ')[0]}
+                    {new Date(course.createdAt).toLocaleDateString('vi-VN')}
                   </div>
                 </div>
 
@@ -232,12 +238,23 @@ export default function CoursesPage() {
               </CardHeader>
 
               <CardContent className="flex-grow">
-
                 <div className="flex items-start text-sm text-gray-500">
                   <BookOpen size={14} className="mr-1 mt-1 flex-shrink-0" />
                   <div>
                     <span className="block mb-1">Nội dung khóa học:</span>
                     <p className="line-clamp-2">{course.contents?.join(', ')}</p>
+                  </div>
+                </div>
+
+                <div className="mt-4 flex items-center justify-between text-sm">
+                  <div className="flex items-center">
+                    <Star size={14} className="mr-1 fill-yellow-400 text-yellow-400" />
+                    <span>{course.rating || 0}</span>
+                    <span className="text-gray-500 ml-1">({course.reviewCount || 0})</span>
+                  </div>
+                  <div className="flex items-center">
+                    <Users size={14} className="mr-1" />
+                    <span>{course.enrollmentCount || 0} học viên</span>
                   </div>
                 </div>
               </CardContent>

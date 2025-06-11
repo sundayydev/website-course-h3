@@ -17,7 +17,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { getCourseById } from '@/api/courseApi';
-import { getChapters, updateChapter, deleteChapter } from '@/api/chapterApi';
+import { getChaptersByCourseId, updateChapter, deleteChapter } from '@/api/chapterApi';
 import { getLessons, updateLesson, deleteLesson } from '@/api/lessonApi';
 import { Plus, Pencil, Trash2, ChevronRight } from 'lucide-react';
 import MDEditor from '@uiw/react-md-editor';
@@ -39,7 +39,7 @@ export default function ManageLessons() {
     const fetchData = async () => {
       try {
         const courseData = await getCourseById(courseId);
-        const chaptersData = await getChapters(courseId);
+        const chaptersData = await getChaptersByCourseId(courseId);
         const lessonsData = await getLessons(courseId);
         setCourse(courseData);
         setChapters(chaptersData);
