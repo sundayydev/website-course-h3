@@ -514,7 +514,7 @@ const Notifications = () => {
                                     paginatedNotifications.map((notification) => (
                                         <TableRow key={notification.id}>
                                             <TableCell>{typeDisplayNames[notification.type] || notification.type}</TableCell>
-                                            <TableCell>{notification.content}</TableCell>
+                                            <TableCell className="max-w-md truncate">{notification.content}</TableCell>
                                             <TableCell>{formatDate(notification.createdAt)}</TableCell>
                                             <TableCell>{getNotificationStatus(notification)}</TableCell>
                                             <TableCell>

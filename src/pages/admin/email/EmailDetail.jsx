@@ -144,7 +144,7 @@ export default function EmailDetail() {
               </CardHeader>
               <CardContent>
                 <div
-                  className="text-gray-700 prose"
+                  className="text-gray-700 "
                   dangerouslySetInnerHTML={{ __html: email?.message || 'Không có nội dung' }}
                 />
               </CardContent>
