@@ -73,7 +73,7 @@ export default function AdminSidebar({ className }) {
   };
 
   return (
-    <aside className={`flex flex-col h-screen p-4 ${className}`}>
+    <aside className={`flex flex-col h-screen p-[16px] ${className}`}>
       {/* Logo */}
       <div className="flex items-center space-x-2 mb-6">
         <NavLink to="/admin" className="rounded-lg">

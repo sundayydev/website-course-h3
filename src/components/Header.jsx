@@ -13,7 +13,7 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
 import { useDispatch, useSelector } from 'react-redux';
-import { logout, setUser, setIsLoggedIn, setToken, refreshHome } from '@/reducers/authReducer'; // Thêm refreshHome
+import { logout, setUser, setIsLoggedIn, setToken, refreshHome } from '@/reducers/authReducer';
 import { forgotPassword, login, register, resetPassword, getUserProfile, logout as logoutApi } from '../api/authApi';
 import CoursePopup from './Popup/CoursePopup';
 import { Bell, Trash2 } from 'lucide-react';
@@ -25,8 +25,7 @@ import { getOrderById } from '../api/orderApi';
 import LoginPopup from './Popup/LoginPopup';
 import RegisterPopup from './Popup/RegisterPopup';
 import ForgotPasswordPopup from './Popup/ForgotPasswordPopup';
-import ResetPasswordPopup from './Popup/ResetPasswordPopup';;
-
+import ResetPasswordPopup from './Popup/ResetPasswordPopup';
 
 const Header = () => {
   const dispatch = useDispatch();
@@ -234,7 +233,6 @@ const Header = () => {
       const response = await login(loginData);
       const { token, email, role } = response.data;
       localStorage.setItem('authToken', token);
-      // Phát ra sự kiện authTokenChanged
       window.dispatchEvent(new Event('authTokenChanged'));
       const userResponse = await getUserProfile();
       if (userResponse.data) {
@@ -253,6 +251,7 @@ const Header = () => {
       toast.error(errorMessage);
     }
   };
+
   // Xử lý đăng ký
   const handleRegister = async () => {
     if (!registerData.fullName || !registerData.email || !registerData.password) {
@@ -298,6 +297,7 @@ const Header = () => {
     try {
       await resetPassword(resetPasswordData.email, resetPasswordData.resetCode, resetPasswordData.newPassword);
       toast.success('Mật khẩu đã được đặt lại thành công!');
+      setResetPasswordData({ email: '', resetCode: '', newPassword: '' }); // Clear resetPasswordData
       setTimeout(() => {
         setIsResetPasswordOpen(false);
         setIsLoginOpen(true);
@@ -654,7 +654,7 @@ const Header = () => {
       {/* Popups */}
       <LoginPopup
         isOpen={isLoginOpen}
-        onClose={() => setIsLogin(false)}
+        onClose={() => setIsLoginOpen(false)}
         loginData={loginData}
         setLoginData={setLoginData}
         showPassword={showPassword}
