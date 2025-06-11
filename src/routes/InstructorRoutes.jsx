@@ -13,6 +13,7 @@ import CommentByPost from '../pages/instructor/post/CommentByPost';
 import AddQuiz from '@/pages/instructor/lessons/AddQuiz';
 import LessonDetail from '@/pages/instructor/lessons/LessonDetail';
 import QuizDetail from '@/pages/instructor/lessons/QuizDetail';
+import Help from '@/pages/instructor/Help';
 const InstructorRoutes = {
   path: '/instructor', // Đường dẫn chính cho Instructor
   element: (
@@ -35,7 +36,8 @@ const InstructorRoutes = {
     { path: "comments/:postId", element: < CommentByPost /> },
     { path: "course/:courseId/lesson/:lessonId/add-quiz", element: <AddQuiz /> },
     { path: "course/:courseId/lesson/quiz/:quizId", element: <QuizDetail /> },
-    { path: "course/:courseId/lesson/:lessonId", element: <LessonDetail /> }
+    { path: "course/:courseId/lesson/:lessonId", element: <LessonDetail /> },
+    { path: "help", element: <Help /> }
   ],
 };
 

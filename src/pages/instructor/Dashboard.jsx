@@ -7,44 +7,24 @@ import {
   BarChart3,
   Bell,
   Search,
-  Trash2, // Thêm Trash2
+  Trash2,
 } from 'lucide-react';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
 import { useSelector, useDispatch } from 'react-redux';
-import { useNavigate } from 'react-router-dom'; // Thêm useNavigate
-import { Button } from '@/components/ui/button'; // Thêm Button
+import { useNavigate } from 'react-router-dom';
+import { Button } from '@/components/ui/button';
 import { getNotificationsByUser, markNotificationAsRead, deleteNotification } from '@/api/notificationApi';
 import { getUserId } from '@/api/authUtils';
 import { formatDate } from '@/utils/formatDate';
 import { toast } from 'react-toastify';
 import { setNotifications, markNotificationAsRead as markNotificationAsReadAction, deleteNotification as deleteNotificationAction } from '@/reducers/notificationReducer';
-import { getCommentById } from '@/api/commentApi'; // Thêm getCommentById
-import { parse, format } from 'date-fns'; // Thêm date-fns
+import { getCommentById } from '@/api/commentApi';
+import { parse, format } from 'date-fns';
+import { getCourseByInstructorId } from '@/api/courseApi';
+import { getEnrollmentsByCourseId } from '@/api/enrollmentApi';
+import { getReviewsByCourseId } from '@/api/reviewApi';
 
-// Dữ liệu mẫu (giữ nguyên)
-const studentPerformanceData = [
-  { name: 'Tuần 1', average: 65 },
-  { name: 'Tuần 2', average: 70 },
-  { name: 'Tuần 3', average: 68 },
-  { name: 'Tuần 4', average: 75 },
-  { name: 'Tuần 5', average: 78 },
-  { name: 'Tuần 6', average: 82 },
-];
-
-const upcomingClasses = [
-  { id: 1, title: 'Lập trình Web nâng cao', time: '09:00 AM - 11:00 AM', date: 'Hôm nay', students: 28, room: 'A203' },
-  { id: 2, title: 'Cơ sở dữ liệu', time: '01:00 PM - 03:00 PM', date: 'Hôm nay', students: 32, room: 'B101' },
-  { id: 3, title: 'Thuật toán và cấu trúc dữ liệu', time: '09:00 AM - 12:00 PM', date: 'Ngày mai', students: 25, room: 'C305' },
-];
-
-const courses = [
-  { id: 1, title: 'Lập trình Web nâng cao', students: 28, completed: 45, total: 60 },
-  { id: 2, title: 'Cơ sở dữ liệu', students: 32, completed: 32, total: 48 },
-  { id: 3, title: 'Thuật toán và cấu trúc dữ liệu', students: 25, completed: 18, total: 36 },
-  { id: 4, title: 'Lập trình hướng đối tượng', students: 30, completed: 24, total: 45 },
-];
-
-// Biểu đồ theo dõi tiến độ khóa học
+// Progress Bar Component
 const ProgressBar = ({ completed, total }) => {
   const percentage = Math.round((completed / total) * 100);
   return (
@@ -54,7 +34,7 @@ const ProgressBar = ({ completed, total }) => {
   );
 };
 
-// Card hiển thị số liệu
+// Stat Card Component
 const StatCard = ({ icon, title, value, bgColor }) => {
   return (
     <div className={`p-6 rounded-lg shadow flex items-start ${bgColor}`}>
@@ -69,14 +49,89 @@ const StatCard = ({ icon, title, value, bgColor }) => {
 
 export default function InstructorDashboard() {
   const dispatch = useDispatch();
-  const navigate = useNavigate(); // Thêm navigate
+  const navigate = useNavigate();
   const notifications = useSelector((state) => state.notifications.notifications || []);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false); // State cho dropdown
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const userId = getUserId();
+  
+  // New state for dashboard data
+  const [dashboardData, setDashboardData] = useState({
+    totalStudents: 0,
+    totalCourses: 0,
+    totalClasses: 0,
+    completionRate: 0,
+    courses: [],
+    studentPerformance: [],
+    upcomingClasses: []
+  });
 
-  // Hàm lấy thông báo
+  // Fetch dashboard data
+  const fetchDashboardData = async () => {
+    try {
+      const instructorId = getUserId();
+      const courses = await getCourseByInstructorId(instructorId);
+      
+      let totalStudents = 0;
+      let totalCompleted = 0;
+      let totalLessons = 0;
+      const courseDetails = [];
+
+      for (const course of courses) {
+        const enrollments = await getEnrollmentsByCourseId(course.id);
+        const reviews = await getReviewsByCourseId(course.id);
+        
+        totalStudents += enrollments.length;
+        
+        // Calculate completion rate
+        const completedLessons = enrollments.reduce((acc, enrollment) => {
+          return acc + (enrollment.completedLessons || 0);
+        }, 0);
+        
+        totalCompleted += completedLessons;
+        totalLessons += course.contents?.length || 0;
+
+        courseDetails.push({
+          id: course.id,
+          title: course.title,
+          students: enrollments.length,
+          completed: completedLessons,
+          total: course.contents?.length || 0,
+          rating: reviews.reduce((acc, review) => acc + review.rating, 0) / (reviews.length || 1)
+        });
+      }
+
+      // Calculate student performance data
+      const performanceData = courseDetails.map(course => ({
+        name: course.title,
+        average: Math.round(course.rating * 20) // Convert 5-star rating to percentage
+      }));
+
+      setDashboardData({
+        totalStudents,
+        totalCourses: courses.length,
+        totalClasses: totalLessons,
+        completionRate: totalLessons ? Math.round((totalCompleted / totalLessons) * 100) : 0,
+        courses: courseDetails,
+        studentPerformance: performanceData,
+        upcomingClasses: courses.slice(0, 3).map(course => ({
+          id: course.id,
+          title: course.title,
+          time: '09:00 AM - 11:00 AM', // This would need to come from a schedule API
+          date: 'Hôm nay',
+          students: courseDetails.find(c => c.id === course.id)?.students || 0,
+          room: 'Online'
+        }))
+      });
+
+    } catch (error) {
+      console.error('Error fetching dashboard data:', error);
+      toast.error('Không thể tải dữ liệu dashboard');
+    }
+  };
+
+  // Fetch notifications
   const fetchNotifications = async () => {
     if (userId) {
       try {
@@ -96,19 +151,20 @@ export default function InstructorDashboard() {
     }
   };
 
-  // Tải thông báo khi mount
   useEffect(() => {
+    fetchDashboardData();
     fetchNotifications();
+    
     const intervalId = setInterval(() => {
       if (userId) {
-        console.log('Polling fetchNotifications');
         fetchNotifications();
       }
     }, 30000);
+    
     return () => clearInterval(intervalId);
   }, [userId, dispatch]);
 
-  // Hàm xử lý nhấp vào thông báo
+  // Notification handlers
   const handleNotificationClick = async (notification) => {
     const entityId = notification.relatedEntityId;
     const entityType = notification.relatedEntityType;
@@ -135,7 +191,6 @@ export default function InstructorDashboard() {
     setIsNotificationsOpen(false);
   };
 
-  // Hàm đánh dấu đã đọc
   const handleMarkAsRead = async (notificationId) => {
     try {
       if (!userId) {
@@ -150,7 +205,6 @@ export default function InstructorDashboard() {
     }
   };
 
-  // Hàm xóa thông báo
   const handleDeleteNotification = async (notificationId) => {
     try {
       await deleteNotification(notificationId);
@@ -209,19 +263,15 @@ export default function InstructorDashboard() {
                         return (
                           <div
                             key={notification.id}
-                            className={`p-3 border-b flex justify-between items-center ${!userNotification.isRead ? 'bg-gray-50' : ''
-                              } cursor-pointer hover:bg-gray-100`}
+                            className={`p-3 border-b flex justify-between items-center ${!userNotification.isRead ? 'bg-gray-50' : ''} cursor-pointer hover:bg-gray-100`}
                             onClick={() => handleNotificationClick(notification)}
                           >
                             <div className="flex-1">
-                              <p
-                                className="text-sm font-semibold overflow-hidden"
-                                style={{
-                                  display: '-webkit-box',
-                                  WebkitLineClamp: 2,
-                                  WebkitBoxOrient: 'vertical',
-                                }}
-                              >
+                              <p className="text-sm font-semibold overflow-hidden" style={{
+                                display: '-webkit-box',
+                                WebkitLineClamp: 2,
+                                WebkitBoxOrient: 'vertical',
+                              }}>
                                 {notification.content}
                               </p>
 
@@ -283,7 +333,7 @@ export default function InstructorDashboard() {
               <div className="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center">
                 <User size={20} className="text-white" />
               </div>
-              <span className="font-medium">TS. Nguyễn Văn A</span>
+              <span className="font-medium">Giảng viên</span>
             </div>
           </div>
         </div>
@@ -301,25 +351,25 @@ export default function InstructorDashboard() {
           <StatCard
             icon={<Users size={24} className="text-blue-700" />}
             title="Tổng sinh viên"
-            value="145"
+            value={dashboardData.totalStudents}
             bgColor="bg-blue-600"
           />
           <StatCard
             icon={<BookOpen size={24} className="text-green-700" />}
             title="Khóa học"
-            value="6"
+            value={dashboardData.totalCourses}
             bgColor="bg-green-600"
           />
           <StatCard
             icon={<Calendar size={24} className="text-purple-700" />}
-            title="Buổi học tuần này"
-            value="12"
+            title="Buổi học"
+            value={dashboardData.totalClasses}
             bgColor="bg-purple-600"
           />
           <StatCard
             icon={<BarChart3 size={24} className="text-orange-700" />}
             title="Tỉ lệ hoàn thành"
-            value="78%"
+            value={`${dashboardData.completionRate}%`}
             bgColor="bg-orange-600"
           />
         </div>
@@ -336,7 +386,7 @@ export default function InstructorDashboard() {
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart
-                  data={studentPerformanceData}
+                  data={dashboardData.studentPerformance}
                   margin={{ top: 5, right: 20, left: 0, bottom: 5 }}
                 >
                   <CartesianGrid strokeDasharray="3 3" vertical={false} />
@@ -363,23 +413,25 @@ export default function InstructorDashboard() {
                 <p className="text-center text-gray-500">Chưa có thông báo nào.</p>
               ) : (
                 <div className="space-y-4">
-                  {notifications.map((notification) => (
+                  {notifications.slice(0, 5).map((notification) => (
                     <div
                       key={notification.id}
                       className="flex items-start pb-4 border-b border-gray-100 last:border-0 last:pb-0"
                     >
                       <div
-                        className={`flex-shrink-0 w-2 h-2 mt-2 rounded-full ${notification.userNotifications?.[0]?.isRead
-                          ? 'bg-gray-400'
-                          : 'bg-blue-500'
-                          }`}
+                        className={`flex-shrink-0 w-2 h-2 mt-2 rounded-full ${
+                          notification.userNotifications?.[0]?.isRead
+                            ? 'bg-gray-400'
+                            : 'bg-blue-500'
+                        }`}
                       ></div>
                       <div className="ml-3">
                         <p
-                          className={`text-sm ${notification.userNotifications?.[0]?.isRead
-                            ? 'text-gray-500'
-                            : 'text-gray-800'
-                            }`}
+                          className={`text-sm ${
+                            notification.userNotifications?.[0]?.isRead
+                              ? 'text-gray-500'
+                              : 'text-gray-800'
+                          }`}
                         >
                           {notification.content}
                         </p>
@@ -427,7 +479,7 @@ export default function InstructorDashboard() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {upcomingClasses.map((course) => (
+                {dashboardData.upcomingClasses.map((course) => (
                   <tr key={course.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       {course.title}
@@ -480,7 +532,7 @@ export default function InstructorDashboard() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200">
-                {courses.map((course) => (
+                {dashboardData.courses.map((course) => (
                   <tr key={course.id} className="hover:bg-gray-50">
                     <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                       {course.title}

@@ -1,3 +1,5 @@
+import log from '@/utils/logging'; // Assuming you have a logging utility
+
 import { getAuthToken } from './authUtils';
 import api from './axios';
 
@@ -68,6 +70,7 @@ export const addNotification = async (notificationData) => {
         relatedEntityType: notificationData.relatedEntityType || null,
         userIds: notificationData.userIds,
     };
+    log.info('Thêm thông báo mới:', newData);
     try {
         const response = await api.post(`${API_URL}`, newData, {
             headers: {

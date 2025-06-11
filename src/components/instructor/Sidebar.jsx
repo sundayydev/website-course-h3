@@ -158,32 +158,6 @@ const Sidebar = () => {
             </NavLink>
           </div>
         </div>
-
-        <div className="p-4 mt-auto">
-          <div className="space-y-1">
-            <a
-              href="#"
-              className="flex items-center p-3 text-gray-400 hover:bg-gray-800 rounded-lg"
-            >
-              <Settings size={20} />
-              {sidebarOpen && <span className="ml-4">Cài đặt</span>}
-            </a>
-            <a
-              href="#"
-              className="flex items-center p-3 text-gray-400 hover:bg-gray-800 rounded-lg"
-            >
-              <HelpCircle size={20} />
-              {sidebarOpen && <span className="ml-4">Trợ giúp</span>}
-            </a>
-            <a
-              href="#"
-              className="flex items-center p-3 text-gray-400 hover:bg-gray-800 rounded-lg"
-            >
-              <LogOut size={20} />
-              {sidebarOpen && <span className="ml-4">Đăng xuất</span>}
-            </a>
-          </div>
-        </div>
       </div>
     </div>
   );
