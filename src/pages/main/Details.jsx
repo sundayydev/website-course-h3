@@ -9,6 +9,7 @@ import {
   CheckCircle,
   GraduationCap,
   Globe,
+  User
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { getCourseById } from '@/api/courseApi';
@@ -23,10 +24,12 @@ import PaymentModal from './Payment';
 import { getAuthToken, isAuthenticated, removeAuthToken } from '@/api/authUtils';
 import { useDispatch } from 'react-redux';
 import { addNotification as addNotificationAction, triggerNotificationReload } from '@/reducers/notificationReducer';
+import { getInstructorById } from '@/api/instructorApi'
 const Details = () => {
   const { courseId } = useParams();
   const [course, setCourse] = useState(null);
   const [chapters, setChapters] = useState([]);
+  const [instructor, setInstructor] = useState(null);
   const [lessons, setLessons] = useState([]);
   const [reviews, setReviews] = useState([]);
   const [expandedChapter, setExpandedChapter] = useState(null);
@@ -43,11 +46,25 @@ const Details = () => {
       return;
     }
 
+    const fetchInstructor = async () => {
+      try {
+        const courseData = await getCourseById(courseId);
+        console.log('Course data in fetchInstructor:', courseData)
+        if (courseData && courseData.instructorId) {
+          const instructorData = await getInstructorById(courseData.instructorId);
+          console.log('Instructor data:', instructorData);
+          setInstructor(instructorData);
+        }
+      } catch (error) {
+        console.error('Lỗi khi lấy thông tin giảng viên:', error);
+      }
+    };
     const fetchCourse = async () => {
       try {
         const data = await getCourseById(courseId);
         if (data) {
           setCourse(data);
+          console.log('Course data:', data);
         } else {
           setError('Không có dữ liệu khóa học');
         }
@@ -103,6 +120,7 @@ const Details = () => {
     fetchChapters();
     fetchReviews();
     checkUserEnrollment();
+    fetchInstructor();
   }, [courseId]);
 
   const toggleChapterExpand = (chapterId) => {
@@ -351,6 +369,14 @@ const Details = () => {
             Học mọi lúc, mọi nơi
           </li>
         </ul>
+        {instructor ? (
+            <div className="text-gray-600 flex items-center space-x-2">
+              <User className="text-emerald-500" size={15} />
+              <span>Giảng viên: <strong>{instructor.fullName || 'Không xác định'}</strong></span>
+            </div>
+        ) : (
+            <div className="text-gray-600">Đang tải thông tin giảng viên...</div> // Thông báo tạm thời
+        )}
       </div>
 
       {isPaymentModalOpen && (
