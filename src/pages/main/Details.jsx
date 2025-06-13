@@ -25,6 +25,8 @@ import { getAuthToken, isAuthenticated, removeAuthToken } from '@/api/authUtils'
 import { useDispatch } from 'react-redux';
 import { addNotification as addNotificationAction, triggerNotificationReload } from '@/reducers/notificationReducer';
 import { getInstructorById } from '@/api/instructorApi'
+import { getUserById } from '@/api/userApi'
+
 const Details = () => {
   const { courseId } = useParams();
   const [course, setCourse] = useState(null);
@@ -51,7 +53,7 @@ const Details = () => {
         const courseData = await getCourseById(courseId);
         console.log('Course data in fetchInstructor:', courseData)
         if (courseData && courseData.instructorId) {
-          const instructorData = await getInstructorById(courseData.instructorId);
+          const instructorData = await getUserById(courseData.instructorId);
           console.log('Instructor data:', instructorData);
           setInstructor(instructorData);
         }
@@ -165,9 +167,7 @@ const Details = () => {
                 relatedEntityType: notificationData.relatedEntityType,
                 userIds: [userId],
               });
-              console.log('Dispatching triggerNotificationReload after adding notification');
               dispatch(triggerNotificationReload());
-
               if (lessons.length > 0) {
                 navigate(`/detailsPageCourse/${lessons[0].id}`);
               }
@@ -370,12 +370,12 @@ const Details = () => {
           </li>
         </ul>
         {instructor ? (
-            <div className="text-gray-600 flex items-center space-x-2">
-              <User className="text-emerald-500" size={15} />
-              <span>Giảng viên: <strong>{instructor.fullName || 'Không xác định'}</strong></span>
-            </div>
+          <div className="text-gray-600 flex items-center space-x-2">
+            <User className="text-emerald-500" size={15} />
+            <span>Giảng viên: <strong>{instructor.data.fullName || 'Không xác định'}</strong></span>
+          </div>
         ) : (
-            <div className="text-gray-600">Đang tải thông tin giảng viên...</div> // Thông báo tạm thời
+          <div className="text-gray-600">Đang tải thông tin giảng viên...</div>
         )}
       </div>
 
