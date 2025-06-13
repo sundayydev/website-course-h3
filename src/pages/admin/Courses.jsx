@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import {
   Table,
@@ -20,7 +20,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'react-toastify';
-import { Pencil, Trash2, Plus, Search, Loader2, BookOpen, Filter, FileVideo } from 'lucide-react';
+import { Pencil, Trash2, Plus, Search, Loader2, BookOpen, Filter, FileVideo, X } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { FaComment } from 'react-icons/fa';
@@ -33,7 +33,9 @@ import {
   SelectTrigger,
 } from '@/components/ui/select';
 import { formatDate } from '../../utils/formatDate';
-import slugify from 'slugify'; // Import slugify
+import slugify from 'slugify';
+import { getCategories } from '@/api/categoryApi';
+import { getUserId } from '../../api/authUtils';
 
 const Courses = () => {
   const navigate = useNavigate();
@@ -43,39 +45,57 @@ const Courses = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCourse, setEditingCourse] = useState(null);
+  const [categories, setCategories] = useState([]);
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    price: 0,
+    price: '',
     urlImage: null,
-    instructorId: '',
+    instructorId: getUserId(),
+    categoryId: '',
     contents: [],
   });
+  const [newContent, setNewContent] = useState('');
+  const [previewUrl, setPreviewUrl] = useState(null);
+  const [error, setError] = useState(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [pageSize] = useState(5);
   const [searchParams, setSearchParams] = useSearchParams();
   const pageNumberFromUrl = parseInt(searchParams.get('page') || 1, 10);
+  const currentUserId = getUserId();
 
-  // Sử dụng slugify thay cho hàm generateSlug
+  // Lấy danh sách danh mục
+  const fetchCategories = async () => {
+    try {
+      const data = await getCategories();
+      setCategories(data);
+    } catch (error) {
+      toast.error('Không thể tải danh sách danh mục');
+      console.error('Lỗi khi tải danh mục:', error);
+    }
+  };
+
+  // Hàm tạo slug
   const generateSlug = (text) => {
     if (!text) return '';
     return slugify(text, {
-      lower: true, // Chuyển thành chữ thường
-      strict: true, // Loại bỏ ký tự đặc biệt
-      remove: /[*+~.()'"!:@]/g, // Loại bỏ các ký tự không mong muốn
-      locale: 'vi', // Hỗ trợ loại bỏ dấu tiếng Việt
-      trim: true, // Xóa khoảng trắng đầu/cuối
+      lower: true,
+      strict: true,
+      remove: /[*+~.()'"!:@]/g,
+      locale: 'vi',
+      trim: true,
     });
   };
 
-  // Cập nhật currentPage dựa trên URL
+  // Cập nhật currentPage từ URL
   useEffect(() => {
     const initialPage = pageNumberFromUrl >= 1 ? pageNumberFromUrl : 1;
     setCurrentPage(initialPage);
   }, [pageNumberFromUrl]);
 
-  // Lấy toàn bộ khóa học
+  // Lấy danh sách khóa học và danh mục
   const fetchCourses = async () => {
     try {
       const data = await getCourses();
@@ -92,14 +112,14 @@ const Courses = () => {
 
   useEffect(() => {
     fetchCourses();
+    fetchCategories();
   }, []);
 
-  // Xử lý phân trang và tìm kiếm phía client
+  // Xử lý phân trang và tìm kiếm
   useEffect(() => {
     const slug = searchParams.get('slug') || '';
     let filteredCourses = allCourses;
 
-    // Lọc khóa học dựa trên searchTerm và slug
     if (slug || searchTerm) {
       filteredCourses = allCourses.filter(
         (course) =>
@@ -109,49 +129,108 @@ const Courses = () => {
       );
     }
 
-    // Cập nhật totalPages dựa trên danh sách đã lọc
     setTotalPages(Math.ceil(filteredCourses.length / pageSize));
-
-    // Tính toán khóa học hiển thị trên trang hiện tại
     const startIndex = (currentPage - 1) * pageSize;
     const endIndex = startIndex + pageSize;
     setDisplayedCourses(filteredCourses.slice(startIndex, endIndex));
   }, [searchTerm, searchParams, currentPage, allCourses]);
 
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSelectChange = (name, value) => {
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleAddContent = () => {
+    if (newContent.trim()) {
+      setFormData((prev) => ({
+        ...prev,
+        contents: [...prev.contents, newContent.trim()],
+      }));
+      setNewContent('');
+    }
+  };
+
+  const handleRemoveContent = (index) => {
+    setFormData((prev) => ({
+      ...prev,
+      contents: prev.contents.filter((_, i) => i !== index),
+    }));
+  };
+
+  const handleImageChange = (e) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setFormData((prev) => ({ ...prev, urlImage: file }));
+      setPreviewUrl(URL.createObjectURL(file));
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setFormData((prev) => ({ ...prev, urlImage: null }));
+    setPreviewUrl(null);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (editingCourse) {
-      try {
-        await updateCourse(editingCourse.id, formData);
-        if (formData.urlImage && formData.urlImage instanceof File && formData.urlImage !== '') {
-          await uploadImage(editingCourse.id, formData.urlImage);
+    setIsSubmitting(true);
+    setError(null);
+
+    try {
+      // Validate required fields
+      if (!formData.title || !formData.description || !formData.price || !formData.categoryId) {
+        throw new Error('Vui lòng điền đầy đủ các trường bắt buộc');
+      }
+
+      let imageUrl = formData.urlImage;
+
+      // Upload new image if selected
+      if (formData.urlImage instanceof File) {
+        const uploadResponse = await uploadImage(formData.urlImage);
+        imageUrl = uploadResponse.url;
+      }
+
+      const courseData = {
+        title: formData.title,
+        description: formData.description,
+        price: parseFloat(formData.price),
+        urlImage: imageUrl || null,
+        instructorId: formData.instructorId,
+        categoryId: formData.categoryId,
+        contents: formData.contents,
+      };
+
+      let response;
+      if (editingCourse) {
+
+        if (editingCourse.instructorId !== currentUserId) {
+          toast.error('Bạn không có quyền chỉnh sửa khóa học này');
+          return;
         }
+        response = await updateCourse(editingCourse.id, courseData);
         toast.success('Cập nhật khóa học thành công');
-        setIsDialogOpen(false);
-        fetchCourses();
-        resetForm();
-      } catch (error) {
-        console.error('Lỗi khi cập nhật khóa học:', error);
-        toast.error('Có lỗi xảy ra khi cập nhật khóa học');
-      }
-    } else {
-      try {
-        const response = await createCourse(formData);
-        if (formData.urlImage && formData.urlImage instanceof File && formData.urlImage !== '') {
-          await uploadImage(response.id, formData.urlImage);
-        }
+      } else {
+        response = await createCourse(courseData);
         toast.success('Thêm khóa học thành công');
-        setIsDialogOpen(false);
-        fetchCourses();
-        resetForm();
-      } catch (error) {
-        console.error('Lỗi khi tạo khóa học:', error);
-        toast.error('Có lỗi xảy ra khi tạo khóa học');
       }
+
+      setIsDialogOpen(false);
+      fetchCourses();
+      resetForm();
+      navigate(`/admin/course-detail/${response.id}`);
+    } catch (error) {
+      console.error(`Lỗi khi ${editingCourse ? 'cập nhật' : 'tạo'} khóa học:`, error);
+      setError(error.message || `Có lỗi xảy ra khi ${editingCourse ? 'cập nhật' : 'tạo'} khóa học`);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   const handleDelete = async (id) => {
+
     if (window.confirm('Bạn có chắc chắn muốn xóa khóa học này?')) {
       try {
         await deleteCourse(id);
@@ -169,11 +248,13 @@ const Courses = () => {
     setFormData({
       title: course.title,
       description: course.description,
-      price: course.price,
-      urlImage: course.urlImage || '',
+      price: course.price.toString(),
+      urlImage: course.urlImage || null,
       instructorId: course.instructorId,
-      contents: course.contents,
+      categoryId: course.categoryId || '',
+      contents: course.contents || [],
     });
+    setPreviewUrl(course.urlImage || null);
     setIsDialogOpen(true);
   };
 
@@ -244,12 +325,16 @@ const Courses = () => {
     setFormData({
       title: '',
       description: '',
-      price: 0,
+      price: '',
       urlImage: null,
-      instructorId: '',
+      instructorId: getUserId(),
+      categoryId: '',
       contents: [],
     });
+    setNewContent('');
+    setPreviewUrl(null);
     setEditingCourse(null);
+    setError(null);
   };
 
   const handleViewLessons = (courseId) => {
@@ -259,9 +344,9 @@ const Courses = () => {
   const handleSearchChange = (e) => {
     const value = e.target.value;
     setSearchTerm(value);
-    setCurrentPage(1); // Reset về trang 1
+    setCurrentPage(1);
     const slug = generateSlug(value);
-    setSearchParams({ page: '1', slug: slug || '' }); // Cập nhật URL với slug
+    setSearchParams({ page: '1', slug: slug || '' });
   };
 
   const handlePageChange = (page) => {
@@ -306,123 +391,183 @@ const Courses = () => {
                 {editingCourse ? 'Chỉnh sửa khóa học' : 'Thêm khóa học mới'}
               </DialogTitle>
             </DialogHeader>
-            <form onSubmit={handleSubmit} className="flex gap-4" encType="multipart/form-data">
-              <div className="flex-1 space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="title">Tên khóa học</Label>
-                  <Input
-                    id="title"
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    required
-                    placeholder="Nhập tên khóa học"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="description">Mô tả</Label>
-                  <Textarea
-                    id="description"
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                    required
-                    placeholder="Nhập mô tả khóa học"
-                    rows={4}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="content">Tóm tắt nội dung</Label>
-                  <Textarea
-                    id="content"
-                    value={
-                      Array.isArray(formData.contents)
-                        ? formData.contents.join('\n')
-                        : formData.contents
-                    }
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        contents: e.target.value,
-                      })
-                    }
-                    placeholder="Nhập tóm tắt nội dung khóa học"
-                    rows={4}
-                  />
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="price">Giá (VNĐ)</Label>
-                    <Input
-                      id="price"
-                      type="number"
-                      value={formData.price}
-                      onChange={(e) => setFormData({ ...formData, price: Number(e.target.value) })}
-                      required
-                      placeholder="Nhập giá khóa học"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="image">Ảnh khóa học</Label>
-                    <div
-                      className="
-                      border-2 border-dashed border-gray-300 rounded-lg p-4 
-                      text-center cursor-pointer 
-                      hover:border-pink-500 transition-colors"
-                      onDragOver={(e) => e.preventDefault()}
-                      onDrop={(e) => {
-                        setFormData({ ...formData, urlImage: e.target.files[0] });
-                      }}
-                    >
+            <form onSubmit={handleSubmit} className="space-y-6" encType="multipart/form-data">
+              <div className="max-h-[600px] overflow-y-auto pr-4">
+                {/* Thông tin cơ bản và giá */}
+                <div className="grid grid-cols-3 gap-6">
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="title">Tên khóa học</Label>
                       <Input
-                        id="image"
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => {
-                          setFormData({ ...formData, urlImage: e.target.files[0] });
-                        }}
+                        id="title"
+                        name="title"
+                        value={formData.title}
+                        onChange={handleInputChange}
+                        required
+                        placeholder="Nhập tên khóa học"
                       />
-                      <label
-                        htmlFor="image"
-                        className="flex flex-col items-center gap-2 cursor-pointer"
-                      >
-                        <FileVideo className="w-8 h-8 text-gray-400" />
-                        <span className="text-sm text-gray-500">
-                          Kéo thả hoặc click để tải ảnh lên
-                        </span>
-                      </label>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="description">Mô tả</Label>
+                      <Textarea
+                        id="description"
+                        name="description"
+                        value={formData.description}
+                        onChange={handleInputChange}
+                        required
+                        placeholder="Nhập mô tả khóa học"
+                        rows={4}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="instructorId">ID giảng viên</Label>
+                      <Input
+                        id="instructorId"
+                        name="instructorId"
+                        value={formData.instructorId}
+                        onChange={handleInputChange}
+                        placeholder="Nhập ID giảng viên"
+                        disabled
+                      />
                     </div>
                   </div>
+
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="price">Giá (VNĐ)</Label>
+                      <Input
+                        id="price"
+                        name="price"
+                        type="number"
+                        value={formData.price}
+                        onChange={handleInputChange}
+                        required
+                        placeholder="Nhập giá khóa học"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="categoryId">Danh mục</Label>
+                      <Select
+                        value={formData.categoryId}
+                        onValueChange={(value) => handleSelectChange('categoryId', value)}
+                        required
+                      >
+                        <SelectTrigger className="w-full">
+                          <span>{formData.categoryId ? categories.find(c => c.id === formData.categoryId)?.name : 'Chọn danh mục'}</span>
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.map((category) => (
+                            <SelectItem key={category.id} value={category.id}>
+                              {category.name}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="image">Ảnh khóa học</Label>
+                      <div
+                        className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center cursor-pointer hover:border-pink-500 transition-colors"
+                        onDragOver={(e) => e.preventDefault()}
+                        onDrop={(e) => {
+                          e.preventDefault();
+                          handleImageChange({ target: { files: e.dataTransfer.files } });
+                        }}
+                      >
+                        <Input
+                          id="image"
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleImageChange}
+                        />
+                        <label
+                          htmlFor="image"
+                          className="flex flex-col items-center gap-2 cursor-pointer"
+                        >
+                          <FileVideo className="w-8 h-8 text-gray-400" />
+                          <span className="text-sm text-gray-500">
+                            Kéo thả hoặc click để tải ảnh lên
+                          </span>
+                        </label>
+                      </div>
+                    </div>
+                    <div className="w-full aspect-video bg-gray-100 rounded-lg overflow-hidden relative">
+                      {previewUrl ? (
+                        <>
+                          <img
+                            src={previewUrl}
+                            alt="Preview"
+                            className="w-full h-full object-cover"
+                          />
+                          <Button
+                            variant="destructive"
+                            size="icon"
+                            className="absolute top-2 right-2"
+                            onClick={handleRemoveImage}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </>
+                      ) : editingCourse?.urlImage ? (
+                        <img
+                          src={editingCourse.urlImage}
+                          alt="Preview"
+                          className="w-full h-full object-cover"
+                        />
+                      ) : (
+                        <div className="w-full h-full flex items-center justify-center text-gray-400">
+                          Chưa có ảnh
+                        </div>
+                      )}
+                    </div>
+                    <span className="text-sm text-gray-500">Kích thước: 460x259</span>
+                    {error && <div className="text-red-600 text-sm">{error}</div>}
+                  </div>
                 </div>
-                <Button type="submit" className="w-full bg-pink-500 hover:bg-pink-600">
-                  {editingCourse ? 'Cập nhật' : 'Thêm mới'}
-                </Button>
-              </div>
-              <div className="w-[230px] flex flex-col items-center gap-2">
-                <div className="w-[230px] h-[129px] bg-gray-100 rounded-lg overflow-hidden">
-                  {formData?.urlImage ? (
-                    <img
-                      src={
-                        formData.urlImage instanceof Blob || formData.urlImage instanceof File
-                          ? URL.createObjectURL(formData.urlImage)
-                          : editingCourse?.urlImage
-                      }
-                      alt="Preview"
-                      className="w-full h-full object-cover"
+
+                {/* Nội dung khóa học */}
+                <div className="space-y-4 mt-6">
+                  <Label>Nội dung khóa học</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      value={newContent}
+                      onChange={(e) => setNewContent(e.target.value)}
+                      placeholder="Nhập nội dung khóa học"
+                      onKeyPress={(e) => e.key === 'Enter' && handleAddContent()}
                     />
-                  ) : editingCourse?.urlImage ? (
-                    <img
-                      src={editingCourse.urlImage}
-                      alt="Preview"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-400">
-                      Chưa có ảnh
+                    <Button type="button" onClick={handleAddContent} disabled={!newContent.trim()}>
+                      Thêm
+                    </Button>
+                  </div>
+                  {formData.contents.length > 0 && (
+                    <div className="grid grid-cols-2 gap-4 mt-4">
+                      {formData.contents.map((content, index) => (
+                        <div
+                          key={index}
+                          className="flex items-center justify-between p-3 bg-gray-50 rounded"
+                        >
+                          <span className="text-xs">{content}</span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleRemoveContent(index)}
+                          >
+                            <X className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
                     </div>
                   )}
                 </div>
-                <span className="text-sm text-gray-500">Kích thước: 460x259</span>
               </div>
+
+              <Button type="submit" className="w-full bg-pink-500 hover:bg-pink-600">
+                {editingCourse ? 'Cập nhật' : 'Thêm mới'}
+              </Button>
             </form>
           </DialogContent>
         </Dialog>
@@ -513,7 +658,7 @@ const Courses = () => {
                     <TableRow key={course.id} className="hover:bg-gray-100 transition-colors">
                       <TableCell className="flex items-center gap-4 py-3">
                         <img
-                          src={course.urlImage ? course.urlImage : ""}
+                          src={course.urlImage || ""}
                           alt={course.title}
                           className="h-12 w-12 rounded-lg object-cover border border-gray-200"
                         />

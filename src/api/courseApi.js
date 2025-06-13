@@ -136,7 +136,7 @@ export const deleteCourse = async (id) => {
 export const uploadImage = async (urlImage) => {
   const token = getAuthToken();
   const formData = new FormData();
-  formData.append("file", urlImage); // "file" phải trùng với tên trong controller
+  formData.append("file", urlImage);
   try {
     const response = await api.post(`${API_URL}/upload-image`, formData, {
       headers: {
