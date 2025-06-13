@@ -20,6 +20,8 @@ import { toast } from 'react-toastify';
 import MDEditor from '@uiw/react-md-editor';
 import { formatDate } from '../../utils/formatDate';
 import slugify from 'slugify';
+import { getUserId } from '../../api/authUtils';
+
 
 function PostManagement() {
   const [allPosts, setAllPosts] = useState([]);
@@ -42,6 +44,7 @@ function PostManagement() {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const pageNumberFromUrl = parseInt(searchParams.get('page') || 1, 10);
+  const currentUserId = getUserId();
 
 
   const generateSlug = (text) => {
@@ -178,45 +181,47 @@ function PostManagement() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const token = localStorage.getItem('authToken');
-    const decoded = jwtDecode(token);
 
     const formData = {
       title: currentPost.title,
       content: currentPost.content,
       tags: currentPost.tags,
-      userId: decoded.id,
+      userId: currentUserId,
       urlImage: currentPost.urlImage && typeof currentPost.urlImage === 'string' ? currentPost.urlImage : null,
     };
 
-    if (isEditing) {
-      try {
+    try {
+      if (isEditing) {
+        if (currentPost.userId !== currentUserId) {
+          toast.error('Bạn không có quyền chỉnh sửa bài viết này');
+          return;
+        }
+
         await updatePost(currentPost.id, formData);
+
+        // Upload new image if provided
         if (currentPost.urlImage instanceof File) {
           await uploadPostImage(currentPost.id, currentPost.urlImage);
         }
+
         toast.success('Cập nhật bài viết thành công');
-        setIsModalOpen(false);
-        fetchPosts();
-        resetForm();
-      } catch (error) {
-        console.error('Lỗi khi cập nhật bài viết:', error);
-        toast.error('Có lỗi xảy ra khi cập nhật bài viết');
-      }
-    } else {
-      try {
+      } else {
         const response = await createPost(formData);
+
+        // Upload image for new post if provided
         if (currentPost.urlImage instanceof File) {
           await uploadPostImage(response.data.id, currentPost.urlImage);
         }
+
         toast.success('Thêm bài viết thành công');
-        setIsModalOpen(false);
-        fetchPosts();
-        resetForm();
-      } catch (error) {
-        console.error('Lỗi khi tạo bài viết:', error);
-        toast.error('Có lỗi xảy ra khi tạo bài viết');
       }
+
+      setIsModalOpen(false);
+      fetchPosts();
+      resetForm();
+    } catch (error) {
+      console.error(`Lỗi khi ${isEditing ? 'cập nhật' : 'tạo'} bài viết:`, error);
+      toast.error(`Có lỗi xảy ra khi ${isEditing ? 'cập nhật' : 'tạo'} bài viết`);
     }
   };
 
