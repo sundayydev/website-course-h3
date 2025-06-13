@@ -31,8 +31,8 @@ const PaymentSuccess = () => {
                 console.log('userId từ hồ sơ:', userId);
 
                 const notificationData = {
-                    type: 'NewMessage',
-                    content: `Thanh toán thành công cho đơn hàng ${id}! Số tiền: ${amount ? parseInt(amount) / 100 : 'N/A'} VND`,
+                    type: 'PaymentSuccess',
+                    content: `Thanh toán thành công cho đơn hàng ${id}! Số tiền: ${amount ? parseInt(amount) / 100 : 'Miễn Phí'} VND`,
                     relatedEntityId: id,
                     relatedEntityType: 'Order',
                     userIds: [userId],

@@ -170,7 +170,7 @@ function ReviewByCourse() {
             <FaArrowLeft className="mr-2" /> Quay lại
           </Button>
           <h1 className="text-2xl font-bold text-pink-500">
-            Bình luận của bài viết ID: {courseId}
+            Đánh giá của khóa học ID: {courseId}
           </h1>
         </div>
       </div>
