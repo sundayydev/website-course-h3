@@ -36,7 +36,7 @@ const About = () => {
       id: '64d8dce6-bf4f-4ece-bdcc-ef7db89e178f',
       name: 'Ngô Mạnh Hùng',
       role: 'Developer & CEO',
-      image: 'https://asd.mediacdn.vn/adt/tuyendungvccorp/lap-trinh-vien-la-gi_1b33bae8-ab72-4134-bb77-8d9df3b29def.jpg',
+      image: 'https://res.cloudinary.com/dbj1vzgbv/image/upload/v1749793494/ChatGPT_Image_12_44_34_13_thg_6_2025_jc1faz.png',
       description: 'Với hơn 8 năm kinh nghiệm phát triển phần mềm và quản lý dự án.'
     },
     {
@@ -50,7 +50,7 @@ const About = () => {
       id: '4942876c-c54a-48c7-95eb-6146baa8c6a1',
       name: 'Lê Hoài Huân',
       role: 'Developer',
-      image: 'https://res.cloudinary.com/dybzjxgt4/image/upload/v1748407977/duwbvopnkwxugjou568o.jpg',
+      image: 'https://assets.grok.com/users/f366a28e-dc80-4597-8363-c4c97f5854ac/generated/joar4bpCgitblj0W/image.jpg',
       description: 'Full-stack developer với đam mê về công nghệ mới và giảng dạy.'
     },
   ];

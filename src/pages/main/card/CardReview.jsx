@@ -1,10 +1,8 @@
-
 import React, { useState, useEffect } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { getReviews } from "@/api/reviewApi";
 import { getUserById } from "@/api/userApi";
 import defaultAvatar from '@/assets/imgs/default-avatar.jpg';
-
 
 export default function CardReview() {
   const [reviews, setReviews] = useState([]);
@@ -12,10 +10,13 @@ export default function CardReview() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Hàm lấy 5 đánh giá ngẫu nhiên
+  // Hàm lấy 5 đánh giá ngẫu nhiên có 5 sao
   const getRandomReviews = (reviewsArray, count) => {
-    const shuffled = [...reviewsArray].sort(() => 0.5 - Math.random());
-    return shuffled.slice(0, Math.min(count, reviewsArray.length));
+    // Lọc các đánh giá có 5 sao
+    const fiveStarReviews = reviewsArray.filter(review => review.rating === 5);
+    // Xáo trộn và lấy số lượng cần thiết
+    const shuffled = [...fiveStarReviews].sort(() => 0.5 - Math.random());
+    return shuffled.slice(0, Math.min(count, fiveStarReviews.length));
   };
 
   // Lấy dữ liệu từ API khi component mount
@@ -38,6 +39,7 @@ export default function CardReview() {
                 name: user.fullName || "Người dùng ẩn danh",
                 position: user.role || "Học viên",
                 avatar: user.profileImage || defaultAvatar,
+                rating: review.rating
               };
             } catch (userError) {
               console.error(`Lỗi khi lấy thông tin người dùng ${review.userId}:`, userError);
@@ -88,7 +90,6 @@ export default function CardReview() {
   }
 
   return (
-
     <div className="container mx-auto px-4 md:px-6 p-5 mt-10">
       <div className="flex flex-col md:flex-row items-center justify-between relative">
         {/* Thẻ Đánh Giá */}
@@ -97,6 +98,18 @@ export default function CardReview() {
             className="bg-[#5DB996] rounded-2xl p-8 text-white shadow-lg"
             style={{ borderRadius: "20px" }}
           >
+            <div className="flex mb-4">
+              {[...Array(5)].map((_, i) => (
+                <svg
+                  key={i}
+                  className="w-5 h-5 text-yellow-300"
+                  fill="currentColor"
+                  viewBox="0 0 20 20"
+                >
+                  <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
+                </svg>
+              ))}
+            </div>
             <p className="text-base md:text-lg mb-8 italic leading-relaxed">
               "{reviews[currentIndex].quote}"
             </p>
@@ -144,12 +157,11 @@ export default function CardReview() {
               Họ Nói Gì Về Khóa Học?
             </h2>
             <p className="text-gray-600 mb-0">
-              “Những đánh giá tích cực như thế này không chỉ truyền cảm hứng, mà còn giúp bạn định hình rõ mình đang cần gì –
-              và khóa học có thể mang đến điều gì để thúc đẩy sự phát triển, cầu tiến của bạn trong lĩnh vực công nghệ thông tin.”
+              "Những đánh giá tích cực như thế này không chỉ truyền cảm hứng, mà còn giúp bạn định hình rõ mình đang cần gì –
+              và khóa học có thể mang đến điều gì để thúc đẩy sự phát triển, cầu tiến của bạn trong lĩnh vực công nghệ thông tin."
             </p>
           </div>
         </div>
-
       </div>
     </div>
   );
