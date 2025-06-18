@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { jwtDecode } from 'jwt-decode';
 import { createPayment, createPaymentMomo } from '@/api/paymentApi';
 import { getCourseById } from '@/api/courseApi';
-import { getAllCoupons, getCouponByCode } from '@/api/couponApi'; 
+import { getAllCoupons, getCouponByCode } from '@/api/couponApi';
 import axios from 'axios';
 const API_URL = process.env.VITE_API_URL || 'http://localhost:5221/api';
 
@@ -34,7 +34,7 @@ const PaymentModal = ({ courseId, onClose }) => {
   const [discountAmount, setDiscountAmount] = useState(0);
   const [couponId, setCouponId] = useState(null);
   const [paymentMethod, setPaymentMethod] = useState('VNPAY');
-  const [coupons, setCoupons] = useState([]); // Danh sách coupon
+  const [coupons, setCoupons] = useState([]);
   const [isCouponValid, setIsCouponValid] = useState(false);
   const navigate = useNavigate();
   const userId = getUserIdFromToken();
@@ -42,7 +42,7 @@ const PaymentModal = ({ courseId, onClose }) => {
   useEffect(() => {
     if (!userId) {
       alert('Bạn cần đăng nhập để thanh toán!');
-      navigate('/login');
+      navigate('/');
       return;
     }
 
@@ -145,7 +145,7 @@ const PaymentModal = ({ courseId, onClose }) => {
           <div className="md:w-1/2 p-6 border-r border-gray-200 flex flex-col space-y-4">
             <div className="flex items-center space-x-4">
               <img
-                  src={course.urlImage ? `${course.urlImage}` : ''}
+                src={course.urlImage ? `${course.urlImage}` : ''}
                 alt={course.title}
                 className="w-16 h-16 rounded-lg object-cover"
               />
@@ -188,22 +188,22 @@ const PaymentModal = ({ courseId, onClose }) => {
           ) : (
             <div className="flex space-x-2">
               <select
-                  value={couponCode}
-                  onChange={(e) => applyCoupon(e.target.value)}
-                  className="flex-1 px-3 py-2 border rounded"
-                  disabled={isApplyingCoupon}
+                value={couponCode}
+                onChange={(e) => applyCoupon(e.target.value)}
+                className="flex-1 px-3 py-2 border rounded"
+                disabled={isApplyingCoupon}
               >
                 <option value="">Chọn mã coupon</option>
                 {coupons.map((coupon) => (
-                    <option key={coupon.id} value={coupon.code}>
-                      {coupon.code} - Giảm {coupon.discountPercentage}% (Tối đa {coupon.maxUsage} lần)
-                    </option>
+                  <option key={coupon.id} value={coupon.code}>
+                    {coupon.code} - Giảm {coupon.discountPercentage}% (Tối đa {coupon.maxUsage} lần)
+                  </option>
                 ))}
               </select>
               <button
-                  onClick={() => applyCoupon(couponCode)}
-                  disabled={isApplyingCoupon}
-                  className={`bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 ${isApplyingCoupon ? 'opacity-50 cursor-not-allowed' : ''}`}
+                onClick={() => applyCoupon(couponCode)}
+                disabled={isApplyingCoupon}
+                className={`bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 ${isApplyingCoupon ? 'opacity-50 cursor-not-allowed' : ''}`}
               >
                 {isApplyingCoupon ? 'Đang kiểm tra...' : 'Áp dụng'}
               </button>
@@ -263,18 +263,18 @@ const PaymentModal = ({ courseId, onClose }) => {
 
           {/* Button */}
           <button
-              onClick={handlePayment}
-              disabled={isLoading || (couponCode && !isCouponValid)}
-              className={`mt-2 py-3 rounded-lg text-white font-semibold ${isLoading || (couponCode && !isCouponValid)
-                      ? 'bg-gray-400 cursor-not-allowed'
-                      : 'bg-blue-600 hover:bg-blue-700'
+            onClick={handlePayment}
+            disabled={isLoading || (couponCode && !isCouponValid)}
+            className={`mt-2 py-3 rounded-lg text-white font-semibold ${isLoading || (couponCode && !isCouponValid)
+              ? 'bg-gray-400 cursor-not-allowed'
+              : 'bg-blue-600 hover:bg-blue-700'
               }`}
           >
             {isLoading
-                ? 'Đang xử lý...'
-                : total === 0
-                    ? 'Đăng ký miễn phí'
-                    : 'Tiếp tục thanh toán'}
+              ? 'Đang xử lý...'
+              : total === 0
+                ? 'Đăng ký miễn phí'
+                : 'Tiếp tục thanh toán'}
           </button>
 
           {total > 0 && (
