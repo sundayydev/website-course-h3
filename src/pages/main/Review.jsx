@@ -2,13 +2,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Send } from 'lucide-react';
 import { FaStar } from 'react-icons/fa';
-import { getReviewsByCourseId, createReview, updateReview, deleteReview } from '../../api/reviewApi';
+import { getReviewsByCourseId, createReview, updateReview, deleteReview } from '@/api/reviewApi';
 import { toast } from 'react-toastify';
-import { getUserId, isAuthenticated } from '../../api/authUtils';
+import { getUserId, isAuthenticated } from '@/api/authUtils';
 import { Link } from 'react-router-dom';
-import defaultAvatar from '../../assets/imgs/default-avatar.jpg';
-import { formatDate } from '../../utils/formatDate';
-import { getEnrollmentByUserId } from '../../api/enrollmentApi';
+import defaultAvatar from '@/assets/imgs/default-avatar.jpg';
+import { formatDate } from '@/utils/formatDate';
+import { getEnrollmentByUserId } from '@/api/enrollmentApi';
 
 const getUserAvatar = (userProfileImage) => {
   return userProfileImage ? userProfileImage : defaultAvatar;

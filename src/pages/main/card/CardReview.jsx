@@ -10,16 +10,13 @@ export default function CardReview() {
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Hàm lấy 5 đánh giá ngẫu nhiên có 5 sao
+
   const getRandomReviews = (reviewsArray, count) => {
-    // Lọc các đánh giá có 5 sao
     const fiveStarReviews = reviewsArray.filter(review => review.rating === 5);
-    // Xáo trộn và lấy số lượng cần thiết
     const shuffled = [...fiveStarReviews].sort(() => 0.5 - Math.random());
     return shuffled.slice(0, Math.min(count, fiveStarReviews.length));
   };
 
-  // Lấy dữ liệu từ API khi component mount
   useEffect(() => {
     const fetchReviewsAndUsers = async () => {
       try {
@@ -27,7 +24,6 @@ export default function CardReview() {
         const response = await getReviews();
         const randomReviews = getRandomReviews(response, 5);
 
-        // Lấy thông tin người dùng cho mỗi đánh giá
         const reviewsWithUserData = (await Promise.all(
           randomReviews.map(async (review) => {
             try {
