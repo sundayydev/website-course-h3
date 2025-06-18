@@ -2,13 +2,13 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Send } from 'lucide-react';
 import { FaStar } from 'react-icons/fa';
-import { getReviewsByCourseId, createReview, updateReview, deleteReview } from '../../api/reviewApi';
+import { getReviewsByCourseId, createReview, updateReview, deleteReview } from '@/api/reviewApi';
 import { toast } from 'react-toastify';
-import { getUserId, isAuthenticated } from '../../api/authUtils';
+import { getUserId, isAuthenticated } from '@/api/authUtils';
 import { Link } from 'react-router-dom';
-import defaultAvatar from '../../assets/imgs/default-avatar.jpg';
-import { formatDate } from '../../utils/formatDate';
-import { getEnrollmentByUserId } from '../../api/enrollmentApi'; // Giả định API kiểm tra đăng ký
+import defaultAvatar from '@/assets/imgs/default-avatar.jpg';
+import { formatDate } from '@/utils/formatDate';
+import { getEnrollmentByUserId } from '@/api/enrollmentApi';
 
 const getUserAvatar = (userProfileImage) => {
   return userProfileImage ? userProfileImage : defaultAvatar;
@@ -22,7 +22,7 @@ const Review = ({ courseId }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [editReviewId, setEditReviewId] = useState(null);
-  const [isEnrolled, setIsEnrolled] = useState(false); // Thêm trạng thái đăng ký
+  const [isEnrolled, setIsEnrolled] = useState(false);
   const currentUserId = isAuthenticated() ? getUserId() : null;
 
   // Fetch reviews and enrollment data
@@ -215,7 +215,6 @@ const Review = ({ courseId }) => {
     );
   };
 
-  // Main Render
   return (
     <div className="mt-8 p-4 bg-white rounded-xl shadow-md">
       {isLoading ? (
