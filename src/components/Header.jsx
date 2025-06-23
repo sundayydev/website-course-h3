@@ -144,7 +144,7 @@ const Header = () => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Tìm kiếm
+  // Tìm kiếm sản phẩm
   const handleSearch = async () => {
     if (!searchQuery.trim()) {
       setSearchResults({ courses: [], posts: [] });
