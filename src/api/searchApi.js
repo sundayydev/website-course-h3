@@ -17,6 +17,7 @@ export const searchCourses = (keyword, category = '', minPrice = null, maxPrice 
 };
 
 // Tìm kiếm bài viết
+// Tìm kiếm theo bài viết
 export const searchPosts = (keyword, author = '', startDate = null, endDate = null, page = 1, pageSize = 10) => {
     return axios.get(`${API_URL}/posts`, {
         params: { keyword, author, startDate, endDate, page, pageSize },
