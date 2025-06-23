@@ -224,8 +224,7 @@ const CourseNew = () => {
   const toggleFilter = () => {
     setIsFilterOpen(!isFilterOpen);
   };
-
-  // Di chuyển khai báo newCourses ra ngoài block render
+  // Di chuyển khai báo newCourses ra ngoài 
   const newCourses = courses.filter((course) => course.isNew);
 
   if (loading) {
