@@ -23,7 +23,7 @@ import { getCategories } from '@/api/categoryApi';
 import { getUserId } from '@/api/authUtils';
 import { getCourseByInstructorId } from '@/api/courseApi';
 import { useNavigate } from 'react-router-dom';
-import CourseStats from '@/components/instructor/course/CourseStats';
+import CourseStats from '@/components/instructor/course/CourseStats'; 
 
 // Tạo một component với tên CoursesPage
 export default function CoursesPage() {
